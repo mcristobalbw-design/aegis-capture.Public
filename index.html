@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#12202B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Aegis">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Aegis Shelf Capture</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2312202B'/%3E%3Crect x='10' y='22' width='44' height='6' fill='%23F26B21'/%3E%3Crect x='10' y='36' width='44' height='6' fill='%23F26B21'/%3E%3Ccircle cx='32' cy='32' r='9' fill='none' stroke='%23F6F3EC' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2312202B'/%3E%3Crect x='10' y='22' width='44' height='6' fill='%23F26B21'/%3E%3Crect x='10' y='36' width='44' height='6' fill='%23F26B21'/%3E%3Ccircle cx='32' cy='32' r='9' fill='none' stroke='%23F6F3EC' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Public+Sans:wght@400;600;700&display=swap">
+<style>
+:root{--bg:#F6F3EC;--card:#FFFDF8;--ink:#12202B;--muted:#5A6873;--line:#D9D2C3;--accent:#F26B21;--accent-ink:#B8460B;--good:#1F7A4D;--warn:#B8860B;--bad:#B3261E;--good-bg:#E6F3EB;--warn-bg:#FBF1D6;--bad-bg:#FBE4E1;--display:'Oswald',Arial Narrow,Arial,sans-serif;--body:'Public Sans',system-ui,Arial,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;overscroll-behavior:none}
+header{position:sticky;top:0;z-index:9;background:var(--ink);color:#F6F3EC;padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;justify-content:space-between;gap:12px}
+header h1{font-family:var(--display);font-weight:600;font-size:20px;margin:0;letter-spacing:.5px}
+header .ctx{font-size:13px;color:#D9D2C3;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+header button{background:transparent;color:#D9D2C3;border:1px solid #44525E;padding:6px 10px;font-size:13px;border-radius:8px}
+main{padding:16px max(16px,env(safe-area-inset-right,0px)) calc(32px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h2{font-family:var(--display);font-weight:600;font-size:22px;margin:0}
+p{margin:0}.muted{color:var(--muted);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;color:var(--muted)}
+input,select,textarea{font:inherit;font-size:17px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
+textarea{min-height:90px;font-size:14px}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1 1 140px;min-width:0}
+button{font:inherit;font-weight:700;border:0;border-radius:10px;padding:14px 18px;cursor:pointer;color:var(--ink);background:var(--line)}
+button.primary{background:var(--accent);color:#fff;font-size:18px}
+button.ghost{background:transparent;border:1px solid var(--line)}
+button.danger{background:var(--bad-bg);color:var(--bad)}
+button[disabled]{opacity:.5}
+.choice{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.choice button{padding:14px 6px;font-size:14px;line-height:1.2;background:var(--bg);border:2px solid var(--line)}
+.choice button b{display:block;font-family:var(--display);font-size:18px;font-weight:600}
+.choice button.on{border-color:var(--accent);background:#FFF1E8}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#F6F3EC;padding:10px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+/* camera */
+#cam{position:fixed;inset:0;background:#000;z-index:20;display:flex;flex-direction:column}
+#cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#cam .top{position:relative;z-index:2;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;background:linear-gradient(rgba(0,0,0,.65),transparent);color:#fff;display:flex;justify-content:space-between;align-items:center;font-size:14px}
+#cam .top b{font-family:var(--display);font-weight:600;font-size:18px}
+#cam .mid{flex:1;position:relative}
+#edge{position:absolute;left:0;top:0;bottom:0;width:18%;overflow:hidden;opacity:.75;border-right:3px solid var(--accent);display:none}
+#edge.col{left:0;right:0;bottom:auto;width:auto;height:18%;border-right:0;border-bottom:3px solid var(--accent)}
+#edge canvas{width:100%;height:100%;object-fit:cover}
+#edgeTip{position:absolute;left:19%;top:50%;transform:translateY(-50%);color:#fff;background:rgba(18,32,43,.75);padding:8px 12px;border-radius:8px;font-size:14px;max-width:60%;display:none}
+#edge.col ~ #edgeTip{left:16px;top:20%}
+#level{position:absolute;left:12%;right:12%;top:50%;height:4px;background:rgba(255,255,255,.35);border-radius:2px;transform-origin:center}
+#level::after{content:"";position:absolute;left:0;right:0;top:-2px;height:8px;border-radius:4px;background:var(--bad);transition:background .2s}
+#level.ok::after{background:var(--good)}#level.near::after{background:var(--warn)}
+#levelTxt{position:absolute;right:16px;top:calc(50% + 14px);color:#fff;font-size:13px;background:rgba(18,32,43,.6);padding:3px 8px;border-radius:6px;font-variant-numeric:tabular-nums}
+#steady{position:absolute;left:50%;top:30%;transform:translateX(-50%);background:var(--bad);color:#fff;padding:8px 14px;border-radius:8px;font-weight:700;display:none}
+#cam .bottom{position:relative;z-index:2;padding:12px 16px calc(18px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,rgba(0,0,0,.75));display:flex;flex-direction:column;gap:12px}
+.tiles{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tiles span{width:34px;height:44px;border-radius:5px;background:var(--good);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
+.tiles span.next{background:transparent;border:2px dashed #fff;color:#fff}
+.tiles.col span{width:44px;height:30px}
+.tiles i{color:#fff;font-style:normal;font-size:13px;margin-left:6px}
+.shutterRow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#shutter{width:76px;height:76px;border-radius:50%;background:#fff;border:6px solid rgba(255,255,255,.35);padding:0}
+#shutter:active{transform:scale(.95)}
+.shutterRow button.ghost{color:#fff;border-color:rgba(255,255,255,.5);background:rgba(0,0,0,.3)}
+/* review */
+#review{position:fixed;inset:0;z-index:21;background:var(--bg);overflow:auto;display:none;flex-direction:column}
+#review .body{padding:16px max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px;max-width:640px;margin:0 auto;width:100%}
+.verdict{font-family:var(--display);font-size:26px;font-weight:600;padding:12px 16px;border-radius:10px;background:var(--good-bg);color:var(--good)}
+.verdict.warn{background:var(--warn-bg);color:var(--warn)}.verdict.bad{background:var(--bad-bg);color:var(--bad)}
+.check{display:grid;grid-template-columns:16px 1fr auto;gap:10px;align-items:center;padding:8px 12px;border-radius:8px;background:var(--card);border:1px solid var(--line);font-size:14px}
+.check .dot{width:12px;height:12px;border-radius:50%;background:var(--good)}.check.warn .dot{background:var(--warn)}.check.bad .dot{background:var(--bad)}
+.check .val{font-variant-numeric:tabular-nums;font-weight:700}
+.check small{display:block;color:var(--muted);font-size:13px}
+#cropWrap{position:relative;background:#000;border-radius:10px;overflow:hidden;touch-action:none}
+#cropWrap canvas{width:100%;display:block}
+#cropBox{position:absolute;border:2px solid var(--accent);box-shadow:0 0 0 2000px rgba(0,0,0,.45);display:none}
+#cropBox i{position:absolute;width:28px;height:28px;background:var(--accent);border-radius:50%;border:3px solid #fff;transform:translate(-50%,-50%)}
+#cropBox i.locked{display:none}
+.shots{display:flex;flex-direction:column;gap:8px}
+.grp{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.grp .h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.grp .h b{font-family:var(--display);font-size:17px;font-weight:600}
+.thumbrow{display:flex;gap:6px;overflow-x:auto}
+.thumbrow img{width:48px;height:64px;object-fit:cover;border-radius:5px;background:#000;flex:none;border:2px solid transparent}
+.thumbrow img.sent{border-color:var(--good)}.thumbrow img.queued{border-color:var(--warn)}.thumbrow img.failed{border-color:var(--bad)}
+.pill{font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--good-bg);color:var(--good);text-transform:uppercase;letter-spacing:.3px}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.bad{background:var(--bad-bg);color:var(--bad)}.pill.off{background:var(--line);color:var(--muted)}
+.status{font-size:14px;color:var(--muted);min-height:1.2em}
+.steps{display:grid;grid-template-columns:1fr 1fr;gap:8px}.step{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:13px}.step b{display:block;font-family:var(--display);font-size:17px;color:var(--accent-ink)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><h1>Aegis Shelf Capture</h1><div style="display:flex;gap:8px;align-items:center;min-width:0"><div class="ctx" id="ctx">not started</div><button id="gearBtn" aria-label="Settings">⚙</button></div></header>
+<main>
+
+<!-- SETTINGS -->
+<section class="card" id="settings" hidden>
+  <h2>Settings</h2>
+  <p class="muted">Done once per phone. The upload link and token come from the project owner.</p>
+  <label>Upload link (Google script URL ending in /exec)<input type="url" id="setUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"></label>
+  <label>Token phrase<input type="text" id="setToken" autocomplete="off"></label>
+  <label>Auditor names (one per line)<textarea id="setAuditors"></textarea></label>
+  <div class="row"><button class="primary" id="saveSet">Save</button><button class="ghost" id="testSet">Test upload link</button></div>
+  <p class="status" id="setStatus"></p>
+  <p class="muted" id="queueInfo"></p>
+</section>
+
+<!-- START -->
+<section class="card" id="start">
+  <h2>Start a store visit</h2>
+  <div class="row">
+    <label>Auditor<select id="auditor"></select></label>
+    <label>Category<select id="category"><option value="POWBEV">Powdered Beverage</option><option value="BISCUITS">Biscuits</option><option value="CHOCO">Chocolates</option><option value="BREADFILL">Breadfill</option><option value="CHILLER">Chiller</option></select></label>
+  </div>
+  <div class="row">
+    <label>Store code<input type="text" id="storeCode" placeholder="e.g. CT0243660" autocapitalize="characters" autocomplete="off"></label>
+    <label>Store name<input type="text" id="storeName" placeholder="e.g. Prince Sibonga" autocomplete="off"></label>
+  </div>
+  <button class="primary" id="startBtn">Start visit</button>
+  <p class="muted" id="resumeNote" hidden></p>
+</section>
+
+<!-- VISIT -->
+<section id="visit" hidden style="display:flex;flex-direction:column;gap:16px">
+  <div class="card" id="newGroup">
+    <h2 id="grpTitle">Group 1</h2>
+    <p class="muted">One group = one piece of shelf the computer joins as a single surface. Shoot the whole bay, post to post, top to floor.</p>
+    <label>Shape</label>
+    <div class="choice" id="kindPick">
+      <button data-v="single" class="on"><b>Single</b>one photo</button>
+      <button data-v="row"><b>Row</b>left to right</button>
+      <button data-v="column"><b>Column</b>top to bottom</button>
+    </div>
+    <label>What is it</label>
+    <div class="choice" id="typePick">
+      <button data-v="shelf" class="on"><b>Shelf</b>regular</button>
+      <button data-v="rack"><b>Tang rack</b>frame counts</button>
+      <button data-v="secondary"><b>Secondary</b>not in SOS</button>
+    </div>
+    <button class="primary" id="openCam">Open camera</button>
+  </div>
+  <div class="card">
+    <div class="grp .h" style="display:flex;justify-content:space-between;align-items:baseline"><h2>This visit</h2><span class="muted" id="visitCount">0 photos</span></div>
+    <div class="shots" id="groups"></div>
+    <p class="status" id="upStatus"></p>
+    <div class="row"><button class="primary" id="finishBtn">Finish visit</button><button class="ghost" id="discardBtn">Discard visit</button></div>
+  </div>
+</section>
+</main>
+
+<!-- CAMERA -->
+<div id="cam" hidden>
+  <video id="video" playsinline autoplay muted></video>
+  <div class="top"><div><b id="camGroup">Group 1 · Single · Shelf</b><div id="camHint">Post to post, top shelf to floor</div></div><button class="ghost" id="camClose" style="color:#fff;border:1px solid rgba(255,255,255,.5);background:rgba(0,0,0,.3);padding:8px 12px">Close</button></div>
+  <div class="mid">
+    <div id="edge"><canvas id="edgeCanvas"></canvas></div>
+    <div id="edgeTip">Move right until these packs line up with the edge</div>
+    <div id="level"></div><div id="levelTxt">level —</div>
+    <div id="steady">Hold steady</div>
+  </div>
+  <div class="bottom">
+    <div class="tiles" id="tiles"></div>
+    <div class="shutterRow"><button class="ghost" id="endGroup">End group</button><button id="shutter" aria-label="Take photo"></button><span style="width:96px"></span></div>
+  </div>
+</div>
+
+<!-- REVIEW -->
+<div id="review">
+  <div class="body">
+    <div class="verdict" id="verdict">Checking…</div>
+    <div id="cropWrap"><canvas id="revCanvas"></canvas><div id="cropBox"><i data-h="l"></i><i data-h="r"></i><i data-h="t"></i><i data-h="b"></i></div></div>
+    <p class="muted" id="cropHelp" hidden></p>
+    <div id="checks" style="display:flex;flex-direction:column;gap:6px"></div>
+    <div class="row"><button class="primary" id="keepBtn">Keep</button><button class="danger" id="retakeBtn">Retake</button></div>
+    <button class="ghost" id="cropBtn">Crop out shelf already in another group</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsfeat/0.0.8/jsfeat-min.js"></script>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const CFG={url:'',token:'',auditors:['Auditor 1','Auditor 2']};
+const V={started:false,store:'',name:'',cat:'POWBEV',auditor:'',date:'',groups:[]}; // group: {n,kind,type,shots:[{name,status,thumb,checks,crop}] ,ended}
+let cur=null;            // current group
+let stream=null,track=null,imageCapture=null;
+let prevG=null,prevBmp=null,levelDeg=0,moving=false,lastAcc=null,motionOn=false;
+let pending=null,crop=null;
+const DBN='aegis-capture-v1',ST='photos';
+
+/* ---------- storage ---------- */
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function load(k,d){try{const j=localStorage.getItem(k);return j?JSON.parse(j):d}catch(e){return d}}
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open(DBN,1);r.onupgradeneeded=()=>r.result.createObjectStore(ST);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function dbPut(k,v){const d=await idb();await new Promise((res,rej)=>{const t=d.transaction(ST,'readwrite');t.objectStore(ST).put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error)})}
+async function dbGet(k){const d=await idb();return await new Promise((res,rej)=>{const t=d.transaction(ST,'readonly');const q=t.objectStore(ST).get(k);q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error)})}
+async function dbDel(k){const d=await idb();await new Promise((res)=>{const t=d.transaction(ST,'readwrite');t.objectStore(ST).delete(k);t.oncomplete=res;t.onerror=res})}
+async function dbKeys(){const d=await idb();return await new Promise((res)=>{const t=d.transaction(ST,'readonly');const q=t.objectStore(ST).getAllKeys();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([])})}
+
+/* ---------- image analysis ---------- */
+function toGray(bmp,W){const H=Math.round(bmp.height*W/bmp.width);const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bmp,0,0,W,H);const d=x.getImageData(0,0,W,H).data;const g=new Float32Array(W*H),u8=new Uint8Array(W*H);for(let i=0,j=0;i<d.length;i+=4,j++){g[j]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];u8[j]=g[j]}return {g,u8,W,H}}
+function gauss(src,W,H,sigma){const r=Math.max(1,Math.ceil(sigma*2.5)),k=new Float32Array(2*r+1);let ks=0;for(let i=-r;i<=r;i++){k[i+r]=Math.exp(-i*i/(2*sigma*sigma));ks+=k[i+r]}for(let i=0;i<k.length;i++)k[i]/=ks;const tmp=new Float32Array(W*H),out=new Float32Array(W*H);
+  for(let y=0;y<H;y++){const row=y*W;for(let x=0;x<W;x++){let a=0;for(let i=-r;i<=r;i++){let xx=x+i;if(xx<0)xx=-xx;else if(xx>=W)xx=2*W-xx-2;a+=src[row+xx]*k[i+r]}tmp[row+x]=a}}
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){let a=0;for(let i=-r;i<=r;i++){let yy=y+i;if(yy<0)yy=-yy;else if(yy>=H)yy=2*H-yy-2;a+=tmp[yy*W+x]*k[i+r]}out[y*W+x]=a}return out}
+function lapVar(g,W,H){let s=0,s2=0,n=0;for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=y*W+x;const v=4*g[i]-g[i-1]-g[i+1]-g[i-W]-g[i+W];s+=v;s2+=v*v;n++}const m=s/n;return s2/n-m*m}
+function sharpness(G){const {g,W,H}=G;const a=gauss(g,W,H,1.0),b=gauss(a,W,H,2.5);return lapVar(a,W,H)/Math.max(1e-6,lapVar(b,W,H))}
+function tiltDeg(G){const {g,W,H}=G;const xs=[],ys=[],ws=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const v=Math.abs(g[(y+1)*W+x]-g[(y-1)*W+x]);if(v>30){xs.push(x-W/2);ys.push(y);ws.push(v)}}
+  let bestA=0,bestV=-1;for(let a=-12;a<=12.01;a+=0.5){const t=Math.tan(a*Math.PI/180);const bins=new Float32Array(H*2+W);for(let i=0;i<xs.length;i++){const b=Math.round(ys[i]-xs[i]*t)+W;if(b>=0&&b<bins.length)bins[b]+=ws[i]}let sum=0,sum2=0,n=0;for(let k=W-H/2;k<W+H*1.5&&k<bins.length;k++){if(k<0)continue;sum+=bins[k];sum2+=bins[k]*bins[k];n++}const v=sum2/n-(sum/n)*(sum/n);if(v>bestV){bestV=v;bestA=a}}return bestA}
+function feats(G,max){const {u8,W,H}=G;const img=new jsfeat.matrix_t(W,H,jsfeat.U8_t|jsfeat.C1_t);img.data.set(u8);const sm=new jsfeat.matrix_t(W,H,jsfeat.U8_t|jsfeat.C1_t);jsfeat.imgproc.gaussian_blur(img,sm,5,1.5);
+  const corners=[];for(let i=0;i<W*H;i++)corners[i]=new jsfeat.keypoint_t(0,0,0,0,-1);jsfeat.yape06.laplacian_threshold=15;jsfeat.yape06.min_eigen_value_threshold=10;let n=jsfeat.yape06.detect(sm,corners,17);corners.length=n;corners.sort((a,b)=>b.score-a.score);if(n>max){corners.length=max;n=max}
+  const desc=new jsfeat.matrix_t(32,Math.max(n,1),jsfeat.U8_t|jsfeat.C1_t);if(n)jsfeat.orb.describe(sm,corners,n,desc);return {corners,desc,n}}
+function popcnt(n){n=n-((n>>1)&0x55555555);n=(n&0x33333333)+((n>>2)&0x33333333);return(((n+(n>>4))&0xF0F0F0F)*0x1010101)>>24}
+function matchFeats(A,B){const da=A.desc.buffer.i32,db=B.desc.buffer.i32;const out=[];const back=new Int32Array(B.n).fill(-1),backd=new Int32Array(B.n).fill(999);const fwd=[];
+  for(let i=0;i<A.n;i++){let best=256,second=256,bj=-1;const ia=i*8;for(let j=0;j<B.n;j++){const jb=j*8;let d=0;for(let k=0;k<8;k++)d+=popcnt(da[ia+k]^db[jb+k]);if(d<best){second=best;best=d;bj=j}else if(d<second)second=d;if(d<backd[j]){backd[j]=d;back[j]=i}}fwd.push([bj,best,second])}
+  for(let i=0;i<A.n;i++){const [bj,best,second]=fwd[i];if(bj>=0&&best<64&&best<0.85*second&&back[bj]===i)out.push([i,bj])}return out}
+function overlap(prev,cur,axis){ if(!prev||!cur||typeof jsfeat==='undefined')return null;
+  try{const A=feats(prev,2000),B=feats(cur,2000);const m=matchFeats(A,B);if(m.length<8)return {inliers:m.length,f:0};
+    const n=m.length,from=[],to=[];for(const [i,j] of m){from.push({x:A.corners[i].x,y:A.corners[i].y});to.push({x:B.corners[j].x,y:B.corners[j].y})}
+    const model=new jsfeat.matrix_t(3,3,jsfeat.F32_t|jsfeat.C1_t),mask=new jsfeat.matrix_t(n,1,jsfeat.U8_t|jsfeat.C1_t);
+    jsfeat.motion_estimator.ransac(new jsfeat.ransac_params_t(3,5,0.5,0.99),new jsfeat.motion_model.affine2d(),from,to,n,model,mask,2000);
+    let inl=0,sx=0,sy=0;for(let i=0;i<n;i++)if(mask.data[i]){inl++;sx+=to[i].x-from[i].x;sy+=to[i].y-from[i].y}
+    const d=model.data,scale=Math.hypot(d[0],d[1]);if(inl<12||scale<0.75||scale>1.33)return {inliers:inl,f:0};
+    const shift=axis==='y'?Math.abs(sy/inl)/prev.H:Math.abs(sx/inl)/prev.W;return {inliers:inl,f:Math.max(0,1-shift),scale}}catch(e){return null}}
+
+/* ---------- settings ---------- */
+Object.assign(CFG,load('aegis.cfg',{}));
+function renderCfg(){$('setUrl').value=CFG.url||'';$('setToken').value=CFG.token||'';$('setAuditors').value=(CFG.auditors||[]).join('\n');const sel=$('auditor');sel.innerHTML='';(CFG.auditors||[]).forEach(a=>{const o=document.createElement('option');o.value=a;o.textContent=a;sel.appendChild(o)})}
+$('gearBtn').addEventListener('click',()=>{$('settings').hidden=!$('settings').hidden;renderCfg();dbKeys().then(k=>{$('queueInfo').textContent=k.length?`${k.length} photo(s) waiting on this phone to upload.`:'No photos waiting to upload.'})});
+$('saveSet').addEventListener('click',()=>{CFG.url=$('setUrl').value.trim();CFG.token=$('setToken').value.trim();CFG.auditors=$('setAuditors').value.split('\n').map(s=>s.trim()).filter(Boolean);save('aegis.cfg',CFG);renderCfg();$('setStatus').textContent='Saved.';pump()});
+$('testSet').addEventListener('click',async()=>{$('setStatus').textContent='Testing…';try{const r=await fetch($('setUrl').value.trim(),{method:'GET'});const j=await r.json();$('setStatus').textContent=j.ok?'Upload link answers. Good.':'Link answered but not as expected.'}catch(e){$('setStatus').textContent='Could not reach the link. Check it is the /exec address and the deployment is "Anyone".'}});
+
+/* ---------- visit ---------- */
+function ctx(){$('ctx').textContent=V.started?`${V.store} · ${V.cat} · ${V.groups.length} group${V.groups.length===1?'':'s'}`:'not started'}
+function persist(){save('aegis.visit',V)}
+function fname(g,n){return `${V.store}_${V.cat}_${V.date.replace(/-/g,'')}_g${String(g.n).padStart(2,'0')}_${g.kind}_${g.type}_s${String(n).padStart(2,'0')}.jpg`}
+$('startBtn').addEventListener('click',()=>{const code=$('storeCode').value.trim().toUpperCase();if(!code){toast('Enter the store code');return}
+  Object.assign(V,{started:true,store:code,name:$('storeName').value.trim(),cat:$('category').value,auditor:$('auditor').value,date:new Date().toISOString().slice(0,10),groups:[]});persist();showVisit()});
+function showVisit(){$('start').hidden=true;$('visit').hidden=false;$('grpTitle').textContent='Group '+(V.groups.length+1);renderGroups();ctx()}
+function renderGroups(){const el=$('groups');el.innerHTML='';let total=0;
+  V.groups.forEach(g=>{total+=g.shots.length;const d=document.createElement('div');d.className='grp';const tn={shelf:'Regular shelf',rack:'Tang rack',secondary:'Secondary display'}[g.type];
+    d.innerHTML=`<div class="h"><b>Group ${g.n} · ${g.kind} · ${tn}</b><span class="pill ${g.type==='secondary'?'off':''}">${g.type==='secondary'?'not in SOS':'counts'}</span></div><div class="thumbrow"></div><div class="muted">${g.shots.length} photo${g.shots.length===1?'':'s'} · ${g.shots.filter(s=>s.status==='sent').length} uploaded${g.shots.some(s=>s.crop)?' · cropped':''}</div>`;
+    const tr=d.querySelector('.thumbrow');g.shots.forEach(s=>{const im=document.createElement('img');im.src=s.thumb;im.className=s.status;im.title=s.name;tr.appendChild(im)});el.appendChild(d)});
+  $('visitCount').textContent=total+(total===1?' photo':' photos');$('finishBtn').disabled=total===0;$('grpTitle').textContent='Group '+(V.groups.length+1);ctx()}
+document.querySelectorAll('.choice').forEach(c=>c.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;c.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}));
+const picked=id=>$(id).querySelector('.on').dataset.v;
+$('openCam').addEventListener('click',async()=>{cur={n:V.groups.length+1,kind:picked('kindPick'),type:picked('typePick'),shots:[],ended:false};V.groups.push(cur);persist();prevG=null;prevBmp=null;await openCamera()});
+$('discardBtn').addEventListener('click',async()=>{if($('discardBtn').dataset.a!=='1'){$('discardBtn').dataset.a='1';$('discardBtn').textContent='Tap again to discard';setTimeout(()=>{$('discardBtn').dataset.a='';$('discardBtn').textContent='Discard visit'},3000);return}
+  for(const g of V.groups)for(const s of g.shots)await dbDel(s.name);Object.assign(V,{started:false,groups:[]});persist();$('discardBtn').dataset.a='';$('discardBtn').textContent='Discard visit';$('visit').hidden=true;$('start').hidden=false;ctx()});
+$('finishBtn').addEventListener('click',async()=>{
+  const lines=['file,store_code,store_name,category,auditor,date,group,kind,type,shot,width,height,sharpness,tilt_deg,overlap_pct,verdict,crop_l,crop_t,crop_r,crop_b,time'];
+  for(const g of V.groups)for(const s of g.shots){const c=s.crop||{};lines.push([s.name,V.store,JSON.stringify(V.name),V.cat,V.auditor,V.date,g.n,g.kind,g.type,s.n,s.w,s.h,s.sharp.toFixed(1),s.tilt.toFixed(1),s.ov==null?'':Math.round(s.ov*100),s.level,c.l??'',c.t??'',c.r??'',c.b??'',s.time].join(','))}
+  const name=`${V.store}_${V.cat}_${V.date.replace(/-/g,'')}_manifest.csv`;await dbPut(name,{kind:'manifest',text:lines.join('\n'),meta:{store:V.store,date:V.date,category:V.cat,auditor:V.auditor}});
+  toast('Visit finished. Photos upload in the background; keep the app open until all are sent.');pump();
+  Object.assign(V,{started:false,groups:[]});persist();$('visit').hidden=true;$('start').hidden=false;ctx()});
+
+/* ---------- camera ---------- */
+async function openCamera(){
+  $('cam').hidden=false;$('camGroup').textContent=`Group ${cur.n} · ${cur.kind[0].toUpperCase()+cur.kind.slice(1)} · ${{shelf:'Shelf',rack:'Tang rack',secondary:'Secondary'}[cur.type]}`;
+  $('camHint').textContent=cur.kind==='single'?'Post to post, top shelf to floor':cur.kind==='row'?'Start at the left end. Walk sideways, same distance.':'Start at the top. Keep the same distance.';
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:4032},height:{ideal:3024}},audio:false});$('video').srcObject=stream;track=stream.getVideoTracks()[0];
+    imageCapture=('ImageCapture' in window)?new ImageCapture(track):null;}
+  catch(e){toast('Camera not available: '+(e.message||e));$('cam').hidden=true;return}
+  if(!motionOn){try{if(typeof DeviceMotionEvent!=='undefined'&&DeviceMotionEvent.requestPermission){await DeviceMotionEvent.requestPermission()}}catch(e){}
+    window.addEventListener('devicemotion',onMotion);motionOn=true}
+  updateTiles();updateEdge();
+}
+function closeCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('cam').hidden=true;renderGroups()}
+$('camClose').addEventListener('click',closeCamera);
+$('endGroup').addEventListener('click',()=>{cur.ended=true;persist();closeCamera();toast(cur.shots.length?`Group ${cur.n} done with ${cur.shots.length} photo(s).`:'Empty group removed');if(!cur.shots.length){V.groups=V.groups.filter(g=>g!==cur);persist();renderGroups()}});
+function onMotion(e){const g=e.accelerationIncludingGravity;if(!g||g.x==null)return;
+  const ang=Math.atan2(g.x,g.y)*180/Math.PI;levelDeg=0.8*levelDeg+0.2*(-ang);
+  const lv=$('level');lv.style.transform=`rotate(${levelDeg}deg)`;const a=Math.abs(levelDeg);lv.className=a<=2?'ok':a<=5?'near':'';$('levelTxt').textContent=`level ${levelDeg.toFixed(0)}°`;
+  const acc=e.acceleration;if(acc&&acc.x!=null){const m=Math.hypot(acc.x,acc.y,acc.z);moving=m>1.8;$('steady').style.display=moving?'block':'none'}}
+function updateTiles(){const t=$('tiles');t.className='tiles'+(cur.kind==='column'?' col':'');t.innerHTML='';
+  if(cur.kind==='single'){t.innerHTML=cur.shots.length?'<span>✓</span><i>one photo taken — End group, or retake by taking another</i>':'<span class="next">1</span><i>one photo for this bay</i>';return}
+  cur.shots.forEach((s,i)=>{const e=document.createElement('span');e.textContent=i+1;t.appendChild(e)});const nx=document.createElement('span');nx.className='next';nx.textContent=cur.shots.length+1;t.appendChild(nx);const i=document.createElement('i');i.textContent=cur.shots.length?`shot ${cur.shots.length+1} · keep 2–3 packs of overlap`:'shot 1 · the left post in frame';t.appendChild(i)}
+function updateEdge(){const ed=$('edge'),tip=$('edgeTip');if(cur.kind==='single'||!prevBmp){ed.style.display='none';tip.style.display='none';return}
+  ed.className=cur.kind==='column'?'col':'';ed.style.display='block';tip.style.display='block';const c=$('edgeCanvas');const x=c.getContext('2d');
+  if(cur.kind==='row'){c.width=Math.round(prevBmp.width*0.18);c.height=prevBmp.height;x.drawImage(prevBmp,prevBmp.width-c.width,0,c.width,c.height,0,0,c.width,c.height);tip.textContent='Move right until the packs at the edge line up with these'}
+  else{c.width=prevBmp.width;c.height=Math.round(prevBmp.height*0.18);x.drawImage(prevBmp,0,prevBmp.height-c.height,c.width,c.height,0,0,c.width,c.height);tip.textContent='Move down until the shelf at the top lines up with this'}}
+async function grab(){
+  if(imageCapture){try{const b=await imageCapture.takePhoto();return b}catch(e){}}
+  const v=$('video');const c=document.createElement('canvas');const s=track&&track.getSettings?track.getSettings():{};c.width=v.videoWidth||s.width;c.height=v.videoHeight||s.height;c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  return await new Promise(r=>c.toBlob(r,'image/jpeg',0.92));
+}
+$('shutter').addEventListener('click',async()=>{if(moving){toast('Hold steady, then shoot');return}$('shutter').disabled=true;
+  try{const blob=await grab();await review(blob)}catch(e){toast('Could not take the photo: '+(e.message||e))}finally{$('shutter').disabled=false}});
+
+/* ---------- review + checks ---------- */
+async function loadBitmap(blob){try{return await createImageBitmap(blob,{imageOrientation:'from-image'})}catch(e){return await createImageBitmap(blob)}}
+function evaluate(m){const rows=[];let worst='good';const lvl=l=>{if(l==='bad')worst='bad';else if(l==='warn'&&worst!=='bad')worst='warn'};
+  let l=m.sharp>=18?'good':m.sharp>=12?'warn':'bad';lvl(l);rows.push({l,name:'Sharpness',val:m.sharp.toFixed(1),note:l==='good'?'Fine detail is there.':l==='warn'?'A little soft. Usable; hold still if you retake.':'Blurred. Hold still, tap to focus, retake.'});
+  const t=Math.abs(m.tilt);l=t<=3?'good':t<=7?'warn':'bad';lvl(l);rows.push({l,name:'Shelf lines level',val:m.tilt.toFixed(1)+'°',note:l==='good'?'Level.':'Shelves slope '+(m.tilt>0?'down to the right':'down to the left')+'. Face the bay squarely.'});
+  l=m.w>=2000?'good':m.w>=1200?'warn':'bad';lvl(l);rows.push({l,name:'Resolution',val:m.w+'×'+m.h,note:l==='good'?'Full resolution.':'Lower than expected from this camera.'});
+  if(cur.kind!=='single'&&cur.shots.length){const o=m.ov;if(o===null){lvl('warn');rows.push({l:'warn',name:'Overlap with previous',val:'not checked',note:'Matching library not loaded (no signal when the app opened). Keep 2–3 packs of overlap by eye.'})}else if(!o.f){lvl('bad');rows.push({l:'bad',name:'Overlap with previous',val:'none found',note:'No shared part with the last photo. Step back so 2–3 packs repeat.'})}
+    else{const p=Math.round(o.f*100);l=p>=65?'bad':p>=15&&p<=45?'good':'warn';lvl(l);rows.push({l,name:'Overlap with previous',val:p+'%',note:p>=65?'Almost the same frame. Move on along the shelf.':p<15?'Thin. Step back half a pace.':p>45?'More than needed; fine.':'Good for joining.'})}}
+  if(m.dup){lvl('bad');rows.push({l:'bad',name:'Duplicate',val:'group '+m.dup,note:'Looks like a photo already taken in this visit. Retake or crop out the shared part.'})}
+  return {rows,worst}}
+async function review(blob){
+  $('review').style.display='flex';$('verdict').className='verdict';$('verdict').textContent='Checking…';$('checks').innerHTML='';$('cropBox').style.display='none';$('cropHelp').hidden=true;crop=null;
+  await new Promise(r=>setTimeout(r,30));
+  const bmp=await loadBitmap(blob);const G=toGray(bmp,480),G12=toGray(bmp,Math.min(1200,bmp.width));
+  const m={w:bmp.width,h:bmp.height,sharp:sharpness(G12),tilt:tiltDeg(G),ov:null,dup:null};
+  if(cur.kind!=='single'&&prevG)m.ov=overlap(prevG,G,cur.kind==='column'?'y':'x');
+  // duplicate against the last photo of every earlier group
+  for(const g of V.groups){if(g===cur||!g.shots.length)continue;const k=g.shots[g.shots.length-1].gray;if(!k)continue;const o=overlap(k,G,'x');if(o&&o.f>=0.65){m.dup=g.n;break}}
+  const rc=$('revCanvas');const scale=Math.min(1,1000/bmp.width);rc.width=Math.round(bmp.width*scale);rc.height=Math.round(bmp.height*scale);rc.getContext('2d').drawImage(bmp,0,0,rc.width,rc.height);
+  const ev=evaluate(m);$('checks').innerHTML=ev.rows.map(r=>`<div class="check ${r.l}"><span class="dot"></span><div><b>${r.name}</b><small>${r.note}</small></div><span class="val">${r.val}</span></div>`).join('');
+  const v=$('verdict');v.className='verdict '+ev.worst;v.textContent=ev.worst==='good'?'Good photo':ev.worst==='warn'?'Usable, could be better':'Retake this one';$('keepBtn').textContent=ev.worst==='bad'?'Keep anyway':'Keep';
+  pending={blob,bmp,G,m,ev};
+}
+$('retakeBtn').addEventListener('click',()=>{pending=null;$('review').style.display='none'});
+$('keepBtn').addEventListener('click',async()=>{if(!pending)return;const {blob,bmp,G,m,ev}=pending;
+  if(cur.kind==='single'&&cur.shots.length){const old=cur.shots.pop();await dbDel(old.name)}
+  const n=cur.shots.length+1,name=fname(cur,n);const tc=document.createElement('canvas');tc.width=96;tc.height=128;const s=Math.max(96/bmp.width,128/bmp.height);tc.getContext('2d').drawImage(bmp,(96-bmp.width*s)/2,(128-bmp.height*s)/2,bmp.width*s,bmp.height*s);
+  const rec={name,n,w:m.w,h:m.h,sharp:m.sharp,tilt:m.tilt,ov:m.ov&&m.ov.f?m.ov.f:null,level:ev.worst,crop,time:new Date().toISOString(),status:'queued',thumb:tc.toDataURL('image/jpeg',0.6),gray:{u8:G.u8,W:G.W,H:G.H}};
+  await dbPut(name,{kind:'photo',blob,meta:{store:V.store,date:V.date,category:V.cat,auditor:V.auditor,group:cur.n,groupType:cur.kind+'/'+cur.type,shot:n,sharpness:m.sharp.toFixed(1),tilt:m.tilt.toFixed(1),overlap:rec.ov==null?'':Math.round(rec.ov*100),verdict:ev.worst,crop:crop?JSON.stringify(crop):''}});
+  const slim={...rec};cur.shots.push(slim);persist();prevG=G;prevBmp=bmp;pending=null;$('review').style.display='none';updateTiles();updateEdge();toast('Kept · '+name.split('_').slice(-1)[0]);pump();
+  if(cur.kind==='single'){cur.ended=true;closeCamera()}
+});
+// keep gray out of localStorage
+const _persist=persist;persist=function(){const copy=JSON.parse(JSON.stringify({...V,groups:V.groups.map(g=>({...g,shots:g.shots.map(s=>{const {gray,...r}=s;return r})}))}));save('aegis.visit',copy)};
+
+/* ---------- crop ---------- */
+let cropDrag=null;
+$('cropBtn').addEventListener('click',()=>{const rc=$('revCanvas');const r=rc.getBoundingClientRect();crop=crop||{l:0,t:0,r:1,b:1};$('cropBox').style.display='block';
+  const n=cur.shots.length+1;const locks={l:false,r:false,t:false,b:false};
+  if(cur.kind==='row'){if(n>1)locks.l=true;locks.r=true}if(cur.kind==='column'){if(n>1)locks.t=true;locks.b=true}
+  document.querySelectorAll('#cropBox i').forEach(h=>h.classList.toggle('locked',locks[h.dataset.h]));
+  $('cropHelp').hidden=false;$('cropHelp').textContent=cur.kind==='single'?'Drag the handles to cut out the part already covered by another group. Leave everything else in.':'In a '+cur.kind+' group only the outer edges can be trimmed; the sides that join the next photo stay.';
+  drawCrop()});
+function drawCrop(){const rc=$('revCanvas');const w=rc.clientWidth,h=rc.clientHeight;const b=$('cropBox');b.style.left=crop.l*w+'px';b.style.top=crop.t*h+'px';b.style.width=(crop.r-crop.l)*w+'px';b.style.height=(crop.b-crop.t)*h+'px';
+  const hs=b.querySelectorAll('i');hs[0].style.cssText='left:0;top:50%';hs[1].style.cssText='left:100%;top:50%';hs[2].style.cssText='left:50%;top:0';hs[3].style.cssText='left:50%;top:100%';
+  document.querySelectorAll('#cropBox i').forEach(h=>{const lk=h.classList.contains('locked');if(lk)h.style.display='none'})}
+$('cropWrap').addEventListener('pointerdown',e=>{const h=e.target.closest('#cropBox i');if(!h||!crop)return;cropDrag=h.dataset.h;e.preventDefault()});
+window.addEventListener('pointermove',e=>{if(!cropDrag||!crop)return;const rc=$('revCanvas').getBoundingClientRect();const x=Math.min(1,Math.max(0,(e.clientX-rc.left)/rc.width)),y=Math.min(1,Math.max(0,(e.clientY-rc.top)/rc.height));
+  if(cropDrag==='l')crop.l=Math.min(x,crop.r-0.1);if(cropDrag==='r')crop.r=Math.max(x,crop.l+0.1);if(cropDrag==='t')crop.t=Math.min(y,crop.b-0.1);if(cropDrag==='b')crop.b=Math.max(y,crop.t+0.1);drawCrop()});
+window.addEventListener('pointerup',()=>{cropDrag=null});
+
+/* ---------- upload queue ---------- */
+let pumping=false;
+function b64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(blob)})}
+function markStatus(name,st){for(const g of V.groups)for(const s of g.shots)if(s.name===name)s.status=st;persist();renderGroups()}
+async function pump(){if(pumping||!CFG.url||!navigator.onLine)return;pumping=true;
+  try{const keys=await dbKeys();let sent=0,failed=0;
+    for(const k of keys){const item=await dbGet(k);if(!item)continue;
+      const body={token:CFG.token,kind:item.kind,filename:k,...item.meta};
+      if(item.kind==='photo'){body.mime='image/jpeg';body.data=await b64(item.blob)}else{body.text=item.text}
+      try{$('upStatus').textContent=`Uploading ${k}…`;const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify(body)});const j=await r.json();
+        if(j.ok){await dbDel(k);markStatus(k,'sent');sent++}else{markStatus(k,'failed');failed++;if(j.error==='bad token'){$('upStatus').textContent='Upload refused: token phrase is wrong. Check Settings.';break}}}
+      catch(e){markStatus(k,'queued');failed++;break}}
+    $('upStatus').textContent=failed?`Uploaded ${sent}; ${failed} waiting (no signal or link problem). Will retry.`:(sent?`All ${sent} uploaded.`:'')}
+  finally{pumping=false}}
+window.addEventListener('online',pump);setInterval(pump,45000);
+
+/* ---------- misc ---------- */
+function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),2800)}
+(function boot(){renderCfg();const v=load('aegis.visit',null);if(v&&v.started){Object.assign(V,v);$('resumeNote').hidden=false;$('resumeNote').innerHTML=`A visit for <b>${V.store}</b> (${V.groups.reduce((a,g)=>a+g.shots.length,0)} photos) is still open on this phone. <button class="ghost" id="resumeBtn" style="padding:6px 10px;margin-left:6px">Continue</button>`;$('resumeBtn').addEventListener('click',showVisit)}
+  if(!CFG.url){$('settings').hidden=false}ctx();pump()})();
+})();
+</script>
+</body>
+</html>
