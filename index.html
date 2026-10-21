@@ -9,8 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="Aegis">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Aegis Shelf Capture</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2312202B'/%3E%3Crect x='10' y='22' width='44' height='6' fill='%23F26B21'/%3E%3Crect x='10' y='36' width='44' height='6' fill='%23F26B21'/%3E%3Ccircle cx='32' cy='32' r='9' fill='none' stroke='%23F6F3EC' stroke-width='4'/%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2312202B'/%3E%3Crect x='10' y='22' width='44' height='6' fill='%23F26B21'/%3E%3Crect x='10' y='36' width='44' height='6' fill='%23F26B21'/%3E%3Ccircle cx='32' cy='32' r='9' fill='none' stroke='%23F6F3EC' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Public+Sans:wght@400;600;700&display=swap">
 <style>
 :root{--bg:#F6F3EC;--card:#FFFDF8;--ink:#12202B;--muted:#5A6873;--line:#D9D2C3;--accent:#F26B21;--accent-ink:#B8460B;--good:#1F7A4D;--warn:#B8860B;--bad:#B3261E;--good-bg:#E6F3EB;--warn-bg:#FBF1D6;--bad-bg:#FBE4E1;--display:'Oswald',Arial Narrow,Arial,sans-serif;--body:'Public Sans',system-ui,Arial,sans-serif}
@@ -22,6 +23,7 @@ header .ctx{font-size:13px;color:#D9D2C3;text-align:right;min-width:0;overflow:h
 header button{background:transparent;color:#D9D2C3;border:1px solid #44525E;padding:6px 10px;font-size:13px;border-radius:8px}
 main{padding:16px max(16px,env(safe-area-inset-right,0px)) calc(32px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
 h2{font-family:var(--display);font-weight:600;font-size:22px;margin:0}
+h3{font-family:var(--display);font-weight:600;font-size:18px;margin:0}
 p{margin:0}.muted{color:var(--muted);font-size:14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
 label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;color:var(--muted)}
@@ -32,12 +34,31 @@ button{font:inherit;font-weight:700;border:0;border-radius:10px;padding:14px 18p
 button.primary{background:var(--accent);color:#fff;font-size:18px}
 button.ghost{background:transparent;border:1px solid var(--line)}
 button.danger{background:var(--bad-bg);color:var(--bad)}
-button[disabled]{opacity:.5}
+button.small{padding:8px 12px;font-size:14px}
+button[disabled]{opacity:.45;cursor:default}
 .choice{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.choice button{padding:14px 6px;font-size:14px;line-height:1.2;background:var(--bg);border:2px solid var(--line)}
-.choice button b{display:block;font-family:var(--display);font-size:18px;font-weight:600}
+.choice button{padding:12px 6px;font-size:13px;line-height:1.2;background:var(--bg);border:2px solid var(--line)}
+.choice button b{display:block;font-family:var(--display);font-size:17px;font-weight:600}
 .choice button.on{border-color:var(--accent);background:#FFF1E8}
-.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#F6F3EC;padding:10px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#F6F3EC;padding:10px 16px;border-radius:999px;font-size:14px;z-index:40;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.vlist{display:flex;flex-direction:column;gap:8px}
+.vrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer}
+.vrow b{font-family:var(--display);font-size:17px;font-weight:600}
+.vrow .sub{font-size:13px;color:var(--muted)}
+.pill{font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--good-bg);color:var(--good);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.bad{background:var(--bad-bg);color:var(--bad)}.pill.off{background:var(--line);color:var(--muted)}
+.grp{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.grp .h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.grp .h b{font-family:var(--display);font-size:17px;font-weight:600}
+.thumbrow{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.thumbrow .th{position:relative;flex:none}
+.thumbrow img{width:60px;height:80px;object-fit:cover;border-radius:6px;background:#000;display:block;border:3px solid transparent}
+.thumbrow img.local{border-color:var(--line)}.thumbrow img.sent{border-color:var(--good)}.thumbrow img.failed{border-color:var(--bad)}.thumbrow img.uploading{border-color:var(--warn)}
+.thumbrow .th span{position:absolute;left:4px;top:4px;font-size:11px;font-weight:700;background:rgba(18,32,43,.8);color:#fff;padding:1px 5px;border-radius:4px}
+.progress{height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--good);width:0;transition:width .3s}
+.status{font-size:14px;color:var(--muted);min-height:1.2em}
+.status.bad{color:var(--bad);font-weight:600}
 /* camera */
 #cam{position:fixed;inset:0;background:#000;z-index:20;display:flex;flex-direction:column}
 #cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -64,36 +85,27 @@ button[disabled]{opacity:.5}
 #shutter{width:76px;height:76px;border-radius:50%;background:#fff;border:6px solid rgba(255,255,255,.35);padding:0}
 #shutter:active{transform:scale(.95)}
 .shutterRow button.ghost{color:#fff;border-color:rgba(255,255,255,.5);background:rgba(0,0,0,.3)}
-/* review */
-#review{position:fixed;inset:0;z-index:21;background:var(--bg);overflow:auto;display:none;flex-direction:column}
-#review .body{padding:16px max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px;max-width:640px;margin:0 auto;width:100%}
+/* overlays */
+.overlay{position:fixed;inset:0;z-index:21;background:var(--bg);overflow:auto;display:none;flex-direction:column}
+.overlay .body{padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px;max-width:640px;margin:0 auto;width:100%}
 .verdict{font-family:var(--display);font-size:26px;font-weight:600;padding:12px 16px;border-radius:10px;background:var(--good-bg);color:var(--good)}
 .verdict.warn{background:var(--warn-bg);color:var(--warn)}.verdict.bad{background:var(--bad-bg);color:var(--bad)}
 .check{display:grid;grid-template-columns:16px 1fr auto;gap:10px;align-items:center;padding:8px 12px;border-radius:8px;background:var(--card);border:1px solid var(--line);font-size:14px}
 .check .dot{width:12px;height:12px;border-radius:50%;background:var(--good)}.check.warn .dot{background:var(--warn)}.check.bad .dot{background:var(--bad)}
 .check .val{font-variant-numeric:tabular-nums;font-weight:700}
 .check small{display:block;color:var(--muted);font-size:13px}
-#cropWrap{position:relative;background:#000;border-radius:10px;overflow:hidden;touch-action:none}
-#cropWrap canvas{width:100%;display:block}
-#cropBox{position:absolute;border:2px solid var(--accent);box-shadow:0 0 0 2000px rgba(0,0,0,.45);display:none}
-#cropBox i{position:absolute;width:28px;height:28px;background:var(--accent);border-radius:50%;border:3px solid #fff;transform:translate(-50%,-50%)}
-#cropBox i.locked{display:none}
-.shots{display:flex;flex-direction:column;gap:8px}
-.grp{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:10px 12px;display:flex;flex-direction:column;gap:8px}
-.grp .h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.grp .h b{font-family:var(--display);font-size:17px;font-weight:600}
-.thumbrow{display:flex;gap:6px;overflow-x:auto}
-.thumbrow img{width:48px;height:64px;object-fit:cover;border-radius:5px;background:#000;flex:none;border:2px solid transparent}
-.thumbrow img.sent{border-color:var(--good)}.thumbrow img.queued{border-color:var(--warn)}.thumbrow img.failed{border-color:var(--bad)}
-.pill{font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--good-bg);color:var(--good);text-transform:uppercase;letter-spacing:.3px}
-.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.bad{background:var(--bad-bg);color:var(--bad)}.pill.off{background:var(--line);color:var(--muted)}
-.status{font-size:14px;color:var(--muted);min-height:1.2em}
+.cropWrap{position:relative;background:#000;border-radius:10px;overflow:hidden;touch-action:none}
+.cropWrap canvas,.cropWrap img{width:100%;display:block}
+.cropBox{position:absolute;border:2px solid var(--accent);box-shadow:0 0 0 2000px rgba(0,0,0,.45);display:none}
+.cropBox i{position:absolute;width:28px;height:28px;background:var(--accent);border-radius:50%;border:3px solid #fff;transform:translate(-50%,-50%)}
+.cropBox i.locked{display:none}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}.kv b{color:var(--muted);font-weight:600}
 .steps{display:grid;grid-template-columns:1fr 1fr;gap:8px}.step{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:13px}.step b{display:block;font-family:var(--display);font-size:17px;color:var(--accent-ink)}
 [hidden]{display:none!important}
 </style>
 </head>
 <body>
-<header><h1>Aegis Shelf Capture</h1><div style="display:flex;gap:8px;align-items:center;min-width:0"><div class="ctx" id="ctx">not started</div><button id="gearBtn" aria-label="Settings">⚙</button></div></header>
+<header><h1>Aegis Shelf Capture</h1><div style="display:flex;gap:8px;align-items:center;min-width:0"><div class="ctx" id="ctx">no visit open</div><button id="gearBtn" aria-label="Settings">⚙</button></div></header>
 <main>
 
 <!-- SETTINGS -->
@@ -105,28 +117,40 @@ button[disabled]{opacity:.5}
   <label>Auditor names (one per line)<textarea id="setAuditors"></textarea></label>
   <div class="row"><button class="primary" id="saveSet">Save</button><button class="ghost" id="testSet">Test upload link</button></div>
   <p class="status" id="setStatus"></p>
-  <p class="muted" id="queueInfo"></p>
+  <p class="muted" id="storageInfo"></p>
 </section>
 
 <!-- START -->
-<section class="card" id="start">
-  <h2>Start a store visit</h2>
-  <div class="row">
-    <label>Auditor<select id="auditor"></select></label>
-    <label>Category<select id="category"><option value="POWBEV">Powdered Beverage</option><option value="BISCUITS">Biscuits</option><option value="CHOCO">Chocolates</option><option value="BREADFILL">Breadfill</option><option value="CHILLER">Chiller</option></select></label>
+<section id="start" style="display:flex;flex-direction:column;gap:16px">
+  <div class="card">
+    <h2>Start a store visit</h2>
+    <div class="row">
+      <label>Auditor<select id="auditor"></select></label>
+      <label>Category<select id="category"><option value="POWBEV">Powdered Beverage</option><option value="BISCUITS">Biscuits</option><option value="CHOCO">Chocolates</option><option value="BREADFILL">Breadfill</option><option value="CHILLER">Chiller</option></select></label>
+    </div>
+    <div class="row">
+      <label>Store code<input type="text" id="storeCode" placeholder="e.g. CT0243660" autocapitalize="characters" autocomplete="off"></label>
+      <label>Store name<input type="text" id="storeName" placeholder="e.g. Prince Sibonga" autocomplete="off"></label>
+    </div>
+    <p class="muted" id="sameDayNote" hidden></p>
+    <button class="primary" id="startBtn">Start visit</button>
+    <p class="muted">Location is recorded with each visit and stamped on every photo. Allow it when the phone asks.</p>
   </div>
-  <div class="row">
-    <label>Store code<input type="text" id="storeCode" placeholder="e.g. CT0243660" autocapitalize="characters" autocomplete="off"></label>
-    <label>Store name<input type="text" id="storeName" placeholder="e.g. Prince Sibonga" autocomplete="off"></label>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><h2>Visits on this phone</h2><span class="muted" id="visitsCount"></span></div>
+    <div class="vlist" id="visitsList"><p class="muted">No visits yet.</p></div>
   </div>
-  <button class="primary" id="startBtn">Start visit</button>
-  <p class="muted" id="resumeNote" hidden></p>
 </section>
 
 <!-- VISIT -->
 <section id="visit" hidden style="display:flex;flex-direction:column;gap:16px">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h2 id="vTitle">Visit</h2><span class="pill" id="vPill"></span></div>
+    <div class="kv" id="vMeta"></div>
+    <button class="ghost small" id="backBtn">← Back to visits</button>
+  </div>
   <div class="card" id="newGroup">
-    <h2 id="grpTitle">Group 1</h2>
+    <h3 id="grpTitle">Add a group</h3>
     <p class="muted">One group = one piece of shelf the computer joins as a single surface. Shoot the whole bay, post to post, top to floor.</p>
     <label>Shape</label>
     <div class="choice" id="kindPick">
@@ -136,17 +160,23 @@ button[disabled]{opacity:.5}
     </div>
     <label>What is it</label>
     <div class="choice" id="typePick">
-      <button data-v="shelf" class="on"><b>Shelf</b>regular</button>
+      <button data-v="shelf" class="on"><b>Shelf</b>regular gondola</button>
       <button data-v="rack"><b>Tang rack</b>frame counts</button>
-      <button data-v="secondary"><b>Secondary</b>not in SOS</button>
+      <button data-v="secondary"><b>Secondary</b>stand, endcap, checkout, floor display · not in SOS</button>
     </div>
     <button class="primary" id="openCam">Open camera</button>
   </div>
   <div class="card">
-    <div class="grp .h" style="display:flex;justify-content:space-between;align-items:baseline"><h2>This visit</h2><span class="muted" id="visitCount">0 photos</span></div>
-    <div class="shots" id="groups"></div>
-    <p class="status" id="upStatus"></p>
-    <div class="row"><button class="primary" id="finishBtn">Finish visit</button><button class="ghost" id="discardBtn">Discard visit</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><h3>Photos in this visit</h3><span class="muted" id="visitCount">0 photos</span></div>
+    <p class="muted">Tap a photo to view, crop, delete or retake it. Nothing is sent until you tap Upload.</p>
+    <div class="vlist" id="groups"></div>
+  </div>
+  <div class="card">
+    <h3>Upload</h3>
+    <div class="progress"><i id="bar"></i></div>
+    <p class="status" id="upStatus">Not uploaded yet.</p>
+    <div class="row"><button class="primary" id="uploadBtn">Upload visit</button><button class="primary" id="finishBtn" disabled>Finish visit</button></div>
+    <button class="ghost small" id="discardBtn">Discard this visit</button>
   </div>
 </section>
 </main>
@@ -167,11 +197,11 @@ button[disabled]{opacity:.5}
   </div>
 </div>
 
-<!-- REVIEW -->
-<div id="review">
+<!-- REVIEW (after a shot) -->
+<div id="review" class="overlay">
   <div class="body">
     <div class="verdict" id="verdict">Checking…</div>
-    <div id="cropWrap"><canvas id="revCanvas"></canvas><div id="cropBox"><i data-h="l"></i><i data-h="r"></i><i data-h="t"></i><i data-h="b"></i></div></div>
+    <div class="cropWrap" id="cropWrap"><canvas id="revCanvas"></canvas><div class="cropBox" id="cropBox"><i data-h="l"></i><i data-h="r"></i><i data-h="t"></i><i data-h="b"></i></div></div>
     <p class="muted" id="cropHelp" hidden></p>
     <div id="checks" style="display:flex;flex-direction:column;gap:6px"></div>
     <div class="row"><button class="primary" id="keepBtn">Keep</button><button class="danger" id="retakeBtn">Retake</button></div>
@@ -179,29 +209,46 @@ button[disabled]{opacity:.5}
   </div>
 </div>
 
+<!-- VIEWER (a kept photo) -->
+<div id="viewer" class="overlay">
+  <div class="body">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="vwTitle">Photo</h2><button class="ghost small" id="vwClose">Close</button></div>
+    <div class="cropWrap" id="vwWrap"><img id="vwImg" alt=""><div class="cropBox" id="vwCropBox"><i data-h="l"></i><i data-h="r"></i><i data-h="t"></i><i data-h="b"></i></div></div>
+    <p class="muted" id="vwCropHelp" hidden></p>
+    <div class="kv" id="vwMeta"></div>
+    <div class="row" id="vwActions"><button class="ghost" id="vwCrop">Crop</button><button class="ghost" id="vwRetake">Retake</button><button class="danger" id="vwDelete">Delete</button></div>
+    <div class="row" id="vwCropActions" hidden><button class="primary" id="vwCropSave">Save crop</button><button class="ghost" id="vwCropClear">Remove crop</button><button class="ghost" id="vwCropCancel">Cancel</button></div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsfeat/0.0.8/jsfeat-min.js"></script>
 <script>
 (function(){
 'use strict';
+const APP='BW Aegis App', VERSION='v2';
 const $=id=>document.getElementById(id);
 const CFG={url:'',token:'',auditors:['Auditor 1','Auditor 2']};
-const V={started:false,store:'',name:'',cat:'POWBEV',auditor:'',date:'',groups:[]}; // group: {n,kind,type,shots:[{name,status,thumb,checks,crop}] ,ended}
-let cur=null;            // current group
+let VISITS=[];            // all visits on this phone (metadata only)
+let V=null;               // open visit
+let cur=null;             // current group while shooting
 let stream=null,track=null,imageCapture=null;
-let prevG=null,prevBmp=null,levelDeg=0,moving=false,lastAcc=null,motionOn=false;
-let pending=null,crop=null;
-const DBN='aegis-capture-v1',ST='photos';
+let prevG=null,prevBmp=null,levelDeg=0,moving=false,motionOn=false;
+let pending=null,crop=null,cropDrag=null,cropCtx=null;
+let vw=null;              // {g,s} in viewer
+const DBN='aegis-capture-v2',PH='photos',TH='thumbs',KEEP_DAYS=7;
+const DEVICE=(function(){try{let d=localStorage.getItem('aegis.device');if(!d){d=Math.random().toString(36).slice(2,8).toUpperCase();localStorage.setItem('aegis.device',d)}return d}catch(e){return 'XXXXXX'}})();
 
 /* ---------- storage ---------- */
-function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){toast('Phone storage is full. Upload and finish old visits.')}}
 function load(k,d){try{const j=localStorage.getItem(k);return j?JSON.parse(j):d}catch(e){return d}}
-function idb(){return new Promise((res,rej)=>{const r=indexedDB.open(DBN,1);r.onupgradeneeded=()=>r.result.createObjectStore(ST);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
-async function dbPut(k,v){const d=await idb();await new Promise((res,rej)=>{const t=d.transaction(ST,'readwrite');t.objectStore(ST).put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error)})}
-async function dbGet(k){const d=await idb();return await new Promise((res,rej)=>{const t=d.transaction(ST,'readonly');const q=t.objectStore(ST).get(k);q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error)})}
-async function dbDel(k){const d=await idb();await new Promise((res)=>{const t=d.transaction(ST,'readwrite');t.objectStore(ST).delete(k);t.oncomplete=res;t.onerror=res})}
-async function dbKeys(){const d=await idb();return await new Promise((res)=>{const t=d.transaction(ST,'readonly');const q=t.objectStore(ST).getAllKeys();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([])})}
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open(DBN,1);r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore(PH);d.createObjectStore(TH)};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function dbPut(st,k,v){const d=await idb();await new Promise((res,rej)=>{const t=d.transaction(st,'readwrite');t.objectStore(st).put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error)})}
+async function dbGet(st,k){const d=await idb();return await new Promise((res,rej)=>{const t=d.transaction(st,'readonly');const q=t.objectStore(st).get(k);q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error)})}
+async function dbDel(st,k){const d=await idb();await new Promise((res)=>{const t=d.transaction(st,'readwrite');t.objectStore(st).delete(k);t.oncomplete=res;t.onerror=res})}
+async function dbKeys(st){const d=await idb();return await new Promise((res)=>{const t=d.transaction(st,'readonly');const q=t.objectStore(st).getAllKeys();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([])})}
+function persist(){save('aegis.visits',VISITS)}
 
-/* ---------- image analysis ---------- */
+/* ---------- image analysis (unchanged from v1) ---------- */
 function toGray(bmp,W){const H=Math.round(bmp.height*W/bmp.width);const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bmp,0,0,W,H);const d=x.getImageData(0,0,W,H).data;const g=new Float32Array(W*H),u8=new Uint8Array(W*H);for(let i=0,j=0;i<d.length;i+=4,j++){g[j]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];u8[j]=g[j]}return {g,u8,W,H}}
 function gauss(src,W,H,sigma){const r=Math.max(1,Math.ceil(sigma*2.5)),k=new Float32Array(2*r+1);let ks=0;for(let i=-r;i<=r;i++){k[i+r]=Math.exp(-i*i/(2*sigma*sigma));ks+=k[i+r]}for(let i=0;i<k.length;i++)k[i]/=ks;const tmp=new Float32Array(W*H),out=new Float32Array(W*H);
   for(let y=0;y<H;y++){const row=y*W;for(let x=0;x<W;x++){let a=0;for(let i=-r;i<=r;i++){let xx=x+i;if(xx<0)xx=-xx;else if(xx>=W)xx=2*W-xx-2;a+=src[row+xx]*k[i+r]}tmp[row+x]=a}}
@@ -209,7 +256,7 @@ function gauss(src,W,H,sigma){const r=Math.max(1,Math.ceil(sigma*2.5)),k=new Flo
 function lapVar(g,W,H){let s=0,s2=0,n=0;for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=y*W+x;const v=4*g[i]-g[i-1]-g[i+1]-g[i-W]-g[i+W];s+=v;s2+=v*v;n++}const m=s/n;return s2/n-m*m}
 function sharpness(G){const {g,W,H}=G;const a=gauss(g,W,H,1.0),b=gauss(a,W,H,2.5);return lapVar(a,W,H)/Math.max(1e-6,lapVar(b,W,H))}
 function tiltDeg(G){const {g,W,H}=G;const xs=[],ys=[],ws=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const v=Math.abs(g[(y+1)*W+x]-g[(y-1)*W+x]);if(v>30){xs.push(x-W/2);ys.push(y);ws.push(v)}}
-  let bestA=0,bestV=-1;for(let a=-12;a<=12.01;a+=0.5){const t=Math.tan(a*Math.PI/180);const bins=new Float32Array(H*2+W);for(let i=0;i<xs.length;i++){const b=Math.round(ys[i]-xs[i]*t)+W;if(b>=0&&b<bins.length)bins[b]+=ws[i]}let sum=0,sum2=0,n=0;for(let k=W-H/2;k<W+H*1.5&&k<bins.length;k++){if(k<0)continue;sum+=bins[k];sum2+=bins[k]*bins[k];n++}const v=sum2/n-(sum/n)*(sum/n);if(v>bestV){bestV=v;bestA=a}}return bestA}
+  let bestA=0,bestV=-1;for(let a=-12;a<=12.01;a+=0.5){const t=Math.tan(a*Math.PI/180);const bins=new Float32Array(H*2+W);for(let i=0;i<xs.length;i++){const b=Math.round(ys[i]-xs[i]*t)+W;if(b>=0&&b<bins.length)bins[b]+=ws[i]}let sum=0,sum2=0,n=0;for(let k=Math.max(0,Math.round(W-H/2));k<W+H*1.5&&k<bins.length;k++){sum+=bins[k];sum2+=bins[k]*bins[k];n++}const v=sum2/n-(sum/n)*(sum/n);if(v>bestV){bestV=v;bestA=a}}return bestA}
 function feats(G,max){const {u8,W,H}=G;const img=new jsfeat.matrix_t(W,H,jsfeat.U8_t|jsfeat.C1_t);img.data.set(u8);const sm=new jsfeat.matrix_t(W,H,jsfeat.U8_t|jsfeat.C1_t);jsfeat.imgproc.gaussian_blur(img,sm,5,1.5);
   const corners=[];for(let i=0;i<W*H;i++)corners[i]=new jsfeat.keypoint_t(0,0,0,0,-1);jsfeat.yape06.laplacian_threshold=15;jsfeat.yape06.min_eigen_value_threshold=10;let n=jsfeat.yape06.detect(sm,corners,17);corners.length=n;corners.sort((a,b)=>b.score-a.score);if(n>max){corners.length=max;n=max}
   const desc=new jsfeat.matrix_t(32,Math.max(n,1),jsfeat.U8_t|jsfeat.C1_t);if(n)jsfeat.orb.describe(sm,corners,n,desc);return {corners,desc,n}}
@@ -228,139 +275,208 @@ function overlap(prev,cur,axis){ if(!prev||!cur||typeof jsfeat==='undefined')ret
 
 /* ---------- settings ---------- */
 Object.assign(CFG,load('aegis.cfg',{}));
-function renderCfg(){$('setUrl').value=CFG.url||'';$('setToken').value=CFG.token||'';$('setAuditors').value=(CFG.auditors||[]).join('\n');const sel=$('auditor');sel.innerHTML='';(CFG.auditors||[]).forEach(a=>{const o=document.createElement('option');o.value=a;o.textContent=a;sel.appendChild(o)})}
-$('gearBtn').addEventListener('click',()=>{$('settings').hidden=!$('settings').hidden;renderCfg();dbKeys().then(k=>{$('queueInfo').textContent=k.length?`${k.length} photo(s) waiting on this phone to upload.`:'No photos waiting to upload.'})});
-$('saveSet').addEventListener('click',()=>{CFG.url=$('setUrl').value.trim();CFG.token=$('setToken').value.trim();CFG.auditors=$('setAuditors').value.split('\n').map(s=>s.trim()).filter(Boolean);save('aegis.cfg',CFG);renderCfg();$('setStatus').textContent='Saved.';pump()});
+function renderCfg(){$('setUrl').value=CFG.url||'';$('setToken').value=CFG.token||'';$('setAuditors').value=(CFG.auditors||[]).join('\n');const sel=$('auditor'),keep=sel.value;sel.innerHTML='';(CFG.auditors||[]).forEach(a=>{const o=document.createElement('option');o.value=a;o.textContent=a;sel.appendChild(o)});if(keep)sel.value=keep}
+$('gearBtn').addEventListener('click',async()=>{$('settings').hidden=!$('settings').hidden;renderCfg();const n=(await dbKeys(PH)).length;$('storageInfo').textContent=`${n} full-size photo(s) kept on this phone (originals are removed ${KEEP_DAYS} days after upload; thumbnails stay). App ${VERSION}, phone id ${DEVICE}.`});
+$('saveSet').addEventListener('click',()=>{CFG.url=$('setUrl').value.trim();CFG.token=$('setToken').value.trim();CFG.auditors=$('setAuditors').value.split('\n').map(s=>s.trim()).filter(Boolean);save('aegis.cfg',CFG);renderCfg();$('setStatus').textContent='Saved.'});
 $('testSet').addEventListener('click',async()=>{$('setStatus').textContent='Testing…';try{const r=await fetch($('setUrl').value.trim(),{method:'GET'});const j=await r.json();$('setStatus').textContent=j.ok?'Upload link answers. Good.':'Link answered but not as expected.'}catch(e){$('setStatus').textContent='Could not reach the link. Check it is the /exec address and the deployment is "Anyone".'}});
 
-/* ---------- visit ---------- */
-function ctx(){$('ctx').textContent=V.started?`${V.store} · ${V.cat} · ${V.groups.length} group${V.groups.length===1?'':'s'}`:'not started'}
-function persist(){save('aegis.visit',V)}
-function fname(g,n){return `${V.store}_${V.cat}_${V.date.replace(/-/g,'')}_g${String(g.n).padStart(2,'0')}_${g.kind}_${g.type}_s${String(n).padStart(2,'0')}.jpg`}
-$('startBtn').addEventListener('click',()=>{const code=$('storeCode').value.trim().toUpperCase();if(!code){toast('Enter the store code');return}
-  Object.assign(V,{started:true,store:code,name:$('storeName').value.trim(),cat:$('category').value,auditor:$('auditor').value,date:new Date().toISOString().slice(0,10),groups:[]});persist();showVisit()});
-function showVisit(){$('start').hidden=true;$('visit').hidden=false;$('grpTitle').textContent='Group '+(V.groups.length+1);renderGroups();ctx()}
-function renderGroups(){const el=$('groups');el.innerHTML='';let total=0;
-  V.groups.forEach(g=>{total+=g.shots.length;const d=document.createElement('div');d.className='grp';const tn={shelf:'Regular shelf',rack:'Tang rack',secondary:'Secondary display'}[g.type];
-    d.innerHTML=`<div class="h"><b>Group ${g.n} · ${g.kind} · ${tn}</b><span class="pill ${g.type==='secondary'?'off':''}">${g.type==='secondary'?'not in SOS':'counts'}</span></div><div class="thumbrow"></div><div class="muted">${g.shots.length} photo${g.shots.length===1?'':'s'} · ${g.shots.filter(s=>s.status==='sent').length} uploaded${g.shots.some(s=>s.crop)?' · cropped':''}</div>`;
-    const tr=d.querySelector('.thumbrow');g.shots.forEach(s=>{const im=document.createElement('img');im.src=s.thumb;im.className=s.status;im.title=s.name;tr.appendChild(im)});el.appendChild(d)});
-  $('visitCount').textContent=total+(total===1?' photo':' photos');$('finishBtn').disabled=total===0;$('grpTitle').textContent='Group '+(V.groups.length+1);ctx()}
+/* ---------- helpers ---------- */
+const pad2=n=>String(n).padStart(2,'0');
+function nowParts(){const d=new Date();return {date:`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`,hhmm:`${pad2(d.getHours())}${pad2(d.getMinutes())}`,iso:d.toISOString()}}
+function fmtDT(iso){const d=new Date(iso);const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`}
+function gpsText(g){if(!g)return 'no GPS';const la=Math.abs(g.lat).toFixed(4)+(g.lat>=0?'N':'S'),lo=Math.abs(g.lng).toFixed(4)+(g.lng>=0?'E':'W');return `${la} ${lo} ±${Math.round(g.acc)} m`}
+function getGPS(){return new Promise(res=>{if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy}),()=>res(null),{enableHighAccuracy:true,timeout:12000,maximumAge:120000})})}
+function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),2800)}
+function ctx(){$('ctx').textContent=V?`${V.store} · ${V.cat} · ${V.groups.length} group${V.groups.length===1?'':'s'}`:'no visit open'}
+function shots(v){return v.groups.flatMap(g=>g.shots)}
+function vStatus(v){const ss=shots(v);if(!ss.length)return {t:'empty',l:'off'};const sent=ss.filter(s=>s.status==='sent').length;if(v.done)return {t:'finished',l:'good'};if(sent===ss.length&&v.manifestSent)return {t:'uploaded',l:'good'};if(sent)return {t:`${ss.length-sent} waiting`,l:'warn'};return {t:'not uploaded',l:'bad'}}
+function fname(v,g,n){return `${v.store}_${v.cat}_${v.date.replace(/-/g,'')}_${v.hhmm}_g${pad2(g.n)}_${g.kind}_${g.type}_s${pad2(n)}.jpg`}
+function folderName(v){return `${v.date.replace(/-/g,'')}-${v.hhmm} ${v.auditor}`}
+const typeName={shelf:'Regular shelf',rack:'Tang rack',secondary:'Secondary display'};
+
+/* ---------- start screen ---------- */
+function renderVisits(){const el=$('visitsList');el.innerHTML='';const list=[...VISITS].sort((a,b)=>b.started<a.started?-1:1);$('visitsCount').textContent=list.length?`${list.length}`:'';
+  if(!list.length){el.innerHTML='<p class="muted">No visits yet.</p>';return}
+  list.forEach(v=>{const st=vStatus(v);const d=document.createElement('div');d.className='vrow';const n=shots(v).length;
+    d.innerHTML=`<div><b>${v.store}${v.seq>1?` · visit ${v.seq} today`:''}</b><div class="sub">${v.name||''} · ${fmtDT(v.started)} · ${v.groups.length} group${v.groups.length===1?'':'s'}, ${n} photo${n===1?'':'s'} · ${v.auditor}</div></div><span class="pill ${st.l}">${st.t}</span>`;
+    d.addEventListener('click',()=>openVisit(v));el.appendChild(d)})}
+$('storeCode').addEventListener('input',()=>{const code=$('storeCode').value.trim().toUpperCase();const {date}=nowParts();const same=VISITS.filter(v=>v.store===code&&v.date===date);const n=$('sameDayNote');
+  if(code&&same.length){n.hidden=false;n.innerHTML=`${same.length} visit${same.length>1?'s':''} for <b>${code}</b> already today on this phone. Starting again creates <b>visit ${same.length+1}</b> in its own folder; or <button class="ghost small" id="contBtn">continue the last one</button>.`;$('contBtn').addEventListener('click',()=>openVisit(same[same.length-1]));const last=same[same.length-1];if(!$('storeName').value)$('storeName').value=last.name||''}else n.hidden=true});
+$('startBtn').addEventListener('click',async()=>{const code=$('storeCode').value.trim().toUpperCase();if(!code){toast('Enter the store code');return}
+  if(!CFG.url){toast('Set the upload link in Settings first');$('settings').hidden=false;return}
+  $('startBtn').disabled=true;$('startBtn').textContent='Getting location…';const gps=await getGPS();$('startBtn').disabled=false;$('startBtn').textContent='Start visit';
+  const np=nowParts();const seq=VISITS.filter(v=>v.store===code&&v.date===np.date).length+1;
+  V={id:`${code}_${np.date.replace(/-/g,'')}_${np.hhmm}_${DEVICE}`,store:code,name:$('storeName').value.trim(),cat:$('category').value,auditor:$('auditor').value,date:np.date,hhmm:np.hhmm,started:np.iso,seq,gps,device:DEVICE,groups:[],done:false,manifestSent:false};
+  VISITS.push(V);persist();if(!gps)toast('No GPS fix; photos will say "no GPS"');showVisit()});
+
+/* ---------- visit screen ---------- */
+function openVisit(v){V=v;showVisit()}
+function showVisit(){$('start').hidden=true;$('visit').hidden=false;$('vTitle').textContent=`${V.store}${V.seq>1?` · visit ${V.seq}`:''}`;
+  $('vMeta').innerHTML=`<b>Store</b><span>${V.name||'(no name typed)'}</span><b>Started</b><span>${fmtDT(V.started)}</span><b>Auditor</b><span>${V.auditor}</span><b>Location</b><span>${gpsText(V.gps)}</span><b>Category</b><span>${V.cat}</span>`;
+  $('newGroup').hidden=!!V.done;renderGroups();ctx()}
+$('backBtn').addEventListener('click',()=>{V=null;$('visit').hidden=true;$('start').hidden=false;renderVisits();ctx()});
+async function renderGroups(){const el=$('groups');el.innerHTML='';let total=0;
+  for(const g of V.groups){total+=g.shots.length;const d=document.createElement('div');d.className='grp';
+    d.innerHTML=`<div class="h"><b>Group ${g.n} · ${g.kind} · ${typeName[g.type]}</b><span class="pill ${g.type==='secondary'?'off':''}">${g.type==='secondary'?'not in SOS':'counts'}</span></div><div class="thumbrow"></div><div class="muted">${g.shots.length} photo${g.shots.length===1?'':'s'} · ${g.shots.filter(s=>s.status==='sent').length} uploaded${g.shots.some(s=>s.crop)?' · cropped':''}${g.addedLater?' · added later':''}</div>`;
+    const tr=d.querySelector('.thumbrow');
+    for(const s of g.shots){const th=document.createElement('div');th.className='th';const im=document.createElement('img');im.className=s.status;im.alt=s.name;th.appendChild(im);const sp=document.createElement('span');sp.textContent='s'+pad2(s.n);th.appendChild(sp);tr.appendChild(th);
+      dbGet(TH,s.name).then(b=>{if(b)im.src=URL.createObjectURL(b)});th.addEventListener('click',()=>openViewer(g,s))}
+    if(!g.shots.length&&!V.done){const b=document.createElement('button');b.className='ghost small';b.textContent='Remove empty group';b.addEventListener('click',()=>{V.groups=V.groups.filter(x=>x!==g);persist();renderGroups()});d.appendChild(b)}
+    el.appendChild(d)}
+  $('visitCount').textContent=total+(total===1?' photo':' photos');$('grpTitle').textContent=V.done?'Visit finished':`Add group ${V.groups.length+1}`;
+  const st=vStatus(V);$('vPill').className='pill '+st.l;$('vPill').textContent=st.t;
+  const allSent=total>0&&shots(V).every(s=>s.status==='sent')&&V.manifestSent;
+  $('uploadBtn').disabled=total===0||V.done||(allSent);$('uploadBtn').textContent=allSent?'All uploaded':'Upload visit';
+  $('finishBtn').disabled=!allSent||V.done;$('finishBtn').textContent=V.done?'Finished':'Finish visit';
+  $('bar').style.width=total?Math.round(100*shots(V).filter(s=>s.status==='sent').length/total)+'%':'0%';
+  if(V.done)$('upStatus').textContent='Finished and uploaded. Tap "Add group" below if something was missed; it is uploaded separately.';else if(allSent)$('upStatus').textContent='Everything is in Drive. You can finish the visit.';else if(!total)$('upStatus').textContent='Not uploaded yet.';
+  if(V.done)$('newGroup').hidden=false;ctx()}
 document.querySelectorAll('.choice').forEach(c=>c.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;c.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}));
 const picked=id=>$(id).querySelector('.on').dataset.v;
-$('openCam').addEventListener('click',async()=>{cur={n:V.groups.length+1,kind:picked('kindPick'),type:picked('typePick'),shots:[],ended:false};V.groups.push(cur);persist();prevG=null;prevBmp=null;await openCamera()});
-$('discardBtn').addEventListener('click',async()=>{if($('discardBtn').dataset.a!=='1'){$('discardBtn').dataset.a='1';$('discardBtn').textContent='Tap again to discard';setTimeout(()=>{$('discardBtn').dataset.a='';$('discardBtn').textContent='Discard visit'},3000);return}
-  for(const g of V.groups)for(const s of g.shots)await dbDel(s.name);Object.assign(V,{started:false,groups:[]});persist();$('discardBtn').dataset.a='';$('discardBtn').textContent='Discard visit';$('visit').hidden=true;$('start').hidden=false;ctx()});
-$('finishBtn').addEventListener('click',async()=>{
-  const lines=['file,store_code,store_name,category,auditor,date,group,kind,type,shot,width,height,sharpness,tilt_deg,overlap_pct,verdict,crop_l,crop_t,crop_r,crop_b,time'];
-  for(const g of V.groups)for(const s of g.shots){const c=s.crop||{};lines.push([s.name,V.store,JSON.stringify(V.name),V.cat,V.auditor,V.date,g.n,g.kind,g.type,s.n,s.w,s.h,s.sharp.toFixed(1),s.tilt.toFixed(1),s.ov==null?'':Math.round(s.ov*100),s.level,c.l??'',c.t??'',c.r??'',c.b??'',s.time].join(','))}
-  const name=`${V.store}_${V.cat}_${V.date.replace(/-/g,'')}_manifest.csv`;await dbPut(name,{kind:'manifest',text:lines.join('\n'),meta:{store:V.store,date:V.date,category:V.cat,auditor:V.auditor}});
-  toast('Visit finished. Photos upload in the background; keep the app open until all are sent.');pump();
-  Object.assign(V,{started:false,groups:[]});persist();$('visit').hidden=true;$('start').hidden=false;ctx()});
+$('openCam').addEventListener('click',async()=>{cur={n:V.groups.length+1,kind:picked('kindPick'),type:picked('typePick'),shots:[],addedLater:!!V.done};V.groups.push(cur);persist();prevG=null;prevBmp=null;await openCamera()});
+$('discardBtn').addEventListener('click',async()=>{const b=$('discardBtn');if(b.dataset.a!=='1'){b.dataset.a='1';b.textContent='Tap again to discard everything in this visit';setTimeout(()=>{b.dataset.a='';b.textContent='Discard this visit'},3000);return}
+  for(const s of shots(V)){await dbDel(PH,s.name);await dbDel(TH,s.name)}VISITS=VISITS.filter(v=>v!==V);persist();b.dataset.a='';b.textContent='Discard this visit';V=null;$('visit').hidden=true;$('start').hidden=false;renderVisits();ctx()});
+$('finishBtn').addEventListener('click',()=>{V.done=true;V.finished=new Date().toISOString();persist();toast('Visit finished.');V=null;$('visit').hidden=true;$('start').hidden=false;renderVisits();ctx()});
 
 /* ---------- camera ---------- */
 async function openCamera(){
   $('cam').hidden=false;$('camGroup').textContent=`Group ${cur.n} · ${cur.kind[0].toUpperCase()+cur.kind.slice(1)} · ${{shelf:'Shelf',rack:'Tang rack',secondary:'Secondary'}[cur.type]}`;
   $('camHint').textContent=cur.kind==='single'?'Post to post, top shelf to floor':cur.kind==='row'?'Start at the left end. Walk sideways, same distance.':'Start at the top. Keep the same distance.';
-  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:4032},height:{ideal:3024}},audio:false});$('video').srcObject=stream;track=stream.getVideoTracks()[0];
-    imageCapture=('ImageCapture' in window)?new ImageCapture(track):null;}
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:4032},height:{ideal:3024}},audio:false});$('video').srcObject=stream;track=stream.getVideoTracks()[0];imageCapture=null;try{if(typeof ImageCapture==='function')imageCapture=new ImageCapture(track)}catch(e){}}
   catch(e){toast('Camera not available: '+(e.message||e));$('cam').hidden=true;return}
-  if(!motionOn){try{if(typeof DeviceMotionEvent!=='undefined'&&DeviceMotionEvent.requestPermission){await DeviceMotionEvent.requestPermission()}}catch(e){}
-    window.addEventListener('devicemotion',onMotion);motionOn=true}
-  updateTiles();updateEdge();
-}
-function closeCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('cam').hidden=true;renderGroups()}
+  if(!motionOn){try{if(typeof DeviceMotionEvent!=='undefined'&&DeviceMotionEvent.requestPermission){await DeviceMotionEvent.requestPermission()}}catch(e){}window.addEventListener('devicemotion',onMotion);motionOn=true}
+  updateTiles();updateEdge()}
+function closeCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('cam').hidden=true;if(cur&&!cur.shots.length){V.groups=V.groups.filter(g=>g!==cur)}persist();renderGroups()}
 $('camClose').addEventListener('click',closeCamera);
-$('endGroup').addEventListener('click',()=>{cur.ended=true;persist();closeCamera();toast(cur.shots.length?`Group ${cur.n} done with ${cur.shots.length} photo(s).`:'Empty group removed');if(!cur.shots.length){V.groups=V.groups.filter(g=>g!==cur);persist();renderGroups()}});
-function onMotion(e){const g=e.accelerationIncludingGravity;if(!g||g.x==null)return;
-  const ang=Math.atan2(g.x,g.y)*180/Math.PI;levelDeg=0.8*levelDeg+0.2*(-ang);
+$('endGroup').addEventListener('click',()=>{const n=cur.shots.length;closeCamera();toast(n?`Group ${cur.n} done with ${n} photo(s).`:'Empty group removed')});
+function onMotion(e){const g=e.accelerationIncludingGravity;if(!g||g.x==null)return;const ang=Math.atan2(g.x,g.y)*180/Math.PI;levelDeg=0.8*levelDeg+0.2*(-ang);
   const lv=$('level');lv.style.transform=`rotate(${levelDeg}deg)`;const a=Math.abs(levelDeg);lv.className=a<=2?'ok':a<=5?'near':'';$('levelTxt').textContent=`level ${levelDeg.toFixed(0)}°`;
   const acc=e.acceleration;if(acc&&acc.x!=null){const m=Math.hypot(acc.x,acc.y,acc.z);moving=m>1.8;$('steady').style.display=moving?'block':'none'}}
 function updateTiles(){const t=$('tiles');t.className='tiles'+(cur.kind==='column'?' col':'');t.innerHTML='';
-  if(cur.kind==='single'){t.innerHTML=cur.shots.length?'<span>✓</span><i>one photo taken — End group, or retake by taking another</i>':'<span class="next">1</span><i>one photo for this bay</i>';return}
+  if(cur.kind==='single'){t.innerHTML=cur.shots.length?'<span>✓</span><i>one photo taken — End group, or take another to replace it</i>':'<span class="next">1</span><i>one photo for this bay</i>';return}
   cur.shots.forEach((s,i)=>{const e=document.createElement('span');e.textContent=i+1;t.appendChild(e)});const nx=document.createElement('span');nx.className='next';nx.textContent=cur.shots.length+1;t.appendChild(nx);const i=document.createElement('i');i.textContent=cur.shots.length?`shot ${cur.shots.length+1} · keep 2–3 packs of overlap`:'shot 1 · the left post in frame';t.appendChild(i)}
 function updateEdge(){const ed=$('edge'),tip=$('edgeTip');if(cur.kind==='single'||!prevBmp){ed.style.display='none';tip.style.display='none';return}
   ed.className=cur.kind==='column'?'col':'';ed.style.display='block';tip.style.display='block';const c=$('edgeCanvas');const x=c.getContext('2d');
   if(cur.kind==='row'){c.width=Math.round(prevBmp.width*0.18);c.height=prevBmp.height;x.drawImage(prevBmp,prevBmp.width-c.width,0,c.width,c.height,0,0,c.width,c.height);tip.textContent='Move right until the packs at the edge line up with these'}
   else{c.width=prevBmp.width;c.height=Math.round(prevBmp.height*0.18);x.drawImage(prevBmp,0,prevBmp.height-c.height,c.width,c.height,0,0,c.width,c.height);tip.textContent='Move down until the shelf at the top lines up with this'}}
-async function grab(){
-  if(imageCapture){try{const b=await imageCapture.takePhoto();return b}catch(e){}}
-  const v=$('video');const c=document.createElement('canvas');const s=track&&track.getSettings?track.getSettings():{};c.width=v.videoWidth||s.width;c.height=v.videoHeight||s.height;c.getContext('2d').drawImage(v,0,0,c.width,c.height);
-  return await new Promise(r=>c.toBlob(r,'image/jpeg',0.92));
-}
-$('shutter').addEventListener('click',async()=>{if(moving){toast('Hold steady, then shoot');return}$('shutter').disabled=true;
-  try{const blob=await grab();await review(blob)}catch(e){toast('Could not take the photo: '+(e.message||e))}finally{$('shutter').disabled=false}});
+async function grab(){if(imageCapture){try{return await imageCapture.takePhoto()}catch(e){}}
+  const v=$('video');const c=document.createElement('canvas');const s=track&&track.getSettings?track.getSettings():{};c.width=v.videoWidth||s.width;c.height=v.videoHeight||s.height;c.getContext('2d').drawImage(v,0,0,c.width,c.height);return await new Promise(r=>c.toBlob(r,'image/jpeg',0.92))}
+$('shutter').addEventListener('click',async()=>{if(moving){toast('Hold steady, then shoot');return}$('shutter').disabled=true;try{const blob=await grab();await review(blob)}catch(e){toast('Could not take the photo: '+(e.message||e))}finally{$('shutter').disabled=false}});
 
-/* ---------- review + checks ---------- */
+/* ---------- review after a shot ---------- */
 async function loadBitmap(blob){try{return await createImageBitmap(blob,{imageOrientation:'from-image'})}catch(e){return await createImageBitmap(blob)}}
-function evaluate(m){const rows=[];let worst='good';const lvl=l=>{if(l==='bad')worst='bad';else if(l==='warn'&&worst!=='bad')worst='warn'};
+function evaluate(m,g,nShot){const rows=[];let worst='good';const lvl=l=>{if(l==='bad')worst='bad';else if(l==='warn'&&worst!=='bad')worst='warn'};
   let l=m.sharp>=18?'good':m.sharp>=12?'warn':'bad';lvl(l);rows.push({l,name:'Sharpness',val:m.sharp.toFixed(1),note:l==='good'?'Fine detail is there.':l==='warn'?'A little soft. Usable; hold still if you retake.':'Blurred. Hold still, tap to focus, retake.'});
   const t=Math.abs(m.tilt);l=t<=3?'good':t<=7?'warn':'bad';lvl(l);rows.push({l,name:'Shelf lines level',val:m.tilt.toFixed(1)+'°',note:l==='good'?'Level.':'Shelves slope '+(m.tilt>0?'down to the right':'down to the left')+'. Face the bay squarely.'});
   l=m.w>=2000?'good':m.w>=1200?'warn':'bad';lvl(l);rows.push({l,name:'Resolution',val:m.w+'×'+m.h,note:l==='good'?'Full resolution.':'Lower than expected from this camera.'});
-  if(cur.kind!=='single'&&cur.shots.length){const o=m.ov;if(o===null){lvl('warn');rows.push({l:'warn',name:'Overlap with previous',val:'not checked',note:'Matching library not loaded (no signal when the app opened). Keep 2–3 packs of overlap by eye.'})}else if(!o.f){lvl('bad');rows.push({l:'bad',name:'Overlap with previous',val:'none found',note:'No shared part with the last photo. Step back so 2–3 packs repeat.'})}
+  if(g.kind!=='single'&&nShot>1){const o=m.ov;if(o===null){lvl('warn');rows.push({l:'warn',name:'Overlap with previous',val:'not checked',note:'Matching library not loaded (no signal when the app opened). Keep 2–3 packs of overlap by eye.'})}
+    else if(!o.f){lvl('bad');rows.push({l:'bad',name:'Overlap with previous',val:'none found',note:'No shared part with the last photo. Step back so 2–3 packs repeat.'})}
     else{const p=Math.round(o.f*100);l=p>=65?'bad':p>=15&&p<=45?'good':'warn';lvl(l);rows.push({l,name:'Overlap with previous',val:p+'%',note:p>=65?'Almost the same frame. Move on along the shelf.':p<15?'Thin. Step back half a pace.':p>45?'More than needed; fine.':'Good for joining.'})}}
-  if(m.dup){lvl('bad');rows.push({l:'bad',name:'Duplicate',val:'group '+m.dup,note:'Looks like a photo already taken in this visit. Retake or crop out the shared part.'})}
+  if(m.dup){lvl('bad');rows.push({l:'bad',name:'Duplicate',val:'group '+m.dup,note:'Looks like a photo already taken in this visit. Retake, or crop out the shared part so it is not counted twice.'})}
   return {rows,worst}}
 async function review(blob){
   $('review').style.display='flex';$('verdict').className='verdict';$('verdict').textContent='Checking…';$('checks').innerHTML='';$('cropBox').style.display='none';$('cropHelp').hidden=true;crop=null;
   await new Promise(r=>setTimeout(r,30));
   const bmp=await loadBitmap(blob);const G=toGray(bmp,480),G12=toGray(bmp,Math.min(1200,bmp.width));
   const m={w:bmp.width,h:bmp.height,sharp:sharpness(G12),tilt:tiltDeg(G),ov:null,dup:null};
+  const nShot=cur.kind==='single'?1:cur.shots.length+1;
   if(cur.kind!=='single'&&prevG)m.ov=overlap(prevG,G,cur.kind==='column'?'y':'x');
-  // duplicate against the last photo of every earlier group
   for(const g of V.groups){if(g===cur||!g.shots.length)continue;const k=g.shots[g.shots.length-1].gray;if(!k)continue;const o=overlap(k,G,'x');if(o&&o.f>=0.65){m.dup=g.n;break}}
   const rc=$('revCanvas');const scale=Math.min(1,1000/bmp.width);rc.width=Math.round(bmp.width*scale);rc.height=Math.round(bmp.height*scale);rc.getContext('2d').drawImage(bmp,0,0,rc.width,rc.height);
-  const ev=evaluate(m);$('checks').innerHTML=ev.rows.map(r=>`<div class="check ${r.l}"><span class="dot"></span><div><b>${r.name}</b><small>${r.note}</small></div><span class="val">${r.val}</span></div>`).join('');
+  const ev=evaluate(m,cur,nShot);$('checks').innerHTML=ev.rows.map(r=>`<div class="check ${r.l}"><span class="dot"></span><div><b>${r.name}</b><small>${r.note}</small></div><span class="val">${r.val}</span></div>`).join('');
   const v=$('verdict');v.className='verdict '+ev.worst;v.textContent=ev.worst==='good'?'Good photo':ev.worst==='warn'?'Usable, could be better':'Retake this one';$('keepBtn').textContent=ev.worst==='bad'?'Keep anyway':'Keep';
-  pending={blob,bmp,G,m,ev};
-}
+  pending={blob,bmp,G,m,ev,nShot}}
 $('retakeBtn').addEventListener('click',()=>{pending=null;$('review').style.display='none'});
-$('keepBtn').addEventListener('click',async()=>{if(!pending)return;const {blob,bmp,G,m,ev}=pending;
-  if(cur.kind==='single'&&cur.shots.length){const old=cur.shots.pop();await dbDel(old.name)}
-  const n=cur.shots.length+1,name=fname(cur,n);const tc=document.createElement('canvas');tc.width=96;tc.height=128;const s=Math.max(96/bmp.width,128/bmp.height);tc.getContext('2d').drawImage(bmp,(96-bmp.width*s)/2,(128-bmp.height*s)/2,bmp.width*s,bmp.height*s);
-  const rec={name,n,w:m.w,h:m.h,sharp:m.sharp,tilt:m.tilt,ov:m.ov&&m.ov.f?m.ov.f:null,level:ev.worst,crop,time:new Date().toISOString(),status:'queued',thumb:tc.toDataURL('image/jpeg',0.6),gray:{u8:G.u8,W:G.W,H:G.H}};
-  await dbPut(name,{kind:'photo',blob,meta:{store:V.store,date:V.date,category:V.cat,auditor:V.auditor,group:cur.n,groupType:cur.kind+'/'+cur.type,shot:n,sharpness:m.sharp.toFixed(1),tilt:m.tilt.toFixed(1),overlap:rec.ov==null?'':Math.round(rec.ov*100),verdict:ev.worst,crop:crop?JSON.stringify(crop):''}});
-  const slim={...rec};cur.shots.push(slim);persist();prevG=G;prevBmp=bmp;pending=null;$('review').style.display='none';updateTiles();updateEdge();toast('Kept · '+name.split('_').slice(-1)[0]);pump();
-  if(cur.kind==='single'){cur.ended=true;closeCamera()}
-});
-// keep gray out of localStorage
-const _persist=persist;persist=function(){const copy=JSON.parse(JSON.stringify({...V,groups:V.groups.map(g=>({...g,shots:g.shots.map(s=>{const {gray,...r}=s;return r})}))}));save('aegis.visit',copy)};
+function stamp(bmp,g,n){ // burn the ownership stamp into the pixels; returns a canvas
+  const c=document.createElement('canvas');c.width=bmp.width;c.height=bmp.height;const x=c.getContext('2d');x.drawImage(bmp,0,0);
+  const fs=Math.round(c.width*0.022),pad=Math.round(fs*0.6);x.textBaseline='alphabetic';x.lineJoin='round';
+  function line(t,px,py,bold,align){x.font=`${bold?'700':'400'} ${fs}px "Public Sans",Arial,sans-serif`;x.textAlign=align||'left';x.lineWidth=Math.max(3,fs*0.14);x.strokeStyle='rgba(0,0,0,.9)';x.strokeText(t,px,py);x.fillStyle='#fff';x.fillText(t,px,py)}
+  const code=`g${pad2(g.n)} · ${g.kind} · s${pad2(n)}`;
+  line(`${APP}  ·  ${fmtDT(new Date().toISOString())}  ·  ${V.store} ${V.name||''}`.trim(),pad,c.height-pad-fs*1.45,true);
+  line(`${gpsText(V.gps)}  ·  ${code}  ·  ${V.auditor}`,pad,c.height-pad,false);
+  line(code,c.width-pad,pad+fs,true,'right');
+  return c}
+$('keepBtn').addEventListener('click',async()=>{if(!pending)return;const {bmp,G,m,ev}=pending;$('keepBtn').disabled=true;
+  try{
+    if(cur.kind==='single'&&cur.shots.length){const old=cur.shots.pop();await dbDel(PH,old.name);await dbDel(TH,old.name)}
+    const n=cur.shots.length+1,name=fname(V,cur,n);
+    const sc=stamp(bmp,cur,n);const blob=await new Promise(r=>sc.toBlob(r,'image/jpeg',0.92));
+    const tc=document.createElement('canvas');tc.width=180;tc.height=240;const s=Math.max(180/bmp.width,240/bmp.height);tc.getContext('2d').drawImage(sc,(180-bmp.width*s)/2,(240-bmp.height*s)/2,bmp.width*s,bmp.height*s);const thumb=await new Promise(r=>tc.toBlob(r,'image/jpeg',0.7));
+    const rec={name,n,w:m.w,h:m.h,sharp:+m.sharp.toFixed(1),tilt:+m.tilt.toFixed(1),ov:m.ov&&m.ov.f?+m.ov.f.toFixed(2):null,dup:m.dup,level:ev.worst,crop,time:new Date().toISOString(),status:'local',gray:{u8:G.u8,W:G.W,H:G.H}};
+    await dbPut(PH,name,blob);await dbPut(TH,name,thumb);
+    cur.shots.push(rec);persist();prevG=G;prevBmp=bmp;pending=null;$('review').style.display='none';updateTiles();updateEdge();toast('Kept · s'+pad2(n));
+    if(cur.kind==='single'){closeCamera()}
+  }finally{$('keepBtn').disabled=false}});
+// strip the gray arrays before writing to localStorage
+const _persist=persist;persist=function(){save('aegis.visits',VISITS.map(v=>({...v,groups:v.groups.map(g=>({...g,shots:g.shots.map(s=>{const {gray,...r}=s;return r})}))})))};
 
-/* ---------- crop ---------- */
-let cropDrag=null;
-$('cropBtn').addEventListener('click',()=>{const rc=$('revCanvas');const r=rc.getBoundingClientRect();crop=crop||{l:0,t:0,r:1,b:1};$('cropBox').style.display='block';
-  const n=cur.shots.length+1;const locks={l:false,r:false,t:false,b:false};
-  if(cur.kind==='row'){if(n>1)locks.l=true;locks.r=true}if(cur.kind==='column'){if(n>1)locks.t=true;locks.b=true}
-  document.querySelectorAll('#cropBox i').forEach(h=>h.classList.toggle('locked',locks[h.dataset.h]));
-  $('cropHelp').hidden=false;$('cropHelp').textContent=cur.kind==='single'?'Drag the handles to cut out the part already covered by another group. Leave everything else in.':'In a '+cur.kind+' group only the outer edges can be trimmed; the sides that join the next photo stay.';
-  drawCrop()});
-function drawCrop(){const rc=$('revCanvas');const w=rc.clientWidth,h=rc.clientHeight;const b=$('cropBox');b.style.left=crop.l*w+'px';b.style.top=crop.t*h+'px';b.style.width=(crop.r-crop.l)*w+'px';b.style.height=(crop.b-crop.t)*h+'px';
-  const hs=b.querySelectorAll('i');hs[0].style.cssText='left:0;top:50%';hs[1].style.cssText='left:100%;top:50%';hs[2].style.cssText='left:50%;top:0';hs[3].style.cssText='left:50%;top:100%';
-  document.querySelectorAll('#cropBox i').forEach(h=>{const lk=h.classList.contains('locked');if(lk)h.style.display='none'})}
-$('cropWrap').addEventListener('pointerdown',e=>{const h=e.target.closest('#cropBox i');if(!h||!crop)return;cropDrag=h.dataset.h;e.preventDefault()});
-window.addEventListener('pointermove',e=>{if(!cropDrag||!crop)return;const rc=$('revCanvas').getBoundingClientRect();const x=Math.min(1,Math.max(0,(e.clientX-rc.left)/rc.width)),y=Math.min(1,Math.max(0,(e.clientY-rc.top)/rc.height));
+/* ---------- crop (shared by review and viewer) ---------- */
+function cropLocks(g,n){const locks={l:false,r:false,t:false,b:false};if(g.kind==='row'){if(n>1)locks.l=true;locks.r=true}if(g.kind==='column'){if(n>1)locks.t=true;locks.b=true}return locks}
+function startCrop(wrapId,boxId,helpId,g,n,initial){crop=initial?{...initial}:{l:0,t:0,r:1,b:1};cropCtx={wrap:$(wrapId),box:$(boxId)};cropCtx.box.style.display='block';const locks=cropLocks(g,n);
+  cropCtx.box.querySelectorAll('i').forEach(h=>h.classList.toggle('locked',locks[h.dataset.h]));
+  const help=$(helpId);help.hidden=false;help.textContent=g.kind==='single'?'Drag the handles to cut out the part already covered by another group. Leave everything else in.':'In a '+g.kind+' group only the outer edges can be trimmed; the sides that join the next photo stay.';drawCrop()}
+function drawCrop(){if(!cropCtx||!crop)return;const el=cropCtx.wrap.querySelector('canvas,img');const w=el.clientWidth,h=el.clientHeight;const b=cropCtx.box;b.style.left=crop.l*w+'px';b.style.top=crop.t*h+'px';b.style.width=(crop.r-crop.l)*w+'px';b.style.height=(crop.b-crop.t)*h+'px';
+  const hs=b.querySelectorAll('i');hs[0].style.cssText='left:0;top:50%';hs[1].style.cssText='left:100%;top:50%';hs[2].style.cssText='left:50%;top:0';hs[3].style.cssText='left:50%;top:100%';hs.forEach(h=>{if(h.classList.contains('locked'))h.style.display='none'})}
+$('cropBtn').addEventListener('click',()=>startCrop('cropWrap','cropBox','cropHelp',cur,pending?pending.nShot:1,crop));
+document.addEventListener('pointerdown',e=>{const h=e.target.closest('.cropBox i');if(!h||!crop||!cropCtx)return;cropDrag=h.dataset.h;e.preventDefault()});
+window.addEventListener('pointermove',e=>{if(!cropDrag||!crop||!cropCtx)return;const el=cropCtx.wrap.querySelector('canvas,img');const rc=el.getBoundingClientRect();const x=Math.min(1,Math.max(0,(e.clientX-rc.left)/rc.width)),y=Math.min(1,Math.max(0,(e.clientY-rc.top)/rc.height));
   if(cropDrag==='l')crop.l=Math.min(x,crop.r-0.1);if(cropDrag==='r')crop.r=Math.max(x,crop.l+0.1);if(cropDrag==='t')crop.t=Math.min(y,crop.b-0.1);if(cropDrag==='b')crop.b=Math.max(y,crop.t+0.1);drawCrop()});
 window.addEventListener('pointerup',()=>{cropDrag=null});
 
-/* ---------- upload queue ---------- */
+/* ---------- viewer: view / crop / delete / retake a kept photo ---------- */
+let vwUrl=null;
+async function openViewer(g,s){vw={g,s};$('viewer').style.display='flex';$('vwTitle').textContent=`Group ${g.n} · s${pad2(s.n)}`;$('vwCropBox').style.display='none';$('vwCropHelp').hidden=true;$('vwActions').hidden=false;$('vwCropActions').hidden=true;
+  const b=await dbGet(PH,s.name)||await dbGet(TH,s.name);if(vwUrl)URL.revokeObjectURL(vwUrl);vwUrl=b?URL.createObjectURL(b):'';$('vwImg').src=vwUrl;
+  const c=s.crop;$('vwMeta').innerHTML=`<b>File</b><span style="word-break:break-all">${s.name}</span><b>Checks</b><span>sharpness ${s.sharp} · level ${s.tilt}° · ${s.ov==null?'first in group':'overlap '+Math.round(s.ov*100)+'%'}${s.dup?' · duplicate of group '+s.dup:''} · <span class="pill ${s.level}">${s.level==='good'?'good':s.level==='warn'?'usable':'weak'}</span></span><b>Crop</b><span>${c?`left ${Math.round(c.l*100)}% · top ${Math.round(c.t*100)}% · right ${Math.round((1-c.r)*100)}% · bottom ${Math.round((1-c.b)*100)}% removed`:'none'}</span><b>Upload</b><span>${s.status==='sent'?'in Drive':s.status==='failed'?'failed, will retry':'on this phone, not sent yet'}</span>`;
+  const locked=s.status==='sent'||V.done;$('vwCrop').disabled=locked;$('vwDelete').disabled=locked;$('vwRetake').disabled=locked;
+  if(locked)$('vwMeta').innerHTML+='<b>Note</b><span>Already uploaded: cannot be changed from the phone. Ask QC to adjust it in the register.</span>'}
+$('vwClose').addEventListener('click',()=>{$('viewer').style.display='none';crop=null;cropCtx=null;vw=null;renderGroups()});
+$('vwCrop').addEventListener('click',()=>{if(!vw)return;$('vwActions').hidden=true;$('vwCropActions').hidden=false;startCrop('vwWrap','vwCropBox','vwCropHelp',vw.g,vw.s.n,vw.s.crop)});
+$('vwCropCancel').addEventListener('click',()=>{$('vwCropBox').style.display='none';$('vwCropHelp').hidden=true;$('vwActions').hidden=false;$('vwCropActions').hidden=true;crop=null;cropCtx=null});
+$('vwCropClear').addEventListener('click',()=>{if(!vw)return;vw.s.crop=null;persist();$('vwCropCancel').click();openViewer(vw.g,vw.s);toast('Crop removed')});
+$('vwCropSave').addEventListener('click',()=>{if(!vw||!crop)return;const c=crop;const isFull=c.l<0.005&&c.t<0.005&&c.r>0.995&&c.b>0.995;vw.s.crop=isFull?null:{l:+c.l.toFixed(3),t:+c.t.toFixed(3),r:+c.r.toFixed(3),b:+c.b.toFixed(3)};persist();$('vwCropCancel').click();openViewer(vw.g,vw.s);toast(isFull?'No crop':'Crop saved')});
+async function deleteShot(g,s){await dbDel(PH,s.name);await dbDel(TH,s.name);g.shots=g.shots.filter(x=>x!==s);
+  // renumber the shots after it so the group stays s01..sNN
+  for(const x of g.shots){const want=g.shots.indexOf(x)+1;if(x.n!==want){const newName=fname(V,g,want);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,newName,b);if(t)await dbPut(TH,newName,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=newName;x.n=want}}
+  if(!g.shots.length){V.groups=V.groups.filter(x=>x!==g)}persist()}
+$('vwDelete').addEventListener('click',async()=>{if(!vw)return;const b=$('vwDelete');if(b.dataset.a!=='1'){b.dataset.a='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.a='';b.textContent='Delete'},3000);return}
+  b.dataset.a='';b.textContent='Delete';const {g,s}=vw;await deleteShot(g,s);$('vwClose').click();toast('Photo deleted')});
+$('vwRetake').addEventListener('click',async()=>{if(!vw)return;const {g,s}=vw;await deleteShot(g,s);$('viewer').style.display='none';vw=null;
+  if(!V.groups.includes(g)){V.groups.push(g);g.shots=[]}cur=g;prevG=null;prevBmp=null;const last=g.shots[g.shots.length-1];if(last&&last.gray){prevG=last.gray;const tb=await dbGet(PH,last.name);if(tb)prevBmp=await loadBitmap(tb)}
+  await openCamera()});
+
+/* ---------- upload ---------- */
 let pumping=false;
 function b64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(blob)})}
-function markStatus(name,st){for(const g of V.groups)for(const s of g.shots)if(s.name===name)s.status=st;persist();renderGroups()}
-async function pump(){if(pumping||!CFG.url||!navigator.onLine)return;pumping=true;
-  try{const keys=await dbKeys();let sent=0,failed=0;
-    for(const k of keys){const item=await dbGet(k);if(!item)continue;
-      const body={token:CFG.token,kind:item.kind,filename:k,...item.meta};
-      if(item.kind==='photo'){body.mime='image/jpeg';body.data=await b64(item.blob)}else{body.text=item.text}
-      try{$('upStatus').textContent=`Uploading ${k}…`;const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify(body)});const j=await r.json();
-        if(j.ok){await dbDel(k);markStatus(k,'sent');sent++}else{markStatus(k,'failed');failed++;if(j.error==='bad token'){$('upStatus').textContent='Upload refused: token phrase is wrong. Check Settings.';break}}}
-      catch(e){markStatus(k,'queued');failed++;break}}
-    $('upStatus').textContent=failed?`Uploaded ${sent}; ${failed} waiting (no signal or link problem). Will retry.`:(sent?`All ${sent} uploaded.`:'')}
+function manifestCSV(v){const lines=['visit_id,file,store_code,store_name,category,auditor,phone,date,time,visit_seq,gps_lat,gps_lng,gps_acc_m,group,kind,type,added_later,shot,width,height,sharpness,tilt_deg,overlap_pct,duplicate_of_group,verdict,crop_l,crop_t,crop_r,crop_b,time_taken'];
+  for(const g of v.groups)for(const s of g.shots){const c=s.crop||{};lines.push([v.id,s.name,v.store,JSON.stringify(v.name||''),v.cat,JSON.stringify(v.auditor),v.device,v.date,v.hhmm,v.seq,v.gps?v.gps.lat.toFixed(6):'',v.gps?v.gps.lng.toFixed(6):'',v.gps?Math.round(v.gps.acc):'',g.n,g.kind,g.type,g.addedLater?1:0,s.n,s.w,s.h,s.sharp,s.tilt,s.ov==null?'':Math.round(s.ov*100),s.dup||'',s.level,c.l??'',c.t??'',c.r??'',c.b??'',s.time].join(','))}return lines.join('\n')}
+function visitFields(v){return {visitId:v.id,store:v.store,storeName:v.name||'',category:v.cat,auditor:v.auditor,device:v.device,date:v.date,time:v.hhmm,seq:v.seq,folder:folderName(v),gpsLat:v.gps?v.gps.lat:'',gpsLng:v.gps?v.gps.lng:'',gpsAcc:v.gps?Math.round(v.gps.acc):'',groups:v.groups.length,photos:shots(v).length,started:v.started,appVersion:VERSION}}
+async function post(body){const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify(body)});return await r.json()}
+async function uploadVisit(v){if(pumping)return;if(!CFG.url){toast('Set the upload link in Settings');return}pumping=true;const st=$('upStatus');st.className='status';
+  try{const all=shots(v);const todo=all.filter(s=>s.status!=='sent');let done=all.length-todo.length,failed=0,stop=false;
+    for(const g of v.groups)for(const s of g.shots){if(s.status==='sent'||stop)continue;
+      if(!navigator.onLine){st.className='status bad';st.textContent=`No signal. ${all.length-done} photo(s) waiting; upload resumes when the phone is back online.`;stop=true;break}
+      s.status='uploading';renderGroups();st.textContent=`Uploading photo ${done+1} of ${all.length}…`;
+      const blob=await dbGet(PH,s.name);if(!blob){s.status='failed';failed++;st.className='status bad';st.textContent=`${s.name} is no longer on this phone.`;continue}
+      try{const j=await post({token:CFG.token,kind:'photo',filename:s.name,mime:'image/jpeg',data:await b64(blob),...visitFields(v),group:g.n,groupType:g.kind+'/'+g.type,shot:s.n,sharpness:s.sharp,tilt:s.tilt,overlap:s.ov==null?'':Math.round(s.ov*100),verdict:s.level,crop:s.crop?JSON.stringify(s.crop):'',dup:s.dup||''});
+        if(j.ok){s.status='sent';s.sentAt=new Date().toISOString();done++}else{s.status='failed';failed++;st.className='status bad';st.textContent=j.error==='bad token'?'Upload refused: the token phrase does not match the script. Check Settings.':'Upload refused: '+(j.error||'unknown error');stop=j.error==='bad token'}}
+      catch(e){s.status='failed';failed++;st.className='status bad';st.textContent='Could not reach the upload link (no signal, or the link changed). Will retry.';stop=true}
+      persist();renderGroups()}
+    if(!stop&&shots(v).every(s=>s.status==='sent')){st.textContent='Sending the visit record…';
+      try{const j=await post({token:CFG.token,kind:'manifest',filename:`${v.store}_${v.cat}_${v.date.replace(/-/g,'')}_${v.hhmm}_manifest.csv`,text:manifestCSV(v),...visitFields(v)});if(j.ok){v.manifestSent=true;persist();st.textContent=`All ${all.length} photos and the visit record are in Drive.`;toast('Upload complete')}else{st.className='status bad';st.textContent='Photos are in; the visit record was refused: '+(j.error||'')}}
+      catch(e){st.className='status bad';st.textContent='Photos are in; the visit record could not be sent yet. Tap Upload again when there is signal.'}}
+    else if(!stop&&failed){st.className='status bad';st.textContent=`${failed} photo(s) failed. Tap Upload to retry.`}
+    renderGroups()}
   finally{pumping=false}}
-window.addEventListener('online',pump);setInterval(pump,45000);
+$('uploadBtn').addEventListener('click',()=>uploadVisit(V));
+function resumeIfNeeded(){if(V&&!V.done&&shots(V).some(s=>s.status==='failed'||s.status==='uploading')&&navigator.onLine)uploadVisit(V)}
+window.addEventListener('online',resumeIfNeeded);document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeIfNeeded()});
 
-/* ---------- misc ---------- */
-function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),2800)}
-(function boot(){renderCfg();const v=load('aegis.visit',null);if(v&&v.started){Object.assign(V,v);$('resumeNote').hidden=false;$('resumeNote').innerHTML=`A visit for <b>${V.store}</b> (${V.groups.reduce((a,g)=>a+g.shots.length,0)} photos) is still open on this phone. <button class="ghost" id="resumeBtn" style="padding:6px 10px;margin-left:6px">Continue</button>`;$('resumeBtn').addEventListener('click',showVisit)}
-  if(!CFG.url){$('settings').hidden=false}ctx();pump()})();
+/* ---------- housekeeping ---------- */
+async function purgeOld(){const cutoff=Date.now()-KEEP_DAYS*864e5;for(const v of VISITS)for(const s of shots(v)){if(s.status==='sent'&&s.sentAt&&new Date(s.sentAt).getTime()<cutoff&&!s.purged){await dbDel(PH,s.name);s.purged=true}}persist()}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
+(function boot(){renderCfg();VISITS=load('aegis.visits',[]);for(const v of VISITS)for(const s of shots(v))if(s.status==='uploading')s.status='failed';
+  renderVisits();if(!CFG.url){$('settings').hidden=false}ctx();purgeOld()})();
 })();
 </script>
 </body>
