@@ -19,7 +19,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;overscroll-behavior:none}
 header{position:sticky;top:0;z-index:9;background:var(--ink);color:#F6F3EC;padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;justify-content:space-between;gap:12px}
-header h1{font-family:var(--display);font-weight:600;font-size:20px;margin:0;letter-spacing:.5px}
+header h1{font-family:var(--display);font-weight:600;font-size:20px;margin:0;letter-spacing:.5px;white-space:nowrap}
 header .ctx{font-size:13px;color:#D9D2C3;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 header button{background:transparent;color:#D9D2C3;border:1px solid #44525E;padding:6px 10px;font-size:13px;border-radius:8px}
 main{padding:16px max(16px,env(safe-area-inset-right,0px)) calc(32px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
@@ -37,11 +37,21 @@ button.ghost{background:transparent;border:1px solid var(--line)}
 button.danger{background:var(--bad-bg);color:var(--bad)}
 button.small{padding:8px 12px;font-size:14px}
 button[disabled]{opacity:.45;cursor:default}
+.tabs{display:flex;background:var(--line);border-radius:10px;padding:4px;gap:4px}
+.tabs button{flex:1;padding:10px;background:transparent;font-size:15px;border-radius:8px}
+.tabs button.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .choice{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.choice.two{grid-template-columns:repeat(2,1fr)}
 .choice button{padding:12px 6px;font-size:13px;line-height:1.2;background:var(--bg);border:2px solid var(--line)}
 .choice button b{display:block;font-family:var(--display);font-size:17px;font-weight:600}
 .choice button.on{border-color:var(--accent);background:#FFF1E8}
-.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#F6F3EC;padding:10px 16px;border-radius:999px;font-size:14px;z-index:40;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.tiles2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.tile{background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:14px 12px;text-align:left;display:flex;flex-direction:column;gap:4px}
+.tile b{font-family:var(--display);font-size:19px;font-weight:600}
+.tile span{font-size:13px;color:var(--muted);font-weight:400}
+.tile.has{border-color:var(--good);background:var(--good-bg)}
+.tile.x{border-style:dashed}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#F6F3EC;padding:10px 16px;border-radius:999px;font-size:14px;z-index:40;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.25);text-align:center}
 .vlist{display:flex;flex-direction:column;gap:8px}
 .vrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer}
 .vrow b{font-family:var(--display);font-size:17px;font-weight:600}
@@ -56,34 +66,44 @@ button[disabled]{opacity:.45;cursor:default}
 .thumbrow img{width:60px;height:80px;object-fit:cover;border-radius:6px;background:#000;display:block;border:3px solid transparent}
 .thumbrow img.local{border-color:var(--line)}.thumbrow img.sent{border-color:var(--good)}.thumbrow img.failed{border-color:var(--bad)}.thumbrow img.uploading{border-color:var(--warn)}
 .thumbrow .th span{position:absolute;left:4px;top:4px;font-size:11px;font-weight:700;background:rgba(18,32,43,.8);color:#fff;padding:1px 5px;border-radius:4px}
+.thumbrow .th em{position:absolute;right:4px;bottom:4px;font-style:normal;font-size:12px;background:rgba(18,32,43,.8);color:#fff;padding:0 4px;border-radius:4px}
 .progress{height:10px;background:var(--line);border-radius:5px;overflow:hidden}
 .progress i{display:block;height:100%;background:var(--good);width:0;transition:width .3s}
 .status{font-size:14px;color:var(--muted);min-height:1.2em}
 .status.bad{color:var(--bad);font-weight:600}
+.notice{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:14px;font-weight:600}
 /* camera */
 #cam{position:fixed;inset:0;background:#000;z-index:20;display:flex;flex-direction:column}
-#cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-#cam .top{position:relative;z-index:2;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;background:linear-gradient(rgba(0,0,0,.65),transparent);color:#fff;display:flex;justify-content:space-between;align-items:center;font-size:14px}
+#cam .top{position:relative;z-index:2;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;background:#000;color:#fff;display:flex;justify-content:space-between;align-items:center;font-size:14px;gap:8px}
 #cam .top b{font-family:var(--display);font-weight:600;font-size:18px}
-#cam .mid{flex:1;position:relative}
+#cam .mid{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#frame{position:relative;background:#111;outline:2px solid var(--accent);outline-offset:-2px}
+#frame video{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
+#frame .corner{position:absolute;width:26px;height:26px;border:4px solid #fff;pointer-events:none}
+#frame .c1{left:0;top:0;border-right:0;border-bottom:0}#frame .c2{right:0;top:0;border-left:0;border-bottom:0}#frame .c3{left:0;bottom:0;border-right:0;border-top:0}#frame .c4{right:0;bottom:0;border-left:0;border-top:0}
+#frameTxt{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);color:#fff;font-size:12px;background:rgba(18,32,43,.7);padding:3px 8px;border-radius:6px;white-space:nowrap}
 #edge{position:absolute;left:0;top:0;bottom:0;width:18%;overflow:hidden;opacity:.75;border-right:3px solid var(--accent);display:none}
 #edge.col{left:0;right:0;bottom:auto;width:auto;height:18%;border-right:0;border-bottom:3px solid var(--accent)}
-#edge canvas{width:100%;height:100%;object-fit:cover}
-#edgeTip{position:absolute;left:19%;top:50%;transform:translateY(-50%);color:#fff;background:rgba(18,32,43,.75);padding:8px 12px;border-radius:8px;font-size:14px;max-width:60%;display:none}
-#edge.col ~ #edgeTip{left:16px;top:20%}
+#edge canvas{width:100%;height:100%;object-fit:fill}
+#edgeTip{position:absolute;left:20%;top:50%;transform:translateY(-50%);color:#fff;background:rgba(18,32,43,.75);padding:8px 12px;border-radius:8px;font-size:14px;max-width:60%;display:none}
+#edge.col ~ #edgeTip{left:16px;top:22%}
 #level{position:absolute;left:12%;right:12%;top:50%;height:4px;background:rgba(255,255,255,.35);border-radius:2px;transform-origin:center}
 #level::after{content:"";position:absolute;left:0;right:0;top:-2px;height:8px;border-radius:4px;background:var(--bad);transition:background .2s}
 #level.ok::after{background:var(--good)}#level.near::after{background:var(--warn)}
-#levelTxt{position:absolute;right:16px;top:calc(50% + 14px);color:#fff;font-size:13px;background:rgba(18,32,43,.6);padding:3px 8px;border-radius:6px;font-variant-numeric:tabular-nums}
+#levelTxt{position:absolute;right:8px;top:calc(50% + 14px);color:#fff;font-size:13px;background:rgba(18,32,43,.6);padding:3px 8px;border-radius:6px;font-variant-numeric:tabular-nums}
 #steady{position:absolute;left:50%;top:30%;transform:translateX(-50%);background:var(--bad);color:#fff;padding:8px 14px;border-radius:8px;font-weight:700;display:none}
-#cam .bottom{position:relative;z-index:2;padding:12px 16px calc(18px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,rgba(0,0,0,.75));display:flex;flex-direction:column;gap:12px}
-.tiles{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#cam .bottom{position:relative;z-index:2;padding:10px 16px calc(16px + env(safe-area-inset-bottom,0px));background:#000;display:flex;flex-direction:column;gap:10px}
+.tiles{display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-height:30px}
 .tiles span{width:34px;height:44px;border-radius:5px;background:var(--good);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
 .tiles span.next{background:transparent;border:2px dashed #fff;color:#fff}
 .tiles.col span{width:44px;height:30px}
 .tiles i{color:#fff;font-style:normal;font-size:13px;margin-left:6px}
+.lensRow{display:flex;gap:8px;align-items:center;color:#fff;font-size:13px;flex-wrap:wrap}
+.lensRow button{padding:6px 10px;font-size:13px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4)}
+.lensRow button.on{background:var(--accent);border-color:var(--accent)}
+.lensRow input[type=range]{flex:1;min-width:80px;padding:0;background:transparent;border:0}
 .shutterRow{display:flex;align-items:center;justify-content:space-between;gap:12px}
-#shutter{width:76px;height:76px;border-radius:50%;background:#fff;border:6px solid rgba(255,255,255,.35);padding:0}
+#shutter{width:72px;height:72px;border-radius:50%;background:#fff;border:6px solid rgba(255,255,255,.35);padding:0}
 #shutter:active{transform:scale(.95)}
 .shutterRow button.ghost{color:#fff;border-color:rgba(255,255,255,.5);background:rgba(0,0,0,.3)}
 /* overlays */
@@ -100,12 +120,11 @@ button[disabled]{opacity:.45;cursor:default}
 .cropBox{position:absolute;border:2px solid var(--accent);box-shadow:0 0 0 2000px rgba(0,0,0,.45);display:none}
 .cropBox i{position:absolute;width:28px;height:28px;background:var(--accent);border-radius:50%;border:3px solid #fff;transform:translate(-50%,-50%)}
 .cropBox i.locked{display:none}
+.cropShade{position:absolute;border:2px dashed var(--accent);box-shadow:0 0 0 2000px rgba(90,104,115,.7);pointer-events:none;display:none}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}.kv b{color:var(--muted);font-weight:600}
-.steps{display:grid;grid-template-columns:1fr 1fr;gap:8px}.step{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:13px}.step b{display:block;font-family:var(--display);font-size:17px;color:var(--accent-ink)}
-[hidden]{display:none!important}
 .pres{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);font-size:14px;cursor:pointer}.pres b{display:block}.pres.on{border-color:var(--accent);background:#FFF1E8}
 #map{height:58vh;min-height:300px;border-radius:10px;border:1px solid var(--line)}
-.xcard .thumbrow img{border-color:var(--line)}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -124,13 +143,14 @@ button[disabled]{opacity:.45;cursor:default}
   <p class="muted" id="storageInfo"></p>
 </section>
 
-<!-- START -->
+<!-- MAIN -->
 <section id="start" style="display:flex;flex-direction:column;gap:16px">
-  <div class="card">
+  <div class="tabs"><button class="on" id="tabNew">New visit</button><button id="tabHist">Visits <span id="histBadge"></span></button></div>
+  <div class="card" id="newCard">
     <h2>Start a store visit</h2>
     <div class="row">
       <label>Auditor<select id="auditor"></select></label>
-      <label>Category<select id="category"><option value="POWBEV">Powdered Beverage</option><option value="BISCUITS">Biscuits</option><option value="CHOCO">Chocolates</option><option value="BREADFILL">Breadfill</option><option value="CHILLER">Chiller</option></select></label>
+      <label>Word of the day<input type="text" id="wod" placeholder="today's word" autocapitalize="characters" autocomplete="off"></label>
     </div>
     <div class="row">
       <label>Store code<input type="text" id="storeCode" placeholder="e.g. CT0243660" autocapitalize="characters" autocomplete="off"></label>
@@ -141,11 +161,14 @@ button[disabled]{opacity:.45;cursor:default}
     <div class="vlist" id="placeResults"></div>
     <p class="muted" id="placePicked" hidden></p>
     <div class="row"><button class="ghost small" id="pinBtn">Pin the location on a map</button><button class="ghost small" id="placeClear" hidden>Clear place</button></div>
+    <p class="notice" id="clockNote" hidden></p>
     <button class="primary" id="startBtn">Start visit</button>
     <p class="muted">Location is recorded with each visit and stamped on every photo. Allow it when the phone asks.</p>
   </div>
-  <div class="card">
+  <div class="card" id="histCard" hidden>
     <div style="display:flex;justify-content:space-between;align-items:baseline"><h2>Visits on this phone</h2><span class="muted" id="visitsCount"></span></div>
+    <input type="search" id="histQ" placeholder="Search store code or name">
+    <p class="notice" id="histWaiting" hidden></p>
     <div class="vlist" id="visitsList"><p class="muted">No visits yet.</p></div>
   </div>
 </section>
@@ -157,33 +180,10 @@ button[disabled]{opacity:.45;cursor:default}
     <div class="kv" id="vMeta"></div>
     <button class="ghost small" id="backBtn">← Back to visits</button>
   </div>
-  <div class="card" id="newGroup">
-    <h3 id="grpTitle">Add a group</h3>
-    <p class="muted">One group = one piece of shelf the computer joins as a single surface. Shoot the whole bay, post to post, top to floor.</p>
-    <label>Shape</label>
-    <div class="choice" id="kindPick">
-      <button data-v="single" class="on"><b>Single</b>one photo</button>
-      <button data-v="row"><b>Row</b>left to right</button>
-      <button data-v="column"><b>Column</b>top to bottom</button>
-    </div>
-    <label>What is it</label>
-    <div class="choice" id="typePick">
-      <button data-v="shelf" class="on"><b>Shelf</b>regular gondola</button>
-      <button data-v="rack"><b>Tang rack</b>frame counts</button>
-      <button data-v="secondary"><b>Secondary</b>stand, endcap, checkout, floor display · not in SOS</button>
-    </div>
-    <button class="primary" id="openCam">Open camera</button>
-  </div>
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:baseline"><h3>Photos in this visit</h3><span class="muted" id="visitCount">0 photos</span></div>
-    <p class="muted">Tap a photo to view, crop, delete or retake it. Nothing is sent until you tap Upload.</p>
-    <div class="vlist" id="groups"></div>
-  </div>
-  <div class="card xcard">
-    <div style="display:flex;justify-content:space-between;align-items:baseline"><h3>Visit photos</h3><span class="muted" id="xCount">0 photos</span></div>
-    <p class="muted">Anything else worth keeping from this visit: storefront, signage, competitor displays, price tags. No checks, not read by the engine; uploads on its own when there is signal.</p>
-    <div class="thumbrow" id="xThumbs"></div>
-    <button class="ghost" id="openXCam">Take visit photos</button>
+    <h3>What are you shooting?</h3>
+    <p class="muted">Pick a category for shelf photos the engine will read, or Visit photos for anything else (storefront, stands, endcaps, checkout, price tags).</p>
+    <div class="tiles2" id="catTiles"></div>
   </div>
   <div class="card">
     <h3>Upload</h3>
@@ -193,25 +193,70 @@ button[disabled]{opacity:.45;cursor:default}
     <button class="ghost small" id="discardBtn">Discard this visit</button>
   </div>
 </section>
+
+<!-- CATEGORY PAGE -->
+<section id="catPage" hidden style="display:flex;flex-direction:column;gap:16px">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="catTitle">Category</h2><button class="ghost small" id="catBack">← Visit</button></div>
+    <p class="muted" id="catSub"></p>
+  </div>
+  <div class="card" id="newGroup">
+    <h3 id="grpTitle">Add group 1</h3>
+    <p class="muted">One group = one piece of shelf the computer joins as a single surface. Shoot the whole bay, post to post, top shelf to floor.</p>
+    <label>Shape</label>
+    <div class="choice" id="kindPick">
+      <button data-v="single" class="on"><b>Single</b>one photo</button>
+      <button data-v="row"><b>Row</b>left to right</button>
+      <button data-v="column"><b>Column</b>top to bottom</button>
+    </div>
+    <label>What is it</label>
+    <div class="choice two" id="typePick">
+      <button data-v="shelf" class="on"><b>Shelf</b>regular gondola</button>
+      <button data-v="rack"><b>Frame/Rack</b>strip or rack frame counts as the brand's length</button>
+    </div>
+    <button class="primary" id="openCam">Open camera</button>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><h3>Groups in this category</h3><span class="muted" id="catCount">0 photos</span></div>
+    <p class="muted">Tap a photo to view, crop, delete or retake it. Nothing is sent until you tap Upload on the visit page.</p>
+    <div class="vlist" id="groups"></div>
+  </div>
+</section>
+
+<!-- VISIT PHOTOS PAGE -->
+<section id="xPage" hidden style="display:flex;flex-direction:column;gap:16px">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>Visit photos</h2><button class="ghost small" id="xBack">← Visit</button></div>
+    <p class="muted">Anything worth keeping from this visit: storefront, signage, stands, endcaps, checkout displays, price tags. No checks, not read by the engine; uploads on its own when there is signal.</p>
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="muted" id="xCount">0 photos</span></div>
+    <div class="thumbrow" id="xThumbs"></div>
+    <button class="primary" id="openXCam">Take visit photos</button>
+  </div>
+</section>
 </main>
 
 <!-- CAMERA -->
 <div id="cam" hidden>
-  <video id="video" playsinline autoplay muted></video>
-  <div class="top"><div><b id="camGroup">Group 1 · Single · Shelf</b><div id="camHint">Post to post, top shelf to floor</div></div><button class="ghost" id="camClose" style="color:#fff;border:1px solid rgba(255,255,255,.5);background:rgba(0,0,0,.3);padding:8px 12px">Close</button></div>
-  <div class="mid">
-    <div id="edge"><canvas id="edgeCanvas"></canvas></div>
-    <div id="edgeTip">Move right until these packs line up with the edge</div>
-    <div id="level"></div><div id="levelTxt">level —</div>
-    <div id="steady">Hold steady</div>
+  <video id="video" playsinline autoplay muted hidden></video>
+  <div class="top"><div><b id="camGroup">Group 1</b><div id="camHint">Post to post, top shelf to floor</div></div><button class="ghost" id="camClose" style="color:#fff;border:1px solid rgba(255,255,255,.5);background:rgba(0,0,0,.3);padding:8px 12px">Close</button></div>
+  <div class="mid" id="camMid">
+    <div id="frame">
+      <i class="corner c1"></i><i class="corner c2"></i><i class="corner c3"></i><i class="corner c4"></i>
+      <div id="edge"><canvas id="edgeCanvas"></canvas></div>
+      <div id="edgeTip">Move right until these packs line up with the edge</div>
+      <div id="level"></div><div id="levelTxt">level —</div>
+      <div id="steady">Hold steady</div>
+      <div id="frameTxt">everything inside the orange frame is in the photo</div>
+    </div>
   </div>
   <div class="bottom">
+    <div class="lensRow" id="lensRow"></div>
     <div class="tiles" id="tiles"></div>
     <div class="shutterRow"><button class="ghost" id="endGroup">End group</button><button id="shutter" aria-label="Take photo"></button><span style="width:96px"></span></div>
   </div>
 </div>
 
-<!-- REVIEW (after a shot) -->
+<!-- REVIEW -->
 <div id="review" class="overlay">
   <div class="body">
     <div class="verdict" id="verdict">Checking…</div>
@@ -223,12 +268,13 @@ button[disabled]{opacity:.45;cursor:default}
   </div>
 </div>
 
-<!-- VIEWER (a kept photo) -->
+<!-- VIEWER -->
 <div id="viewer" class="overlay">
   <div class="body">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="vwTitle">Photo</h2><button class="ghost small" id="vwClose">Close</button></div>
-    <div class="cropWrap" id="vwWrap"><img id="vwImg" alt=""><div class="cropBox" id="vwCropBox"><i data-h="l"></i><i data-h="r"></i><i data-h="t"></i><i data-h="b"></i></div></div>
+    <div class="cropWrap" id="vwWrap"><img id="vwImg" alt=""><div class="cropShade" id="vwShade"></div><div class="cropBox" id="vwCropBox"><i data-h="l"></i><i data-h="r"></i><i data-h="t"></i><i data-h="b"></i></div></div>
     <p class="muted" id="vwCropHelp" hidden></p>
+    <button class="ghost small" id="vwToggle" hidden>Show cropped result</button>
     <div class="kv" id="vwMeta"></div>
     <div class="row" id="vwActions"><button class="ghost" id="vwCrop">Crop</button><button class="ghost" id="vwRetake">Retake</button><button class="danger" id="vwDelete">Delete</button></div>
     <div class="row" id="vwCropActions" hidden><button class="primary" id="vwCropSave">Save crop</button><button class="ghost" id="vwCropClear">Remove crop</button><button class="ghost" id="vwCropCancel">Cancel</button></div>
@@ -251,17 +297,17 @@ button[disabled]{opacity:.45;cursor:default}
 <script>
 (function(){
 'use strict';
-const APP='BW Aegis App', VERSION='v2.1';
+const APP='BW Aegis App', VERSION='v3';
 const $=id=>document.getElementById(id);
 const CFG={url:'',token:'',auditors:['Auditor 1','Auditor 2']};
-let VISITS=[];            // all visits on this phone (metadata only)
-let V=null;               // open visit
-let cur=null;             // current group while shooting
-let stream=null,track=null,imageCapture=null;
+const CATS=[['POWBEV','Powdered Beverage'],['BISCUITS','Biscuits'],['CHOCO','Chocolates'],['BREADFILL','Breadfill'],['CHILLER','Chiller']];
+const catName=c=>(CATS.find(x=>x[0]===c)||[c,c])[1];
+let VISITS=[],V=null,CAT=null,cur=null;
+let stream=null,track=null,imageCapture=null,lensList=[],lensId=null;
 let prevG=null,prevBmp=null,levelDeg=0,moving=false,motionOn=false;
-let pending=null,crop=null,cropDrag=null,cropCtx=null;
-let vw=null;              // {g,s} in viewer
-let PLACE=null,lastGPS=null,map=null,marker=null;   // place chosen for the next visit
+let pending=null,crop=null,cropDrag=null,cropCtx=null,vw=null,vwUrl=null,vwCropped=false;
+let PLACE=null,lastGPS=null,map=null,marker=null;
+let CLOCK={offset:0,checked:null,raw:0};   // ms to add to the phone clock to get Google's time
 const DBN='aegis-capture-v2',PH='photos',TH='thumbs',KEEP_DAYS=7;
 const DEVICE=(function(){try{let d=localStorage.getItem('aegis.device');if(!d){d=Math.random().toString(36).slice(2,8).toUpperCase();localStorage.setItem('aegis.device',d)}return d}catch(e){return 'XXXXXX'}})();
 
@@ -273,9 +319,17 @@ async function dbPut(st,k,v){const d=await idb();await new Promise((res,rej)=>{c
 async function dbGet(st,k){const d=await idb();return await new Promise((res,rej)=>{const t=d.transaction(st,'readonly');const q=t.objectStore(st).get(k);q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error)})}
 async function dbDel(st,k){const d=await idb();await new Promise((res)=>{const t=d.transaction(st,'readwrite');t.objectStore(st).delete(k);t.oncomplete=res;t.onerror=res})}
 async function dbKeys(st){const d=await idb();return await new Promise((res)=>{const t=d.transaction(st,'readonly');const q=t.objectStore(st).getAllKeys();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([])})}
-function persist(){save('aegis.visits',VISITS)}
+function persist(){save('aegis.visits',VISITS.map(v=>({...v,groups:v.groups.map(g=>({...g,shots:g.shots.map(s=>{const {gray,...r}=s;return r})}))})))}
 
-/* ---------- image analysis (unchanged from v1) ---------- */
+/* ---------- time ---------- */
+const pad2=n=>String(n).padStart(2,'0');
+function nowMs(){return Date.now()+CLOCK.offset}
+function parts(ms){const d=new Date(ms);return {date:`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`,hhmm:`${pad2(d.getHours())}${pad2(d.getMinutes())}`,iso:d.toISOString()}}
+function fmtDT(iso){const d=new Date(iso);const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`}
+async function checkClock(){if(!CFG.url||!navigator.onLine)return;try{const t0=Date.now();const r=await fetch(CFG.url,{cache:'no-store'});const j=await r.json();if(!j.time)return;const t1=Date.now();const server=new Date(j.time).getTime()+(t1-t0)/2;const raw=server-t1;CLOCK={offset:Math.abs(raw)>120000?raw:0,checked:new Date().toISOString(),raw};save('aegis.clock',CLOCK);showClock()}catch(e){}}
+function showClock(){const n=$('clockNote');if(CLOCK.offset){const m=Math.round(Math.abs(CLOCK.offset)/60000);n.hidden=false;n.textContent=`This phone's clock is ${m>=60?Math.floor(m/60)+' h '+(m%60)+' min':m+' min'} ${CLOCK.offset>0?'behind':'ahead'}. Google's time is used for file names and stamps.`}else n.hidden=true}
+
+/* ---------- image analysis ---------- */
 function toGray(bmp,W){const H=Math.round(bmp.height*W/bmp.width);const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bmp,0,0,W,H);const d=x.getImageData(0,0,W,H).data;const g=new Float32Array(W*H),u8=new Uint8Array(W*H);for(let i=0,j=0;i<d.length;i+=4,j++){g[j]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];u8[j]=g[j]}return {g,u8,W,H}}
 function gauss(src,W,H,sigma){const r=Math.max(1,Math.ceil(sigma*2.5)),k=new Float32Array(2*r+1);let ks=0;for(let i=-r;i<=r;i++){k[i+r]=Math.exp(-i*i/(2*sigma*sigma));ks+=k[i+r]}for(let i=0;i<k.length;i++)k[i]/=ks;const tmp=new Float32Array(W*H),out=new Float32Array(W*H);
   for(let y=0;y<H;y++){const row=y*W;for(let x=0;x<W;x++){let a=0;for(let i=-r;i<=r;i++){let xx=x+i;if(xx<0)xx=-xx;else if(xx>=W)xx=2*W-xx-2;a+=src[row+xx]*k[i+r]}tmp[row+x]=a}}
@@ -284,6 +338,9 @@ function lapVar(g,W,H){let s=0,s2=0,n=0;for(let y=1;y<H-1;y++)for(let x=1;x<W-1;
 function sharpness(G){const {g,W,H}=G;const a=gauss(g,W,H,1.0),b=gauss(a,W,H,2.5);return lapVar(a,W,H)/Math.max(1e-6,lapVar(b,W,H))}
 function tiltDeg(G){const {g,W,H}=G;const xs=[],ys=[],ws=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const v=Math.abs(g[(y+1)*W+x]-g[(y-1)*W+x]);if(v>30){xs.push(x-W/2);ys.push(y);ws.push(v)}}
   let bestA=0,bestV=-1;for(let a=-12;a<=12.01;a+=0.5){const t=Math.tan(a*Math.PI/180);const bins=new Float32Array(H*2+W);for(let i=0;i<xs.length;i++){const b=Math.round(ys[i]-xs[i]*t)+W;if(b>=0&&b<bins.length)bins[b]+=ws[i]}let sum=0,sum2=0,n=0;for(let k=Math.max(0,Math.round(W-H/2));k<W+H*1.5&&k<bins.length;k++){sum+=bins[k];sum2+=bins[k]*bins[k];n++}const v=sum2/n-(sum/n)*(sum/n);if(v>bestV){bestV=v;bestA=a}}return bestA}
+function postEdge(G,side){ // a long vertical edge (upright/post) within the outer 15% on that side?
+  const {g,W,H}=G;if(!g)return true;const x0=side==='l'?2:Math.round(W*0.85),x1=side==='l'?Math.round(W*0.15):W-2;let best=0;
+  for(let x=x0;x<x1;x++){let n=0;for(let y=2;y<H-2;y++){if(Math.abs(g[y*W+x+1]-g[y*W+x-1])>28)n++}best=Math.max(best,n/(H-4))}return best>=0.55}
 function feats(G,max){const {u8,W,H}=G;const img=new jsfeat.matrix_t(W,H,jsfeat.U8_t|jsfeat.C1_t);img.data.set(u8);const sm=new jsfeat.matrix_t(W,H,jsfeat.U8_t|jsfeat.C1_t);jsfeat.imgproc.gaussian_blur(img,sm,5,1.5);
   const corners=[];for(let i=0;i<W*H;i++)corners[i]=new jsfeat.keypoint_t(0,0,0,0,-1);jsfeat.yape06.laplacian_threshold=15;jsfeat.yape06.min_eigen_value_threshold=10;let n=jsfeat.yape06.detect(sm,corners,17);corners.length=n;corners.sort((a,b)=>b.score-a.score);if(n>max){corners.length=max;n=max}
   const desc=new jsfeat.matrix_t(32,Math.max(n,1),jsfeat.U8_t|jsfeat.C1_t);if(n)jsfeat.orb.describe(sm,corners,n,desc);return {corners,desc,n}}
@@ -300,38 +357,65 @@ function overlap(prev,cur,axis){ if(!prev||!cur||typeof jsfeat==='undefined')ret
     const d=model.data,scale=Math.hypot(d[0],d[1]);if(inl<12||scale<0.75||scale>1.33)return {inliers:inl,f:0};
     const shift=axis==='y'?Math.abs(sy/inl)/prev.H:Math.abs(sx/inl)/prev.W;return {inliers:inl,f:Math.max(0,1-shift),scale}}catch(e){return null}}
 
-/* ---------- settings ---------- */
-Object.assign(CFG,load('aegis.cfg',{}));
-function renderCfg(){$('setUrl').value=CFG.url||'';$('setToken').value=CFG.token||'';$('setAuditors').value=(CFG.auditors||[]).join('\n');const sel=$('auditor'),keep=sel.value;sel.innerHTML='';(CFG.auditors||[]).forEach(a=>{const o=document.createElement('option');o.value=a;o.textContent=a;sel.appendChild(o)});if(keep)sel.value=keep}
-$('gearBtn').addEventListener('click',async()=>{$('settings').hidden=!$('settings').hidden;renderCfg();const n=(await dbKeys(PH)).length;$('storageInfo').textContent=`${n} full-size photo(s) kept on this phone (originals are removed ${KEEP_DAYS} days after upload; thumbnails stay). App ${VERSION}, phone id ${DEVICE}.`});
-$('saveSet').addEventListener('click',()=>{CFG.url=$('setUrl').value.trim();CFG.token=$('setToken').value.trim();CFG.auditors=$('setAuditors').value.split('\n').map(s=>s.trim()).filter(Boolean);save('aegis.cfg',CFG);renderCfg();$('setStatus').textContent='Saved.'});
-$('testSet').addEventListener('click',async()=>{$('setStatus').textContent='Testing…';try{const r=await fetch($('setUrl').value.trim(),{method:'GET'});const j=await r.json();$('setStatus').textContent=j.ok?'Upload link answers. Good.':'Link answered but not as expected.'}catch(e){$('setStatus').textContent='Could not reach the link. Check it is the /exec address and the deployment is "Anyone".'}});
-
 /* ---------- helpers ---------- */
-const pad2=n=>String(n).padStart(2,'0');
-function nowParts(){const d=new Date();return {date:`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`,hhmm:`${pad2(d.getHours())}${pad2(d.getMinutes())}`,iso:d.toISOString()}}
-function fmtDT(iso){const d=new Date(iso);const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`}
+function toast(t,ms){const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),ms||2800)}
 function gpsText(g){if(!g)return 'no GPS';const la=Math.abs(g.lat).toFixed(4)+(g.lat>=0?'N':'S'),lo=Math.abs(g.lng).toFixed(4)+(g.lng>=0?'E':'W');return `${la} ${lo} ±${Math.round(g.acc)} m`}
 function getGPS(){return new Promise(res=>{if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy}),()=>res(null),{enableHighAccuracy:true,timeout:12000,maximumAge:120000})})}
-function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),2800)}
-function ctx(){$('ctx').textContent=V?`${V.store} · ${V.cat} · ${V.groups.length} group${V.groups.length===1?'':'s'}`:'no visit open'}
-function shots(v){return v.groups.flatMap(g=>g.shots).concat(v.extras||[])}
-function vStatus(v){const ss=shots(v);if(!ss.length)return {t:'empty',l:'off'};const sent=ss.filter(s=>s.status==='sent').length;if(v.done)return {t:'finished',l:'good'};if(sent===ss.length&&v.manifestSent)return {t:'uploaded',l:'good'};if(sent)return {t:`${ss.length-sent} waiting`,l:'warn'};return {t:'not uploaded',l:'bad'}}
-function fname(v,g,n){return `${v.store}_${v.cat}_${v.date.replace(/-/g,'')}_${v.hhmm}_g${pad2(g.n)}_${g.kind}_${g.type}_s${pad2(n)}.jpg`}
-function folderName(v){return `${v.date.replace(/-/g,'')}-${v.hhmm} ${v.auditor}`}
-const typeName={shelf:'Regular shelf',rack:'Tang rack',secondary:'Secondary display',visit:'Visit photos'};
 function distM(a,b){if(!a||!b)return null;const R=6371000,toR=x=>x*Math.PI/180;const dLa=toR(b.lat-a.lat),dLo=toR(b.lng-a.lng);const s=Math.sin(dLa/2)**2+Math.cos(toR(a.lat))*Math.cos(toR(b.lat))*Math.sin(dLo/2)**2;return Math.round(2*R*Math.asin(Math.sqrt(s)))}
 function placeText(v){if(!v.place)return 'not set';const d=distM(v.gps,v.place);return `${v.place.name}${v.place.src==='pin'?' (pinned)':''}${d==null?'':' · '+(d>=1000?(d/1000).toFixed(1)+' km':d+' m')+' from phone'}`}
-function fnameX(v,n){return `${v.store}_${v.cat}_${v.date.replace(/-/g,'')}_${v.hhmm}_v${pad2(n)}.jpg`}
-function XG(v){return {n:0,kind:'visit',type:'visit',shots:v.extras||(v.extras=[])}}
+function shots(v){return v.groups.flatMap(g=>g.shots).concat(v.extras||[])}
+function shelfShots(v){return v.groups.flatMap(g=>g.shots)}
+function vStatus(v){const ss=shots(v);if(!ss.length)return {t:'empty',l:'off'};const sent=ss.filter(s=>s.status==='sent').length;if(sent===ss.length&&v.manifestSent)return {t:v.done?'finished':'uploaded',l:'good'};if(v.done)return {t:`${ss.length-sent} to send`,l:'warn'};if(sent)return {t:`${ss.length-sent} waiting`,l:'warn'};return {t:'not uploaded',l:'bad'}}
+function base(v){return `${v.store}_${v.date.replace(/-/g,'')}_${v.hhmm}`}
+function fname(v,g,n){return `${base(v)}_${g.cat}_g${pad2(g.n)}_${g.kind}_${g.type}_s${pad2(n)}.jpg`}
+function fnameX(v,n){return `${base(v)}_v${pad2(n)}.jpg`}
+function XG(v){return {n:0,cat:'',kind:'visit',type:'visit',shots:v.extras||(v.extras=[])}}
+function folderName(v){return `${v.date.replace(/-/g,'')}-${v.hhmm} ${v.auditor}`}
+function catGroups(v,c){return v.groups.filter(g=>g.cat===c)}
+function catsCovered(v){return [...new Set(v.groups.filter(g=>g.shots.length).map(g=>g.cat))]}
+const typeName={shelf:'Shelf',rack:'Frame/Rack',visit:'Visit photos'};
+function ctx(){$('ctx').textContent=V?`${V.store} · ${V.groups.length} group${V.groups.length===1?'':'s'}, ${shots(V).length} photo${shots(V).length===1?'':'s'}`:'no visit open'}
 
-/* ---------- start screen ---------- */
-function renderVisits(){const el=$('visitsList');el.innerHTML='';const list=[...VISITS].sort((a,b)=>b.started<a.started?-1:1);$('visitsCount').textContent=list.length?`${list.length}`:'';
-  if(!list.length){el.innerHTML='<p class="muted">No visits yet.</p>';return}
-  list.forEach(v=>{const st=vStatus(v);const d=document.createElement('div');d.className='vrow';const n=shots(v).length;
-    d.innerHTML=`<div><b>${v.store}${v.seq>1?` · visit ${v.seq} today`:''}</b><div class="sub">${v.name||''} · ${fmtDT(v.started)} · ${v.groups.length} group${v.groups.length===1?'':'s'}, ${n} photo${n===1?'':'s'} · ${v.auditor}</div></div><span class="pill ${st.l}">${st.t}</span>`;
+/* ---------- navigation: every screen is a step the phone's Back button can undo ---------- */
+let depth=0;
+function push(name){depth++;history.pushState({aegis:name,d:depth},'')}
+function back(n){if(depth>0)history.go(-Math.min(n||1,depth))}
+function topScreen(){if($('review').style.display==='flex')return 'review';if($('viewer').style.display==='flex')return 'viewer';if($('mapOv').style.display==='flex')return 'map';if(!$('cam').hidden)return 'cam';if(!$('settings').hidden)return 'settings';if(!$('catPage').hidden)return 'cat';if(!$('xPage').hidden)return 'x';if(!$('visit').hidden)return 'visit';return 'main'}
+function closeTop(){const t=topScreen();
+  if(t==='review'){if(pending){push('review');toast('Choose Keep or Retake first');return}$('review').style.display='none';return}
+  if(t==='viewer'){doCloseViewer();return}
+  if(t==='map'){$('mapOv').style.display='none';return}
+  if(t==='cam'){doCloseCamera();return}
+  if(t==='settings'){$('settings').hidden=true;return}
+  if(t==='cat'){$('catPage').hidden=true;CAT=null;$('visit').hidden=false;renderVisit();return}
+  if(t==='x'){$('xPage').hidden=true;$('visit').hidden=false;renderVisit();return}
+  if(t==='visit'){V=null;$('visit').hidden=true;$('start').hidden=false;renderVisits();ctx();return}}
+window.addEventListener('popstate',e=>{const d=(e.state&&typeof e.state.d==='number')?e.state.d:0;if(d>=depth){depth=d;return}const steps=depth-d;depth=d;for(let i=0;i<steps;i++){try{closeTop()}catch(err){}}});
+
+/* ---------- settings ---------- */
+Object.assign(CFG,load('aegis.cfg',{}));
+function renderCfg(){$('setUrl').value=CFG.url||'';$('setToken').value=CFG.token||'';$('setAuditors').value=(CFG.auditors||[]).join('\n');const sel=$('auditor'),keep=sel.value||load('aegis.auditor','');sel.innerHTML='';(CFG.auditors||[]).forEach(a=>{const o=document.createElement('option');o.value=a;o.textContent=a;sel.appendChild(o)});if(keep)sel.value=keep}
+$('gearBtn').addEventListener('click',async()=>{if(!$('settings').hidden){if(history.state&&history.state.aegis==='settings')back();else $('settings').hidden=true;return}$('settings').hidden=false;push('settings');renderCfg();const n=(await dbKeys(PH)).length;$('storageInfo').textContent=`${n} full-size photo(s) kept on this phone (originals are removed ${KEEP_DAYS} days after upload; thumbnails stay). App ${VERSION}, phone id ${DEVICE}.`});
+$('saveSet').addEventListener('click',()=>{const u=$('setUrl').value.trim();const st=$('setStatus');
+  if(/googleusercontent\.com/.test(u)){st.className='status bad';st.textContent='That is the address the browser was redirected to, not the upload link. Use the Web app URL from Apps Script: it starts with https://script.google.com/macros/s/ and ends in /exec.';return}
+  if(u&&!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(u)){st.className='status bad';st.textContent='The upload link should start with https://script.google.com/macros/s/ and end in /exec.';return}
+  CFG.url=u;CFG.token=$('setToken').value.trim();CFG.auditors=$('setAuditors').value.split('\n').map(s=>s.trim()).filter(Boolean);save('aegis.cfg',CFG);renderCfg();st.className='status';st.textContent='Saved.';checkClock()});
+$('testSet').addEventListener('click',async()=>{const st=$('setStatus');st.className='status';st.textContent='Testing…';try{const r=await fetch($('setUrl').value.trim(),{cache:'no-store'});const j=await r.json();st.textContent=j.ok?`Upload link answers (script ${j.version||'?'}). Good.`:'Link answered but not as expected.'}catch(e){st.className='status bad';st.textContent='Could not reach the link. Check it is the /exec address and the deployment is "Anyone".'}});
+
+/* ---------- main page ---------- */
+$('tabNew').addEventListener('click',()=>{$('tabNew').classList.add('on');$('tabHist').classList.remove('on');$('newCard').hidden=false;$('histCard').hidden=true});
+$('tabHist').addEventListener('click',()=>{$('tabHist').classList.add('on');$('tabNew').classList.remove('on');$('newCard').hidden=true;$('histCard').hidden=false;renderVisits()});
+$('histQ').addEventListener('input',renderVisits);
+function renderVisits(){const el=$('visitsList');el.innerHTML='';const q=($('histQ').value||'').trim().toUpperCase();
+  const list=[...VISITS].sort((a,b)=>b.started<a.started?-1:1).filter(v=>!q||v.store.includes(q)||(v.name||'').toUpperCase().includes(q));
+  $('visitsCount').textContent=VISITS.length?`${VISITS.length}`:'';
+  const waiting=VISITS.filter(v=>shots(v).some(s=>s.status!=='sent')).length;$('histBadge').textContent=waiting?`(${waiting})`:'';
+  const hw=$('histWaiting');if(waiting){hw.hidden=false;hw.textContent=`${waiting} visit${waiting>1?'s':''} still ${waiting>1?'have':'has'} photos not uploaded.`}else hw.hidden=true;
+  if(!list.length){el.innerHTML='<p class="muted">'+(q?'No visit matches.':'No visits yet.')+'</p>';return}
+  list.forEach(v=>{const st=vStatus(v);const d=document.createElement('div');d.className='vrow';
+    d.innerHTML=`<div><b>${v.store}${v.seq>1?` · visit ${v.seq} that day`:''}</b><div class="sub">${v.name||''} · ${fmtDT(v.started)} · ${catsCovered(v).map(catName).join(', ')||'no shelf photos'}${(v.extras||[]).length?' · '+v.extras.length+' visit photo'+(v.extras.length>1?'s':''):''} · ${v.auditor}</div></div><span class="pill ${st.l}">${st.t}</span>`;
     d.addEventListener('click',()=>openVisit(v));el.appendChild(d)})}
-$('storeCode').addEventListener('input',()=>{const code=$('storeCode').value.trim().toUpperCase();const {date}=nowParts();const same=VISITS.filter(v=>v.store===code&&v.date===date);const n=$('sameDayNote');
+$('storeCode').addEventListener('input',()=>{const code=$('storeCode').value.trim().toUpperCase();const {date}=parts(nowMs());const same=VISITS.filter(v=>v.store===code&&v.date===date);const n=$('sameDayNote');
   if(code&&same.length){n.hidden=false;n.innerHTML=`${same.length} visit${same.length>1?'s':''} for <b>${code}</b> already today on this phone. Starting again creates <b>visit ${same.length+1}</b> in its own folder; or <button class="ghost small" id="contBtn">continue the last one</button>.`;$('contBtn').addEventListener('click',()=>openVisit(same[same.length-1]));const last=same[same.length-1];if(!$('storeName').value)$('storeName').value=last.name||''}else n.hidden=true});
 function showPlace(){const p=$('placePicked');if(PLACE){p.hidden=false;p.innerHTML=`Place: <b>${PLACE.name}</b>${PLACE.src==='pin'?' (pinned on map)':''}`;$('placeClear').hidden=false;if(!$('storeName').value&&PLACE.src!=='pin')$('storeName').value=PLACE.name.split(',')[0]}else{p.hidden=true;$('placeClear').hidden=true}}
 $('placeClear').addEventListener('click',()=>{PLACE=null;$('placeResults').innerHTML='';showPlace()});
@@ -344,136 +428,172 @@ $('placeSearch').addEventListener('click',async()=>{const q=$('placeQ').value.tr
       d.addEventListener('click',()=>{PLACE={name:nm,full:it.display_name,lat:la,lng:lo,src:'search'};res.querySelectorAll('.pres').forEach(x=>x.classList.remove('on'));d.classList.add('on');showPlace()});res.appendChild(d)})}
   catch(e){res.innerHTML='<p class="muted">Search needs signal. You can pin the location on the map instead (map also needs signal) or just continue; the phone GPS is still recorded.</p>'}});
 $('pinBtn').addEventListener('click',async()=>{if(typeof L==='undefined'){toast('Map library did not load (no signal when the app opened).');return}
-  $('mapOv').style.display='flex';if(!lastGPS)lastGPS=await getGPS();const c=PLACE?[PLACE.lat,PLACE.lng]:lastGPS?[lastGPS.lat,lastGPS.lng]:[14.5995,120.9842];
+  $('mapOv').style.display='flex';push('map');if(!lastGPS)lastGPS=await getGPS();const c=PLACE?[PLACE.lat,PLACE.lng]:lastGPS?[lastGPS.lat,lastGPS.lng]:[14.5995,120.9842];
   if(!map){map=L.map('map',{zoomControl:true}).setView(c,PLACE||lastGPS?17:12);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
     const pin=L.divIcon({className:'',html:'<div style="width:26px;height:26px;background:#F26B21;border:3px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>',iconSize:[26,26],iconAnchor:[13,26]});marker=L.marker(c,{draggable:true,icon:pin}).addTo(map);
     const upd=()=>{const p=marker.getLatLng();$('mapTxt').textContent=`Pin at ${gpsText({lat:p.lat,lng:p.lng,acc:0}).replace(' ±0 m','')}${lastGPS?' · '+distM(lastGPS,{lat:p.lat,lng:p.lng})+' m from the phone':''}`};
-    marker.on('dragend',upd);map.on('click',e=>{marker.setLatLng(e.latlng);upd()});map.on('moveend',()=>{});upd();if(lastGPS)L.circle([lastGPS.lat,lastGPS.lng],{radius:Math.max(10,lastGPS.acc),color:'#1F7A4D',weight:1}).addTo(map).bindTooltip('phone GPS')}
+    marker.on('dragend',upd);map.on('click',e=>{marker.setLatLng(e.latlng);upd()});upd();if(lastGPS)L.circle([lastGPS.lat,lastGPS.lng],{radius:Math.max(10,lastGPS.acc),color:'#1F7A4D',weight:1}).addTo(map).bindTooltip('phone GPS')}
   else{map.setView(c,17);marker.setLatLng(c)}setTimeout(()=>map.invalidateSize(),200)});
-$('mapCancel').addEventListener('click',()=>{$('mapOv').style.display='none'});
-$('mapSave').addEventListener('click',()=>{const p=marker.getLatLng();PLACE={name:$('storeName').value.trim()||$('storeCode').value.trim().toUpperCase()||'pinned location',lat:+p.lat.toFixed(6),lng:+p.lng.toFixed(6),src:'pin'};$('mapOv').style.display='none';showPlace()});
-
+$('mapCancel').addEventListener('click',()=>back());
+$('mapSave').addEventListener('click',()=>{const p=marker.getLatLng();PLACE={name:$('storeName').value.trim()||$('storeCode').value.trim().toUpperCase()||'pinned location',lat:+p.lat.toFixed(6),lng:+p.lng.toFixed(6),src:'pin'};showPlace();back()});
+$('wod').addEventListener('change',()=>{save('aegis.wod',{date:parts(nowMs()).date,word:$('wod').value.trim().toUpperCase()})});
 $('startBtn').addEventListener('click',async()=>{const code=$('storeCode').value.trim().toUpperCase();if(!code){toast('Enter the store code');return}
+  const wod=$('wod').value.trim().toUpperCase();if(!wod){toast('Enter the word of the day');$('wod').focus();return}
   if(!CFG.url){toast('Set the upload link in Settings first');$('settings').hidden=false;return}
-  $('startBtn').disabled=true;$('startBtn').textContent='Getting location…';const gps=await getGPS();$('startBtn').disabled=false;$('startBtn').textContent='Start visit';
-  const np=nowParts();const seq=VISITS.filter(v=>v.store===code&&v.date===np.date).length+1;
-  V={id:`${code}_${np.date.replace(/-/g,'')}_${np.hhmm}_${DEVICE}`,store:code,name:$('storeName').value.trim(),cat:$('category').value,auditor:$('auditor').value,date:np.date,hhmm:np.hhmm,started:np.iso,seq,gps,device:DEVICE,groups:[],extras:[],place:PLACE,done:false,manifestSent:false};
-  PLACE=null;showPlace();$('placeResults').innerHTML='';$('placeQ').value='';lastGPS=gps||lastGPS;VISITS.push(V);persist();if(!gps)toast('No GPS fix; photos will say "no GPS"');showVisit()});
+  $('startBtn').disabled=true;$('startBtn').textContent='Getting location…';const [gps]=await Promise.all([getGPS(),checkClock()]);$('startBtn').disabled=false;$('startBtn').textContent='Start visit';
+  const np=parts(nowMs());const seq=VISITS.filter(v=>v.store===code&&v.date===np.date).length+1;
+  save('aegis.wod',{date:np.date,word:wod});save('aegis.auditor',$('auditor').value);
+  V={id:`${code}_${np.date.replace(/-/g,'')}_${np.hhmm}_${DEVICE}`,store:code,name:$('storeName').value.trim(),auditor:$('auditor').value,wod,date:np.date,hhmm:np.hhmm,started:np.iso,seq,gps,place:PLACE,device:DEVICE,clockOffsetS:Math.round((CLOCK.raw||0)/1000),clockChecked:!!CLOCK.checked,groups:[],extras:[],done:false,manifestSent:false};
+  PLACE=null;showPlace();$('placeResults').innerHTML='';$('placeQ').value='';lastGPS=gps||lastGPS;VISITS.push(V);persist();if(!gps)toast('No GPS fix; photos will say "no GPS"');openVisit(V)});
 
-/* ---------- visit screen ---------- */
-function openVisit(v){V=v;showVisit()}
-function showVisit(){$('start').hidden=true;$('visit').hidden=false;$('vTitle').textContent=`${V.store}${V.seq>1?` · visit ${V.seq}`:''}`;
-  $('vMeta').innerHTML=`<b>Store</b><span>${V.name||'(no name typed)'}</span><b>Started</b><span>${fmtDT(V.started)}</span><b>Auditor</b><span>${V.auditor}</span><b>Phone GPS</b><span>${gpsText(V.gps)}</span><b>Place</b><span>${placeText(V)}</span><b>Category</b><span>${V.cat}</span>`;
-  $('newGroup').hidden=!!V.done;renderGroups();ctx()}
-$('backBtn').addEventListener('click',()=>{V=null;$('visit').hidden=true;$('start').hidden=false;renderVisits();ctx()});
-async function renderGroups(){const el=$('groups');el.innerHTML='';let total=0;
-  for(const g of V.groups){total+=g.shots.length;const d=document.createElement('div');d.className='grp';
-    d.innerHTML=`<div class="h"><b>Group ${g.n} · ${g.kind} · ${typeName[g.type]}</b><span class="pill ${g.type==='secondary'?'off':''}">${g.type==='secondary'?'not in SOS':'counts'}</span></div><div class="thumbrow"></div><div class="muted">${g.shots.length} photo${g.shots.length===1?'':'s'} · ${g.shots.filter(s=>s.status==='sent').length} uploaded${g.shots.some(s=>s.crop)?' · cropped':''}${g.addedLater?' · added later':''}</div>`;
-    const tr=d.querySelector('.thumbrow');
-    for(const s of g.shots){const th=document.createElement('div');th.className='th';const im=document.createElement('img');im.className=s.status;im.alt=s.name;th.appendChild(im);const sp=document.createElement('span');sp.textContent='s'+pad2(s.n);th.appendChild(sp);tr.appendChild(th);
-      dbGet(TH,s.name).then(b=>{if(b)im.src=URL.createObjectURL(b)});th.addEventListener('click',()=>openViewer(g,s))}
-    if(!g.shots.length&&!V.done){const b=document.createElement('button');b.className='ghost small';b.textContent='Remove empty group';b.addEventListener('click',()=>{V.groups=V.groups.filter(x=>x!==g);persist();renderGroups()});d.appendChild(b)}
-    el.appendChild(d)}
-  const xs=V.extras||[];const xt=$('xThumbs');xt.innerHTML='';for(const s of xs){const th=document.createElement('div');th.className='th';const im=document.createElement('img');im.className=s.status;th.appendChild(im);const sp=document.createElement('span');sp.textContent='v'+pad2(s.n);th.appendChild(sp);xt.appendChild(th);dbGet(TH,s.name).then(b=>{if(b)im.src=URL.createObjectURL(b)});th.addEventListener('click',()=>openViewer(XG(V),s))}
-  $('xCount').textContent=`${xs.length} photo${xs.length===1?'':'s'} · ${xs.filter(s=>s.status==='sent').length} uploaded`;total+=xs.length;
-  $('visitCount').textContent=total+(total===1?' photo':' photos');$('grpTitle').textContent=V.done?'Visit finished':`Add group ${V.groups.length+1}`;
-  const st=vStatus(V);$('vPill').className='pill '+st.l;$('vPill').textContent=st.t;
-  const allSent=total>0&&shots(V).every(s=>s.status==='sent')&&V.manifestSent;
-  $('uploadBtn').disabled=total===0||V.done||(allSent);$('uploadBtn').textContent=allSent?'All uploaded':'Upload visit';
+/* ---------- visit page ---------- */
+function openVisit(v){V=v;$('start').hidden=true;$('visit').hidden=false;push('visit');renderVisit()}
+function renderVisit(){if(!V)return;$('vTitle').textContent=`${V.store}${V.seq>1?` · visit ${V.seq}`:''}`;
+  $('vMeta').innerHTML=`<b>Store</b><span>${V.name||'(no name typed)'}</span><b>Started</b><span>${fmtDT(V.started)}</span><b>Auditor</b><span>${V.auditor}</span><b>WOD</b><span>${V.wod||'—'}</span><b>Phone GPS</b><span>${gpsText(V.gps)}</span><b>Place</b><span>${placeText(V)}</span>`;
+  const t=$('catTiles');t.innerHTML='';for(const [c,nm] of CATS){const gs=catGroups(V,c);const n=gs.reduce((a,g)=>a+g.shots.length,0);const b=document.createElement('button');b.className='tile'+(n?' has':'');b.innerHTML=`<b>${nm}</b><span>${n?`${gs.length} group${gs.length>1?'s':''}, ${n} photo${n>1?'s':''}`:'no photos yet'}</span>`;b.addEventListener('click',()=>openCat(c));t.appendChild(b)}
+  const xs=V.extras||[];const xb=document.createElement('button');xb.className='tile x'+(xs.length?' has':'');xb.innerHTML=`<b>Visit photos</b><span>${xs.length?`${xs.length} photo${xs.length>1?'s':''} · ${xs.filter(s=>s.status==='sent').length} uploaded`:'storefront, stands, anything else'}</span>`;xb.addEventListener('click',()=>{$('visit').hidden=true;$('xPage').hidden=false;push('x');renderX()});t.appendChild(xb);
+  const all=shots(V),total=all.length,sent=all.filter(s=>s.status==='sent').length;const st=vStatus(V);$('vPill').className='pill '+st.l;$('vPill').textContent=st.t;
+  const allSent=total>0&&sent===total&&V.manifestSent;
+  $('uploadBtn').disabled=total===0||allSent||Q.running;$('uploadBtn').textContent=Q.running?'Uploading…':allSent?'All uploaded':'Upload visit';
   $('finishBtn').disabled=!allSent||V.done;$('finishBtn').textContent=V.done?'Finished':'Finish visit';
-  $('bar').style.width=total?Math.round(100*shots(V).filter(s=>s.status==='sent').length/total)+'%':'0%';
-  if(V.done)$('upStatus').textContent='Finished and uploaded. Tap "Add group" below if something was missed; it is uploaded separately.';else if(allSent)$('upStatus').textContent='Everything is in Drive. You can finish the visit.';else if(!total)$('upStatus').textContent='Not uploaded yet.';
-  if(V.done)$('newGroup').hidden=false;ctx()}
+  $('bar').style.width=total?Math.round(100*sent/total)+'%':'0%';
+  if(!Q.running){if(V.done&&allSent)setStatus('Finished and uploaded. Anything you add now is sent with Upload visit.');else if(allSent)setStatus('Everything is in Drive. You can finish the visit.');else if(!total)setStatus('Not uploaded yet.');else if(total-sent&&!$('upStatus').classList.contains('bad'))setStatus(`${total-sent} photo${total-sent>1?'s':''} on this phone, not sent yet.`)}
+  ctx()}
+$('backBtn').addEventListener('click',()=>back());
+$('discardBtn').addEventListener('click',async()=>{const b=$('discardBtn');if(b.dataset.a!=='1'){b.dataset.a='1';b.textContent='Tap again to remove this visit from the phone';setTimeout(()=>{b.dataset.a='';b.textContent='Discard this visit'},3000);return}
+  for(const s of shots(V)){await dbDel(PH,s.name);await dbDel(TH,s.name)}VISITS=VISITS.filter(v=>v!==V);persist();b.dataset.a='';b.textContent='Discard this visit';back()});
+$('finishBtn').addEventListener('click',()=>{V.done=true;V.finished=new Date(nowMs()).toISOString();persist();toast('Visit finished.');back()});
+
+/* ---------- category page ---------- */
+function openCat(c){CAT=c;$('visit').hidden=true;$('catPage').hidden=false;push('cat');renderCat()}
+$('catBack').addEventListener('click',()=>back());
+function renderCat(){if(!V||!CAT)return;$('catTitle').textContent=catName(CAT);const gs=catGroups(V,CAT);$('catSub').textContent=`${V.store}${V.name?' · '+V.name:''}`;
+  const el=$('groups');el.innerHTML='';let total=0;
+  for(const g of gs){total+=g.shots.length;const d=document.createElement('div');d.className='grp';
+    d.innerHTML=`<div class="h"><b>Group ${g.n} · ${g.kind} · ${typeName[g.type]}</b><span class="pill ${g.shots.length&&g.shots.every(s=>s.status==='sent')?'':'off'}">${g.shots.filter(s=>s.status==='sent').length}/${g.shots.length} sent</span></div><div class="thumbrow"></div><div class="muted">${g.shots.length} photo${g.shots.length===1?'':'s'}${g.shots.some(s=>s.crop)?' · cropped':''}${g.addedLater?' · added after finish':''}${g.lens&&g.lens!=='main'?' · '+g.lens+' lens':''}</div>`;
+    const tr=d.querySelector('.thumbrow');
+    for(const s of g.shots){const th=document.createElement('div');th.className='th';const im=document.createElement('img');im.className=s.status;im.alt=s.name;th.appendChild(im);const sp=document.createElement('span');sp.textContent='s'+pad2(s.n);th.appendChild(sp);if(s.crop){const em=document.createElement('em');em.textContent='✂';th.appendChild(em)}tr.appendChild(th);
+      dbGet(TH,s.name).then(b=>{if(b)im.src=URL.createObjectURL(b)});th.addEventListener('click',()=>openViewer(g,s))}
+    if(!g.shots.length){const b=document.createElement('button');b.className='ghost small';b.textContent='Remove empty group';b.addEventListener('click',()=>{V.groups=V.groups.filter(x=>x!==g);persist();renderCat()});d.appendChild(b)}
+    el.appendChild(d)}
+  $('catCount').textContent=total+(total===1?' photo':' photos');$('grpTitle').textContent=`Add group ${gs.length+1}`}
 document.querySelectorAll('.choice').forEach(c=>c.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;c.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}));
 const picked=id=>$(id).querySelector('.on').dataset.v;
+$('openCam').addEventListener('click',async()=>{cur={n:catGroups(V,CAT).length+1,cat:CAT,kind:picked('kindPick'),type:picked('typePick'),shots:[],addedLater:!!V.done};V.groups.push(cur);persist();prevG=null;prevBmp=null;await openCamera()});
+
+/* ---------- visit photos page ---------- */
+function renderX(){if(!V)return;const xs=V.extras||[];const xt=$('xThumbs');xt.innerHTML='';for(const s of xs){const th=document.createElement('div');th.className='th';const im=document.createElement('img');im.className=s.status;th.appendChild(im);const sp=document.createElement('span');sp.textContent='v'+pad2(s.n);th.appendChild(sp);xt.appendChild(th);dbGet(TH,s.name).then(b=>{if(b)im.src=URL.createObjectURL(b)});th.addEventListener('click',()=>openViewer(XG(V),s))}
+  $('xCount').textContent=`${xs.length} photo${xs.length===1?'':'s'} · ${xs.filter(s=>s.status==='sent').length} uploaded`}
+$('xBack').addEventListener('click',()=>back());
 $('openXCam').addEventListener('click',async()=>{cur=XG(V);prevG=null;prevBmp=null;await openCamera()});
-$('openCam').addEventListener('click',async()=>{cur={n:V.groups.length+1,kind:picked('kindPick'),type:picked('typePick'),shots:[],addedLater:!!V.done};V.groups.push(cur);persist();prevG=null;prevBmp=null;await openCamera()});
-$('discardBtn').addEventListener('click',async()=>{const b=$('discardBtn');if(b.dataset.a!=='1'){b.dataset.a='1';b.textContent='Tap again to discard everything in this visit';setTimeout(()=>{b.dataset.a='';b.textContent='Discard this visit'},3000);return}
-  for(const s of shots(V)){await dbDel(PH,s.name);await dbDel(TH,s.name)}VISITS=VISITS.filter(v=>v!==V);persist();b.dataset.a='';b.textContent='Discard this visit';V=null;$('visit').hidden=true;$('start').hidden=false;renderVisits();ctx()});
-$('finishBtn').addEventListener('click',()=>{V.done=true;V.finished=new Date().toISOString();persist();toast('Visit finished.');V=null;$('visit').hidden=true;$('start').hidden=false;renderVisits();ctx()});
 
 /* ---------- camera ---------- */
+async function listLenses(){try{const devs=await navigator.mediaDevices.enumerateDevices();const vids=devs.filter(d=>d.kind==='videoinput');const backs=vids.filter(d=>/back|rear|environment/i.test(d.label));lensList=(backs.length?backs:vids).map((d,i)=>({id:d.deviceId,label:d.label||('Camera '+(i+1))}))}catch(e){lensList=[]}}
+function lensName(i){const l=lensList[i];if(!l||i<0)return 'main';const s=l.label.toLowerCase();if(/ultra|wide|0\.5|0\.6/.test(s))return 'wide';if(/tele|zoom|3x|5x|10x/.test(s))return 'tele';return i===0?'main':'lens'+(i+1)}
+function curLens(){const i=lensList.findIndex(l=>l.id===lensId);const n=lensName(i);const z=track&&track.getSettings?track.getSettings().zoom:null;return z&&z<0.95?'wide':n}
+function renderLens(){const r=$('lensRow');r.innerHTML='';
+  if(lensList.length>1){const lab=document.createElement('span');lab.textContent='Lens:';r.appendChild(lab);lensList.forEach((l,i)=>{const b=document.createElement('button');const nm=lensName(i);b.textContent=nm==='main'?'Main 1×':nm==='wide'?'Wide':nm==='tele'?'Tele':'Cam '+(i+1);b.className=l.id===lensId?'on':'';b.addEventListener('click',async()=>{if(l.id!==lensId){lensId=l.id;save('aegis.lens',lensId);try{await startStream()}catch(e){toast('That camera did not open')}}});r.appendChild(b)})}
+  if(track&&track.getCapabilities){const cap=track.getCapabilities();if(cap.zoom&&cap.zoom.max>cap.zoom.min){const s=track.getSettings();const z=document.createElement('input');z.type='range';z.min=cap.zoom.min;z.max=Math.min(cap.zoom.max,4);z.step=cap.zoom.step||0.1;z.value=s.zoom||cap.zoom.min;const zt=document.createElement('span');zt.textContent=(+z.value).toFixed(1)+'×';z.addEventListener('input',()=>{zt.textContent=(+z.value).toFixed(1)+'×';track.applyConstraints({advanced:[{zoom:+z.value}]}).catch(()=>{})});r.appendChild(z);r.appendChild(zt)}}
+  if(curLens()==='wide'){const n=document.createElement('span');n.style.cssText='flex-basis:100%;color:#D9D2C3;font-size:12px';n.textContent='Wide bends the shelves at the edges: use it only for tight aisles; step back with Main when you can.';r.appendChild(n)}}
+async function startStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+  const base={width:{ideal:4032},height:{ideal:3024},aspectRatio:{ideal:4/3}};const c=lensId?{deviceId:{exact:lensId},...base}:{facingMode:{ideal:'environment'},...base};
+  stream=await navigator.mediaDevices.getUserMedia({video:c,audio:false});const v=$('video');v.srcObject=stream;v.hidden=false;track=stream.getVideoTracks()[0];
+  imageCapture=null;try{if(typeof ImageCapture==='function')imageCapture=new ImageCapture(track)}catch(e){}
+  await new Promise(r=>{if(v.videoWidth)r();else{v.onloadedmetadata=()=>r();setTimeout(r,1500)}});fitFrame();
+  if(!lensId&&track.getSettings)lensId=track.getSettings().deviceId||null;if(!lensList.length)await listLenses();renderLens()}
+function fitFrame(){const v=$('video'),mid=$('camMid'),f=$('frame');const ar=(v.videoWidth&&v.videoHeight)?v.videoWidth/v.videoHeight:3/4;const W=mid.clientWidth,H=mid.clientHeight;let fw=W,fh=W/ar;if(fh>H){fh=H;fw=H*ar}f.style.width=Math.floor(fw)+'px';f.style.height=Math.floor(fh)+'px';if(!f.contains(v))f.insertBefore(v,f.firstChild)}
+window.addEventListener('resize',()=>{if(!$('cam').hidden)fitFrame()});$('video').addEventListener('resize',()=>{if(!$('cam').hidden)fitFrame()});$('video').addEventListener('loadedmetadata',()=>{if(!$('cam').hidden)fitFrame()});
+function refit(){[0,100,400,1000].forEach(t=>setTimeout(()=>{if(!$('cam').hidden)fitFrame()},t))}
 async function openCamera(){
-  $('cam').hidden=false;const isX=cur.kind==='visit';$('endGroup').textContent=isX?'Done':'End group';
-  $('camGroup').textContent=isX?'Visit photos':`Group ${cur.n} · ${cur.kind[0].toUpperCase()+cur.kind.slice(1)} · ${{shelf:'Shelf',rack:'Tang rack',secondary:'Secondary'}[cur.type]}`;
-  $('camHint').textContent=isX?'Storefront, signage, displays, anything useful. Saved and uploaded as you go.':cur.kind==='single'?'Post to post, top shelf to floor':cur.kind==='row'?'Start at the left end. Walk sideways, same distance.':'Start at the top. Keep the same distance.';
-  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:4032},height:{ideal:3024}},audio:false});$('video').srcObject=stream;track=stream.getVideoTracks()[0];imageCapture=null;try{if(typeof ImageCapture==='function')imageCapture=new ImageCapture(track)}catch(e){}}
-  catch(e){toast('Camera not available: '+(e.message||e));$('cam').hidden=true;return}
+  $('cam').hidden=false;push('cam');const isX=cur.kind==='visit';$('endGroup').textContent=isX?'Done':'End group';$('endGroup').dataset.a='';
+  $('camGroup').textContent=isX?'Visit photos':`${catName(cur.cat)} · Group ${cur.n} · ${cur.kind[0].toUpperCase()+cur.kind.slice(1)} · ${typeName[cur.type]}`;
+  $('camHint').textContent=isX?'Storefront, signage, displays, anything useful. Saved and uploaded as you go.':cur.kind==='single'?'Post to post, top shelf to floor':cur.kind==='row'?'Start with the left post in frame. Walk sideways, same distance.':'Start at the top. Keep the same distance.';
+  lensId=lensId||load('aegis.lens',null);
+  try{await startStream()}catch(e){if(lensId){lensId=null;try{await startStream()}catch(e2){toast('Camera not available: '+(e2.message||e2));back();return}}else{toast('Camera not available: '+(e.message||e));back();return}}
   if(!motionOn){try{if(typeof DeviceMotionEvent!=='undefined'&&DeviceMotionEvent.requestPermission){await DeviceMotionEvent.requestPermission()}}catch(e){}window.addEventListener('devicemotion',onMotion);motionOn=true}
-  updateTiles();updateEdge()}
-function closeCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('cam').hidden=true;if(cur&&cur.kind!=='visit'&&!cur.shots.length){V.groups=V.groups.filter(g=>g!==cur)}persist();renderGroups();if(cur&&cur.kind==='visit'&&navigator.onLine)uploadVisit(V,true)}
-$('camClose').addEventListener('click',closeCamera);
-$('endGroup').addEventListener('click',()=>{const n=cur.shots.length,x=cur.kind==='visit';closeCamera();toast(x?`${n} visit photo(s) saved.`:n?`Group ${cur.n} done with ${n} photo(s).`:'Empty group removed')});
+  refit();updateTiles();updateEdge()}
+function doCloseCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('cam').hidden=true;$('video').hidden=true;const g=cur;cur=null;
+  if(g&&g.kind!=='visit'&&!g.shots.length){V.groups=V.groups.filter(x=>x!==g)}persist();
+  if(g&&g.kind==='visit'){renderX();if(navigator.onLine)enqueue(V,true)}else renderCat()}
+$('camClose').addEventListener('click',()=>back());
+$('endGroup').addEventListener('click',()=>{const n=cur.shots.length,x=cur.kind==='visit',gn=cur.n;
+  if(!x&&cur.kind==='row'&&n>0&&!cur.rightOk&&$('endGroup').dataset.a!=='1'){const last=cur.shots[n-1];if(last.gray&&!postEdge(last.gray,'r')){$('endGroup').dataset.a='1';$('endGroup').textContent='No right post seen · End anyway?';setTimeout(()=>{$('endGroup').dataset.a='';$('endGroup').textContent='End group'},4000);return}}
+  $('endGroup').dataset.a='';back();toast(x?`${n} visit photo(s) saved.`:n?`Group ${gn} done with ${n} photo(s).`:'Empty group removed')});
 function onMotion(e){const g=e.accelerationIncludingGravity;if(!g||g.x==null)return;const ang=Math.atan2(g.x,g.y)*180/Math.PI;levelDeg=0.8*levelDeg+0.2*(-ang);
   const lv=$('level');lv.style.transform=`rotate(${levelDeg}deg)`;const a=Math.abs(levelDeg);lv.className=a<=2?'ok':a<=5?'near':'';$('levelTxt').textContent=`level ${levelDeg.toFixed(0)}°`;
   const acc=e.acceleration;if(acc&&acc.x!=null){const m=Math.hypot(acc.x,acc.y,acc.z);moving=m>1.8;$('steady').style.display=moving?'block':'none'}}
-function updateTiles(){const t=$('tiles');t.className='tiles'+(cur.kind==='column'?' col':'');t.innerHTML='';
+function updateTiles(){if(!cur)return;const t=$('tiles');t.className='tiles'+(cur.kind==='column'?' col':'');t.innerHTML='';
   if(cur.kind==='visit'){t.innerHTML=`<i>${cur.shots.length} visit photo${cur.shots.length===1?'':'s'} this visit · ${cur.shots.filter(s=>s.status==='sent').length} uploaded</i>`;return}
-  if(cur.kind==='single'){t.innerHTML=cur.shots.length?'<span>✓</span><i>one photo taken — End group, or take another to replace it</i>':'<span class="next">1</span><i>one photo for this bay</i>';return}
-  cur.shots.forEach((s,i)=>{const e=document.createElement('span');e.textContent=i+1;t.appendChild(e)});const nx=document.createElement('span');nx.className='next';nx.textContent=cur.shots.length+1;t.appendChild(nx);const i=document.createElement('i');i.textContent=cur.shots.length?`shot ${cur.shots.length+1} · keep 2–3 packs of overlap`:'shot 1 · the left post in frame';t.appendChild(i)}
-function updateEdge(){const ed=$('edge'),tip=$('edgeTip');if(cur.kind==='single'||cur.kind==='visit'||!prevBmp){ed.style.display='none';tip.style.display='none';return}
+  if(cur.kind==='single'){t.innerHTML=cur.shots.length?'<span>✓</span><i>one photo taken: End group, or shoot again to replace it</i>':'<span class="next">1</span><i>one photo for this bay</i>';return}
+  cur.shots.forEach((s,i)=>{const e=document.createElement('span');e.textContent=i+1;t.appendChild(e)});const nx=document.createElement('span');nx.className='next';nx.textContent=cur.shots.length+1;t.appendChild(nx);const i=document.createElement('i');i.textContent=cur.shots.length?`shot ${cur.shots.length+1} · keep 2–3 packs of overlap`:(cur.kind==='row'?'shot 1 · the left post in frame':'shot 1 · the top shelf in frame');t.appendChild(i)}
+function updateEdge(){if(!cur)return;const ed=$('edge'),tip=$('edgeTip');if(cur.kind==='single'||cur.kind==='visit'||!prevBmp){ed.style.display='none';tip.style.display='none';return}
   ed.className=cur.kind==='column'?'col':'';ed.style.display='block';tip.style.display='block';const c=$('edgeCanvas');const x=c.getContext('2d');
   if(cur.kind==='row'){c.width=Math.round(prevBmp.width*0.18);c.height=prevBmp.height;x.drawImage(prevBmp,prevBmp.width-c.width,0,c.width,c.height,0,0,c.width,c.height);tip.textContent='Move right until the packs at the edge line up with these'}
   else{c.width=prevBmp.width;c.height=Math.round(prevBmp.height*0.18);x.drawImage(prevBmp,0,prevBmp.height-c.height,c.width,c.height,0,0,c.width,c.height);tip.textContent='Move down until the shelf at the top lines up with this'}}
-async function grab(){if(imageCapture){try{return await imageCapture.takePhoto()}catch(e){}}
-  const v=$('video');const c=document.createElement('canvas');const s=track&&track.getSettings?track.getSettings():{};c.width=v.videoWidth||s.width;c.height=v.videoHeight||s.height;c.getContext('2d').drawImage(v,0,0,c.width,c.height);return await new Promise(r=>c.toBlob(r,'image/jpeg',0.92))}
-async function keepX(blob){const bmp=await loadBitmap(blob);const n=(V.extras||[]).length+1,name=fnameX(V,n);const sc=stamp(bmp,null,n);const out=await new Promise(r=>sc.toBlob(r,'image/jpeg',0.9));
-  const tc=document.createElement('canvas');tc.width=180;tc.height=240;const s=Math.max(180/bmp.width,240/bmp.height);tc.getContext('2d').drawImage(sc,(180-bmp.width*s)/2,(240-bmp.height*s)/2,bmp.width*s,bmp.height*s);const thumb=await new Promise(r=>tc.toBlob(r,'image/jpeg',0.7));
-  await dbPut(PH,name,out);await dbPut(TH,name,thumb);V.extras.push({name,n,w:bmp.width,h:bmp.height,sharp:'',tilt:'',ov:null,dup:null,level:'',crop:null,time:new Date().toISOString(),status:'local'});persist();updateTiles();toast('Saved · v'+pad2(n))}
-$('shutter').addEventListener('click',async()=>{if(moving){toast('Hold steady, then shoot');return}$('shutter').disabled=true;try{const blob=await grab();if(cur.kind==='visit')await keepX(blob);else await review(blob)}catch(e){toast('Could not take the photo: '+(e.message||e))}finally{$('shutter').disabled=false}});
-
-/* ---------- review after a shot ---------- */
 async function loadBitmap(blob){try{return await createImageBitmap(blob,{imageOrientation:'from-image'})}catch(e){return await createImageBitmap(blob)}}
+async function grab(){ // returns a bitmap that shows exactly what the frame showed
+  const v=$('video');const pa=v.videoWidth/v.videoHeight;let bmp=null;
+  if(imageCapture){try{bmp=await loadBitmap(await imageCapture.takePhoto())}catch(e){bmp=null}}
+  if(!bmp){const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);return await createImageBitmap(c)}
+  const ba=bmp.width/bmp.height;if(Math.abs(ba-pa)/pa>0.02){let w=bmp.width,h=bmp.height;if(ba>pa)w=Math.round(h*pa);else h=Math.round(w/pa);const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(bmp,(bmp.width-w)/2,(bmp.height-h)/2,w,h,0,0,w,h);return await createImageBitmap(c)}
+  return bmp}
+$('shutter').addEventListener('click',async()=>{if(moving){toast('Hold steady, then shoot');return}$('shutter').disabled=true;try{const bmp=await grab();if(cur.kind==='visit')await keepX(bmp);else await review(bmp)}catch(e){toast('Could not take the photo: '+(e.message||e))}finally{$('shutter').disabled=false}});
+
+/* ---------- review ---------- */
 function evaluate(m,g,nShot){const rows=[];let worst='good';const lvl=l=>{if(l==='bad')worst='bad';else if(l==='warn'&&worst!=='bad')worst='warn'};
   let l=m.sharp>=18?'good':m.sharp>=12?'warn':'bad';lvl(l);rows.push({l,name:'Sharpness',val:m.sharp.toFixed(1),note:l==='good'?'Fine detail is there.':l==='warn'?'A little soft. Usable; hold still if you retake.':'Blurred. Hold still, tap to focus, retake.'});
   const t=Math.abs(m.tilt);l=t<=3?'good':t<=7?'warn':'bad';lvl(l);rows.push({l,name:'Shelf lines level',val:m.tilt.toFixed(1)+'°',note:l==='good'?'Level.':'Shelves slope '+(m.tilt>0?'down to the right':'down to the left')+'. Face the bay squarely.'});
   l=m.w>=2000?'good':m.w>=1200?'warn':'bad';lvl(l);rows.push({l,name:'Resolution',val:m.w+'×'+m.h,note:l==='good'?'Full resolution.':'Lower than expected from this camera.'});
+  if((g.kind==='row'&&nShot===1)||g.kind==='single'){if(!m.postL){lvl('warn');rows.push({l:'warn',name:'Left end of the bay',val:'not seen',note:'No upright/post found at the left edge. If the bay continues to the left, retake with the post in frame.'})}
+    if(g.kind==='single'&&!m.postR){lvl('warn');rows.push({l:'warn',name:'Right end of the bay',val:'not seen',note:'No upright/post found at the right edge. Step back, or shoot it as a Row.'})}}
   if(g.kind!=='single'&&nShot>1){const o=m.ov;if(o===null){lvl('warn');rows.push({l:'warn',name:'Overlap with previous',val:'not checked',note:'Matching library not loaded (no signal when the app opened). Keep 2–3 packs of overlap by eye.'})}
     else if(!o.f){lvl('bad');rows.push({l:'bad',name:'Overlap with previous',val:'none found',note:'No shared part with the last photo. Step back so 2–3 packs repeat.'})}
     else{const p=Math.round(o.f*100);l=p>=65?'bad':p>=15&&p<=45?'good':'warn';lvl(l);rows.push({l,name:'Overlap with previous',val:p+'%',note:p>=65?'Almost the same frame. Move on along the shelf.':p<15?'Thin. Step back half a pace.':p>45?'More than needed; fine.':'Good for joining.'})}}
-  if(m.dup){lvl('bad');rows.push({l:'bad',name:'Duplicate',val:'group '+m.dup,note:'Looks like a photo already taken in this visit. Retake, or crop out the shared part so it is not counted twice.'})}
+  if(m.dup){lvl('bad');rows.push({l:'bad',name:'Duplicate',val:m.dup,note:'Looks like a shelf already photographed in this visit. Retake, or crop out the shared part so it is not counted twice.'})}
   return {rows,worst}}
-async function review(blob){
-  $('review').style.display='flex';$('verdict').className='verdict';$('verdict').textContent='Checking…';$('checks').innerHTML='';$('cropBox').style.display='none';$('cropHelp').hidden=true;crop=null;
+async function review(bmp){
+  $('review').style.display='flex';push('review');$('verdict').className='verdict';$('verdict').textContent='Checking…';$('checks').innerHTML='';$('cropBox').style.display='none';$('cropHelp').hidden=true;crop=null;pending={bmp};
   await new Promise(r=>setTimeout(r,30));
-  const bmp=await loadBitmap(blob);const G=toGray(bmp,480),G12=toGray(bmp,Math.min(1200,bmp.width));
-  const m={w:bmp.width,h:bmp.height,sharp:sharpness(G12),tilt:tiltDeg(G),ov:null,dup:null};
+  const G=toGray(bmp,480),G12=toGray(bmp,Math.min(1200,bmp.width));
+  const m={w:bmp.width,h:bmp.height,sharp:sharpness(G12),tilt:tiltDeg(G),ov:null,dup:null,postL:postEdge(G,'l'),postR:postEdge(G,'r')};
   const nShot=cur.kind==='single'?1:cur.shots.length+1;
   if(cur.kind!=='single'&&prevG)m.ov=overlap(prevG,G,cur.kind==='column'?'y':'x');
-  for(const g of V.groups){if(g===cur||!g.shots.length)continue;const k=g.shots[g.shots.length-1].gray;if(!k)continue;const o=overlap(k,G,'x');if(o&&o.f>=0.65){m.dup=g.n;break}}
+  for(const g of V.groups){if(g===cur||!g.shots.length)continue;const k=g.shots[g.shots.length-1].gray;if(!k)continue;const o=overlap(k,G,'x');if(o&&o.f>=0.65){m.dup=`${catName(g.cat)} group ${g.n}`;break}}
   const rc=$('revCanvas');const scale=Math.min(1,1000/bmp.width);rc.width=Math.round(bmp.width*scale);rc.height=Math.round(bmp.height*scale);rc.getContext('2d').drawImage(bmp,0,0,rc.width,rc.height);
   const ev=evaluate(m,cur,nShot);$('checks').innerHTML=ev.rows.map(r=>`<div class="check ${r.l}"><span class="dot"></span><div><b>${r.name}</b><small>${r.note}</small></div><span class="val">${r.val}</span></div>`).join('');
   const v=$('verdict');v.className='verdict '+ev.worst;v.textContent=ev.worst==='good'?'Good photo':ev.worst==='warn'?'Usable, could be better':'Retake this one';$('keepBtn').textContent=ev.worst==='bad'?'Keep anyway':'Keep';
-  pending={blob,bmp,G,m,ev,nShot}}
-$('retakeBtn').addEventListener('click',()=>{pending=null;$('review').style.display='none'});
-function stamp(bmp,g,n){ // burn the ownership stamp into the pixels; returns a canvas
-  const c=document.createElement('canvas');c.width=bmp.width;c.height=bmp.height;const x=c.getContext('2d');x.drawImage(bmp,0,0);
+  pending={bmp,G,m,ev,nShot}}
+$('retakeBtn').addEventListener('click',()=>{pending=null;back()});
+function stamp(bmp,g,n){const c=document.createElement('canvas');c.width=bmp.width;c.height=bmp.height;const x=c.getContext('2d');x.drawImage(bmp,0,0);
   const fs=Math.round(c.width*0.022),pad=Math.round(fs*0.6);x.textBaseline='alphabetic';x.lineJoin='round';
   function line(t,px,py,bold,align){x.font=`${bold?'700':'400'} ${fs}px "Public Sans",Arial,sans-serif`;x.textAlign=align||'left';x.lineWidth=Math.max(3,fs*0.14);x.strokeStyle='rgba(0,0,0,.9)';x.strokeText(t,px,py);x.fillStyle='#fff';x.fillText(t,px,py)}
-  const code=g?`g${pad2(g.n)} · ${g.kind} · s${pad2(n)}`:`VISIT PHOTO v${pad2(n)}`;
-  line(`${APP}  ·  ${fmtDT(new Date().toISOString())}  ·  ${V.store} ${V.name||''}`.trim(),pad,c.height-pad-fs*1.45,true);
-  line(`${gpsText(V.gps)}  ·  ${code}  ·  ${V.auditor}`,pad,c.height-pad,false);
-  line(code,c.width-pad,pad+fs,true,'right');
-  return c}
-$('keepBtn').addEventListener('click',async()=>{if(!pending)return;const {bmp,G,m,ev}=pending;$('keepBtn').disabled=true;
+  const code=g?`${g.cat} g${pad2(g.n)} · ${g.kind} · s${pad2(n)}`:`VISIT PHOTO v${pad2(n)}`;
+  line(`${APP}  ·  ${fmtDT(new Date(nowMs()).toISOString())}  ·  ${V.store} ${V.name||''}`.trim(),pad,c.height-pad-fs*1.45,true);
+  line(`WOD ${V.wod||'—'}  ·  ${gpsText(V.gps)}  ·  ${code}  ·  ${V.auditor}`,pad,c.height-pad,false);
+  line(code,c.width-pad,pad+fs,true,'right');return c}
+async function thumbOf(sc,w,h){const tc=document.createElement('canvas');tc.width=180;tc.height=240;const s=Math.max(180/w,240/h);tc.getContext('2d').drawImage(sc,(180-w*s)/2,(240-h*s)/2,w*s,h*s);return await new Promise(r=>tc.toBlob(r,'image/jpeg',0.7))}
+$('keepBtn').addEventListener('click',async()=>{if(!pending||!pending.ev)return;const {bmp,G,m,ev}=pending;$('keepBtn').disabled=true;
   try{
     if(cur.kind==='single'&&cur.shots.length){const old=cur.shots.pop();await dbDel(PH,old.name);await dbDel(TH,old.name)}
     const n=cur.shots.length+1,name=fname(V,cur,n);
-    const sc=stamp(bmp,cur,n);const blob=await new Promise(r=>sc.toBlob(r,'image/jpeg',0.92));
-    const tc=document.createElement('canvas');tc.width=180;tc.height=240;const s=Math.max(180/bmp.width,240/bmp.height);tc.getContext('2d').drawImage(sc,(180-bmp.width*s)/2,(240-bmp.height*s)/2,bmp.width*s,bmp.height*s);const thumb=await new Promise(r=>tc.toBlob(r,'image/jpeg',0.7));
-    const rec={name,n,w:m.w,h:m.h,sharp:+m.sharp.toFixed(1),tilt:+m.tilt.toFixed(1),ov:m.ov&&m.ov.f?+m.ov.f.toFixed(2):null,dup:m.dup,level:ev.worst,crop,time:new Date().toISOString(),status:'local',gray:{u8:G.u8,W:G.W,H:G.H}};
+    const sc=stamp(bmp,cur,n);const blob=await new Promise(r=>sc.toBlob(r,'image/jpeg',0.82));const thumb=await thumbOf(sc,bmp.width,bmp.height);
+    const rec={name,n,w:m.w,h:m.h,sharp:+m.sharp.toFixed(1),tilt:+m.tilt.toFixed(1),ov:m.ov&&m.ov.f?+m.ov.f.toFixed(2):null,dup:m.dup,postL:m.postL,postR:m.postR,level:ev.worst,crop,time:new Date(nowMs()).toISOString(),status:'local',gray:G};
+    cur.lens=curLens();if(cur.kind==='row'&&m.postR)cur.rightOk=true;
     await dbPut(PH,name,blob);await dbPut(TH,name,thumb);
-    cur.shots.push(rec);persist();prevG=G;prevBmp=bmp;pending=null;$('review').style.display='none';updateTiles();updateEdge();toast('Kept · s'+pad2(n));
-    if(cur.kind==='single'){closeCamera()}
+    cur.shots.push(rec);persist();prevG=G;prevBmp=bmp;pending=null;toast('Kept · s'+pad2(n));
+    if(cur.kind==='single'){back(2)}else{back();updateTiles();updateEdge()}
   }finally{$('keepBtn').disabled=false}});
-// strip the gray arrays before writing to localStorage
-const _persist=persist;persist=function(){save('aegis.visits',VISITS.map(v=>({...v,groups:v.groups.map(g=>({...g,shots:g.shots.map(s=>{const {gray,...r}=s;return r})}))})))};
+async function keepX(bmp){const n=(V.extras||[]).length+1,name=fnameX(V,n);
+  let b=bmp;const L=2400;if(Math.max(bmp.width,bmp.height)>L){const s=L/Math.max(bmp.width,bmp.height);const c=document.createElement('canvas');c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);b=c}
+  const sc=stamp(b,null,n);const out=await new Promise(r=>sc.toBlob(r,'image/jpeg',0.8));const thumb=await thumbOf(sc,sc.width,sc.height);
+  await dbPut(PH,name,out);await dbPut(TH,name,thumb);V.extras.push({name,n,w:sc.width,h:sc.height,sharp:'',tilt:'',ov:null,dup:null,level:'',crop:null,time:new Date(nowMs()).toISOString(),status:'local'});persist();updateTiles();toast('Saved · v'+pad2(n))}
 
-/* ---------- crop (shared by review and viewer) ---------- */
+/* ---------- crop ---------- */
 function cropLocks(g,n){const locks={l:false,r:false,t:false,b:false};if(g.kind==='row'){if(n>1)locks.l=true;locks.r=true}if(g.kind==='column'){if(n>1)locks.t=true;locks.b=true}return locks}
 function startCrop(wrapId,boxId,helpId,g,n,initial){crop=initial?{...initial}:{l:0,t:0,r:1,b:1};cropCtx={wrap:$(wrapId),box:$(boxId)};cropCtx.box.style.display='block';const locks=cropLocks(g,n);
   cropCtx.box.querySelectorAll('i').forEach(h=>h.classList.toggle('locked',locks[h.dataset.h]));
-  const help=$(helpId);help.hidden=false;help.textContent=g.kind==='single'?'Drag the handles to cut out the part already covered by another group. Leave everything else in.':'In a '+g.kind+' group only the outer edges can be trimmed; the sides that join the next photo stay.';drawCrop()}
+  const help=$(helpId);help.hidden=false;const first=V.groups.filter(x=>x.shots.length&&x!==g).length===0;
+  help.textContent=(first?'This is the first group with photos: there is nothing to avoid double-counting yet. Crop only if part of this shelf will be shot again in another group. ':'')+(g.kind==='single'?'Drag the handles to cut out the part already covered by another group. Leave everything else in.':'In a '+g.kind+' group only the outer edges can be trimmed; the sides that join the next photo stay.');drawCrop()}
 function drawCrop(){if(!cropCtx||!crop)return;const el=cropCtx.wrap.querySelector('canvas,img');const w=el.clientWidth,h=el.clientHeight;const b=cropCtx.box;b.style.left=crop.l*w+'px';b.style.top=crop.t*h+'px';b.style.width=(crop.r-crop.l)*w+'px';b.style.height=(crop.b-crop.t)*h+'px';
   const hs=b.querySelectorAll('i');hs[0].style.cssText='left:0;top:50%';hs[1].style.cssText='left:100%;top:50%';hs[2].style.cssText='left:50%;top:0';hs[3].style.cssText='left:50%;top:100%';hs.forEach(h=>{if(h.classList.contains('locked'))h.style.display='none'})}
 $('cropBtn').addEventListener('click',()=>startCrop('cropWrap','cropBox','cropHelp',cur,pending?pending.nShot:1,crop));
@@ -482,64 +602,77 @@ window.addEventListener('pointermove',e=>{if(!cropDrag||!crop||!cropCtx)return;c
   if(cropDrag==='l')crop.l=Math.min(x,crop.r-0.1);if(cropDrag==='r')crop.r=Math.max(x,crop.l+0.1);if(cropDrag==='t')crop.t=Math.min(y,crop.b-0.1);if(cropDrag==='b')crop.b=Math.max(y,crop.t+0.1);drawCrop()});
 window.addEventListener('pointerup',()=>{cropDrag=null});
 
-/* ---------- viewer: view / crop / delete / retake a kept photo ---------- */
-let vwUrl=null;
-async function openViewer(g,s){vw={g,s};$('viewer').style.display='flex';const isX=g.kind==='visit';$('vwTitle').textContent=isX?`Visit photo v${pad2(s.n)}`:`Group ${g.n} · s${pad2(s.n)}`;$('vwCrop').hidden=isX;$('vwRetake').hidden=isX;$('vwCropBox').style.display='none';$('vwCropHelp').hidden=true;$('vwActions').hidden=false;$('vwCropActions').hidden=true;
-  const b=await dbGet(PH,s.name)||await dbGet(TH,s.name);if(vwUrl)URL.revokeObjectURL(vwUrl);vwUrl=b?URL.createObjectURL(b):'';$('vwImg').src=vwUrl;
-  const c=s.crop;$('vwMeta').innerHTML=isX?`<b>File</b><span style="word-break:break-all">${s.name}</span><b>Upload</b><span>${s.status==='sent'?'in Drive':s.status==='failed'?'failed, will retry':'waiting for signal'}</span>`:`<b>File</b><span style="word-break:break-all">${s.name}</span><b>Checks</b><span>sharpness ${s.sharp} · level ${s.tilt}° · ${s.ov==null?'first in group':'overlap '+Math.round(s.ov*100)+'%'}${s.dup?' · duplicate of group '+s.dup:''} · <span class="pill ${s.level}">${s.level==='good'?'good':s.level==='warn'?'usable':'weak'}</span></span><b>Crop</b><span>${c?`left ${Math.round(c.l*100)}% · top ${Math.round(c.t*100)}% · right ${Math.round((1-c.r)*100)}% · bottom ${Math.round((1-c.b)*100)}% removed`:'none'}</span><b>Upload</b><span>${s.status==='sent'?'in Drive':s.status==='failed'?'failed, will retry':'on this phone, not sent yet'}</span>`;
-  const locked=s.status==='sent'||V.done;$('vwCrop').disabled=locked;$('vwDelete').disabled=locked;$('vwRetake').disabled=locked;
+/* ---------- viewer ---------- */
+function drawShade(s){const sh=$('vwShade');const c=s.crop;if(!c||vwCropped||crop){sh.style.display='none';return}const el=$('vwImg');const w=el.clientWidth,h=el.clientHeight;sh.style.display='block';sh.style.left=c.l*w+'px';sh.style.top=c.t*h+'px';sh.style.width=(c.r-c.l)*w+'px';sh.style.height=(c.b-c.t)*h+'px'}
+async function showVwImage(s){const b=await dbGet(PH,s.name)||await dbGet(TH,s.name);if(vwUrl)URL.revokeObjectURL(vwUrl);vwUrl='';if(!b){$('vwImg').src='';return}
+  if(vwCropped&&s.crop){const bmp=await loadBitmap(b);const c=s.crop;const w=Math.round((c.r-c.l)*bmp.width),h=Math.round((c.b-c.t)*bmp.height);const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(bmp,c.l*bmp.width,c.t*bmp.height,w,h,0,0,w,h);const nb=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.85));vwUrl=URL.createObjectURL(nb)}else vwUrl=URL.createObjectURL(b);
+  const im=$('vwImg');await new Promise(r=>{im.onload=r;im.onerror=r;im.src=vwUrl});drawShade(s)}
+async function openViewer(g,s,noPush){vw={g,s};vwCropped=false;crop=null;cropCtx=null;$('viewer').style.display='flex';if(!noPush)push('viewer');const isX=g.kind==='visit';$('vwTitle').textContent=isX?`Visit photo v${pad2(s.n)}`:`${catName(g.cat)} · Group ${g.n} · s${pad2(s.n)}`;$('vwCrop').hidden=isX;$('vwRetake').hidden=isX;$('vwCropBox').style.display='none';$('vwCropHelp').hidden=true;$('vwActions').hidden=false;$('vwCropActions').hidden=true;
+  $('vwToggle').hidden=!s.crop;$('vwToggle').textContent='Show cropped result';await showVwImage(s);
+  const c=s.crop;$('vwMeta').innerHTML=isX?`<b>File</b><span style="word-break:break-all">${s.name}</span><b>Upload</b><span>${s.status==='sent'?'in Drive':s.status==='failed'?'failed, will retry':'waiting for signal'}</span>`:`<b>File</b><span style="word-break:break-all">${s.name}</span><b>Checks</b><span>sharpness ${s.sharp} · level ${s.tilt}° · ${s.ov==null?'first in group':'overlap '+Math.round(s.ov*100)+'%'}${s.dup?' · duplicate of '+s.dup:''} · <span class="pill ${s.level}">${s.level==='good'?'good':s.level==='warn'?'usable':'weak'}</span></span><b>Crop</b><span>${c?`left ${Math.round(c.l*100)}% · top ${Math.round(c.t*100)}% · right ${Math.round((1-c.r)*100)}% · bottom ${Math.round((1-c.b)*100)}% removed. The grey part is not read by the engine; the full photo is kept.`:'none'}</span><b>Upload</b><span>${s.status==='sent'?'in Drive':s.status==='failed'?'failed, will retry':'on this phone, not sent yet'}</span>`;
+  const locked=s.status==='sent';$('vwCrop').disabled=locked;$('vwDelete').disabled=locked;$('vwRetake').disabled=locked;
   if(locked)$('vwMeta').innerHTML+='<b>Note</b><span>Already uploaded: cannot be changed from the phone. Ask QC to adjust it in the register.</span>'}
-$('vwClose').addEventListener('click',()=>{$('viewer').style.display='none';crop=null;cropCtx=null;vw=null;renderGroups()});
-$('vwCrop').addEventListener('click',()=>{if(!vw)return;$('vwActions').hidden=true;$('vwCropActions').hidden=false;startCrop('vwWrap','vwCropBox','vwCropHelp',vw.g,vw.s.n,vw.s.crop)});
-$('vwCropCancel').addEventListener('click',()=>{$('vwCropBox').style.display='none';$('vwCropHelp').hidden=true;$('vwActions').hidden=false;$('vwCropActions').hidden=true;crop=null;cropCtx=null});
-$('vwCropClear').addEventListener('click',()=>{if(!vw)return;vw.s.crop=null;persist();$('vwCropCancel').click();openViewer(vw.g,vw.s);toast('Crop removed')});
-$('vwCropSave').addEventListener('click',()=>{if(!vw||!crop)return;const c=crop;const isFull=c.l<0.005&&c.t<0.005&&c.r>0.995&&c.b>0.995;vw.s.crop=isFull?null:{l:+c.l.toFixed(3),t:+c.t.toFixed(3),r:+c.r.toFixed(3),b:+c.b.toFixed(3)};persist();$('vwCropCancel').click();openViewer(vw.g,vw.s);toast(isFull?'No crop':'Crop saved')});
+$('vwToggle').addEventListener('click',async()=>{if(!vw)return;vwCropped=!vwCropped;$('vwToggle').textContent=vwCropped?'Show full photo':'Show cropped result';await showVwImage(vw.s)});
+function doCloseViewer(){$('viewer').style.display='none';crop=null;cropCtx=null;const g=vw&&vw.g;vw=null;if(vwUrl){URL.revokeObjectURL(vwUrl);vwUrl=null}if(g&&g.kind==='visit')renderX();else renderCat()}
+$('vwClose').addEventListener('click',()=>back());
+$('vwCrop').addEventListener('click',async()=>{if(!vw)return;vwCropped=false;await showVwImage(vw.s);$('vwActions').hidden=true;$('vwCropActions').hidden=false;startCrop('vwWrap','vwCropBox','vwCropHelp',vw.g,vw.s.n,vw.s.crop);$('vwShade').style.display='none'});
+$('vwCropCancel').addEventListener('click',()=>{$('vwCropBox').style.display='none';$('vwCropHelp').hidden=true;$('vwActions').hidden=false;$('vwCropActions').hidden=true;crop=null;cropCtx=null;if(vw)drawShade(vw.s)});
+$('vwCropClear').addEventListener('click',()=>{if(!vw)return;vw.s.crop=null;persist();$('vwCropCancel').click();openViewer(vw.g,vw.s,true);toast('Crop removed')});
+$('vwCropSave').addEventListener('click',()=>{if(!vw||!crop)return;const c=crop;const isFull=c.l<0.005&&c.t<0.005&&c.r>0.995&&c.b>0.995;vw.s.crop=isFull?null:{l:+c.l.toFixed(3),t:+c.t.toFixed(3),r:+c.r.toFixed(3),b:+c.b.toFixed(3)};persist();$('vwCropCancel').click();openViewer(vw.g,vw.s,true);toast(isFull?'No crop':'Crop saved: the grey part will not be read')});
 async function deleteShot(g,s){await dbDel(PH,s.name);await dbDel(TH,s.name);
   if(g.kind==='visit'){V.extras=V.extras.filter(x=>x!==s);for(const x of V.extras){const want=V.extras.indexOf(x)+1;if(x.n!==want){const nn=fnameX(V,want);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,nn,b);if(t)await dbPut(TH,nn,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=nn;x.n=want}}persist();return}
   g.shots=g.shots.filter(x=>x!==s);
-  // renumber the shots after it so the group stays s01..sNN
-  for(const x of g.shots){const want=g.shots.indexOf(x)+1;if(x.n!==want){const newName=fname(V,g,want);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,newName,b);if(t)await dbPut(TH,newName,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=newName;x.n=want}}
+  for(const x of g.shots){const want=g.shots.indexOf(x)+1;if(x.n!==want){const nn=fname(V,g,want);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,nn,b);if(t)await dbPut(TH,nn,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=nn;x.n=want}}
   if(!g.shots.length){V.groups=V.groups.filter(x=>x!==g)}persist()}
 $('vwDelete').addEventListener('click',async()=>{if(!vw)return;const b=$('vwDelete');if(b.dataset.a!=='1'){b.dataset.a='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.a='';b.textContent='Delete'},3000);return}
-  b.dataset.a='';b.textContent='Delete';const {g,s}=vw;await deleteShot(g,s);$('vwClose').click();toast('Photo deleted')});
-$('vwRetake').addEventListener('click',async()=>{if(!vw)return;const {g,s}=vw;await deleteShot(g,s);$('viewer').style.display='none';vw=null;
+  b.dataset.a='';b.textContent='Delete';const {g,s}=vw;await deleteShot(g,s);toast('Photo deleted');back()});
+$('vwRetake').addEventListener('click',async()=>{if(!vw)return;const {g,s}=vw;await deleteShot(g,s);$('viewer').style.display='none';vw=null;depth--;history.replaceState({aegis:'cat',d:depth},'');
   if(!V.groups.includes(g)){V.groups.push(g);g.shots=[]}cur=g;prevG=null;prevBmp=null;const last=g.shots[g.shots.length-1];if(last&&last.gray){prevG=last.gray;const tb=await dbGet(PH,last.name);if(tb)prevBmp=await loadBitmap(tb)}
   await openCamera()});
 
-/* ---------- upload ---------- */
-let pumping=false;
+/* ---------- upload queue (one at a time; a tap while running joins the queue) ---------- */
+const Q={running:false,again:false,quiet:true,v:null};
 function b64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(blob)})}
-function manifestCSV(v){const lines=['visit_id,file,store_code,store_name,category,auditor,phone,date,time,visit_seq,gps_lat,gps_lng,gps_acc_m,place_name,place_lat,place_lng,place_src,place_dist_m,group,kind,type,added_later,shot,width,height,sharpness,tilt_deg,overlap_pct,duplicate_of_group,verdict,crop_l,crop_t,crop_r,crop_b,time_taken'];
-  for(const g of v.groups)for(const s of g.shots){const c=s.crop||{};lines.push([v.id,s.name,v.store,JSON.stringify(v.name||''),v.cat,JSON.stringify(v.auditor),v.device,v.date,v.hhmm,v.seq,v.gps?v.gps.lat.toFixed(6):'',v.gps?v.gps.lng.toFixed(6):'',v.gps?Math.round(v.gps.acc):'',JSON.stringify(v.place?v.place.name:''),v.place?v.place.lat:'',v.place?v.place.lng:'',v.place?v.place.src:'',v.place&&v.gps?distM(v.gps,v.place):'',g.n,g.kind,g.type,g.addedLater?1:0,s.n,s.w,s.h,s.sharp,s.tilt,s.ov==null?'':Math.round(s.ov*100),s.dup||'',s.level,c.l??'',c.t??'',c.r??'',c.b??'',s.time].join(','))}return lines.join('\n')}
-function visitFields(v){return {visitId:v.id,store:v.store,storeName:v.name||'',category:v.cat,auditor:v.auditor,device:v.device,date:v.date,time:v.hhmm,seq:v.seq,folder:folderName(v),gpsLat:v.gps?v.gps.lat:'',gpsLng:v.gps?v.gps.lng:'',gpsAcc:v.gps?Math.round(v.gps.acc):'',placeName:v.place?v.place.name:'',placeLat:v.place?v.place.lat:'',placeLng:v.place?v.place.lng:'',placeSrc:v.place?v.place.src:'',placeDistM:v.place&&v.gps?distM(v.gps,v.place):'',groups:v.groups.length,photos:v.groups.reduce((a,g)=>a+g.shots.length,0),visitPhotos:(v.extras||[]).length,started:v.started,appVersion:VERSION}}
+function manifestCSV(v){const lines=['visit_id,file,store_code,store_name,auditor,wod,phone,date,time,visit_seq,clock_offset_s,gps_lat,gps_lng,gps_acc_m,place_name,place_lat,place_lng,place_src,place_dist_m,category,group,kind,type,lens,added_later,shot,width,height,sharpness,tilt_deg,overlap_pct,post_left,post_right,duplicate_of,verdict,crop_l,crop_t,crop_r,crop_b,time_taken'];
+  const vp=[v.store,JSON.stringify(v.name||''),JSON.stringify(v.auditor),v.wod||'',v.device,v.date,v.hhmm,v.seq,v.clockOffsetS||0,v.gps?v.gps.lat.toFixed(6):'',v.gps?v.gps.lng.toFixed(6):'',v.gps?Math.round(v.gps.acc):'',JSON.stringify(v.place?v.place.name:''),v.place?v.place.lat:'',v.place?v.place.lng:'',v.place?v.place.src:'',v.place&&v.gps?distM(v.gps,v.place):''];
+  for(const g of v.groups)for(const s of g.shots){const c=s.crop||{};lines.push([v.id,s.name,...vp,g.cat,g.n,g.kind,g.type,g.lens||'',g.addedLater?1:0,s.n,s.w,s.h,s.sharp,s.tilt,s.ov==null?'':Math.round(s.ov*100),s.postL?1:0,s.postR?1:0,JSON.stringify(s.dup||''),s.level,c.l??'',c.t??'',c.r??'',c.b??'',s.time].join(','))}
+  for(const s of (v.extras||[]))lines.push([v.id,s.name,...vp,'VISIT','','visit','visit','',0,s.n,s.w,s.h,'','','','','','','','','','','',s.time].join(','));return lines.join('\n')}
+function visitFields(v){return {visitId:v.id,store:v.store,storeName:v.name||'',auditor:v.auditor,wod:v.wod||'',device:v.device,date:v.date,time:v.hhmm,seq:v.seq,folder:folderName(v),started:v.started,clockOffsetS:v.clockOffsetS||0,clockChecked:v.clockChecked?1:0,gpsLat:v.gps?v.gps.lat:'',gpsLng:v.gps?v.gps.lng:'',gpsAcc:v.gps?Math.round(v.gps.acc):'',placeName:v.place?v.place.name:'',placeLat:v.place?v.place.lat:'',placeLng:v.place?v.place.lng:'',placeSrc:v.place?v.place.src:'',placeDistM:v.place&&v.gps?distM(v.gps,v.place):'',categories:catsCovered(v).join(', '),groups:v.groups.length,photos:shelfShots(v).length,visitPhotos:(v.extras||[]).length,appVersion:VERSION}}
 async function post(body){const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify(body)});return await r.json()}
-async function uploadVisit(v,quiet){if(pumping)return;if(!CFG.url){if(!quiet)toast('Set the upload link in Settings');return}pumping=true;const st=$('upStatus');st.className='status';
-  try{const all=shots(v);const todo=all.filter(s=>s.status!=='sent');let done=all.length-todo.length,failed=0,stop=false;
-    const units=quiet?[XG(v)]:[XG(v),...v.groups];
-    for(const g of units)for(const s of g.shots){if(s.status==='sent'||stop)continue;
-      if(!navigator.onLine){st.className='status bad';st.textContent=`No signal. ${all.length-done} photo(s) waiting; upload resumes when the phone is back online.`;stop=true;break}
-      s.status='uploading';renderGroups();st.textContent=`Uploading photo ${done+1} of ${all.length}…`;
-      const blob=await dbGet(PH,s.name);if(!blob){s.status='failed';failed++;st.className='status bad';st.textContent=`${s.name} is no longer on this phone.`;continue}
-      try{const j=await post({token:CFG.token,kind:'photo',filename:s.name,mime:'image/jpeg',data:await b64(blob),...visitFields(v),group:g.kind==='visit'?'visit':g.n,groupType:g.kind+'/'+g.type,shot:s.n,sharpness:s.sharp,tilt:s.tilt,overlap:s.ov==null?'':Math.round(s.ov*100),verdict:s.level,crop:s.crop?JSON.stringify(s.crop):'',dup:s.dup||''});
-        if(j.ok){s.status='sent';s.sentAt=new Date().toISOString();done++}else{s.status='failed';failed++;st.className='status bad';st.textContent=j.error==='bad token'?'Upload refused: the token phrase does not match the script. Check Settings.':'Upload refused: '+(j.error||'unknown error');stop=j.error==='bad token'}}
-      catch(e){s.status='failed';failed++;st.className='status bad';st.textContent='Could not reach the upload link (no signal, or the link changed). Will retry.';stop=true}
-      persist();renderGroups()}
-    if(quiet){renderGroups();return}
-    if(!stop&&shots(v).every(s=>s.status==='sent')){st.textContent='Sending the visit record…';
-      try{const j=await post({token:CFG.token,kind:'manifest',filename:`${v.store}_${v.cat}_${v.date.replace(/-/g,'')}_${v.hhmm}_manifest.csv`,text:manifestCSV(v),...visitFields(v)});if(j.ok){v.manifestSent=true;persist();st.textContent=`All ${all.length} photos and the visit record are in Drive.`;toast('Upload complete')}else{st.className='status bad';st.textContent='Photos are in; the visit record was refused: '+(j.error||'')}}
-      catch(e){st.className='status bad';st.textContent='Photos are in; the visit record could not be sent yet. Tap Upload again when there is signal.'}}
-    else if(!stop&&failed){st.className='status bad';st.textContent=`${failed} photo(s) failed. Tap Upload to retry.`}
-    renderGroups()}
-  finally{pumping=false}}
-$('uploadBtn').addEventListener('click',()=>uploadVisit(V));
-function resumeIfNeeded(){if(!V||!navigator.onLine)return;if((V.extras||[]).some(s=>s.status!=='sent'))uploadVisit(V,true);else if(!V.done&&shots(V).some(s=>s.status==='failed'||s.status==='uploading'))uploadVisit(V)}
+function setStatus(t,bad){const st=$('upStatus');st.className='status'+(bad?' bad':'');st.textContent=t}
+function enqueue(v,quiet){if(!CFG.url){if(!quiet)toast('Set the upload link in Settings');return}
+  if(Q.running){Q.again=true;if(!quiet)Q.quiet=false;if(!quiet)toast('Upload already running; your shelf photos are queued behind it.');return}
+  Q.running=true;Q.quiet=!!quiet;Q.v=v;if(V===v)renderVisit();runQueue().catch(e=>setStatus('Upload stopped: '+(e.message||e),true)).finally(()=>{Q.running=false;if(V===v)renderVisit();if(Q.again){const q=Q.quiet;Q.again=false;enqueue(v,q)}})}
+async function sendOne(v,g,s){const blob=await dbGet(PH,s.name);if(!blob){s.status='failed';return {ok:false,error:'file missing on phone'}}
+  try{const j=await post({token:CFG.token,kind:'photo',filename:s.name,mime:'image/jpeg',data:await b64(blob),...visitFields(v),category:g.cat||'VISIT',group:g.kind==='visit'?'visit':g.n,groupType:g.kind+'/'+g.type,lens:g.lens||'',shot:s.n,sharpness:s.sharp,tilt:s.tilt,overlap:s.ov==null?'':Math.round(s.ov*100),verdict:s.level,crop:s.crop?JSON.stringify(s.crop):'',dup:s.dup||''});
+    if(j.ok){s.status='sent';s.sentAt=new Date().toISOString()}else s.status='failed';return j}
+  catch(e){s.status='failed';return {ok:false,net:true,error:String(e&&e.message||e)}}}
+async function runQueue(){const v=Q.v;const units=[[XG(v),true],...v.groups.map(g=>[g,false])];
+  const todo=[];for(const [g,isX] of units)for(const s of g.shots)if(s.status!=='sent'&&(!Q.quiet||isX))todo.push([g,s]);
+  const all=shots(v);let sent=all.filter(s=>s.status==='sent').length;let stop=null;
+  for(let i=0;i<todo.length&&!stop;i+=2){const batch=todo.slice(i,i+2);
+    if(!navigator.onLine){stop='No signal. Upload resumes when the phone is back online.';break}
+    for(const [,s] of batch)s.status='uploading';if(V===v)renderVisit();setStatus(`Uploading photo ${sent+1}${batch.length>1?'–'+(sent+batch.length):''} of ${all.length}…`);
+    const rs=await Promise.all(batch.map(([g,s])=>sendOne(v,g,s)));
+    for(const r of rs){if(r.ok)sent++;else if(r.error==='bad token')stop='Upload refused: the token phrase does not match the script. Check Settings.';else if(r.net)stop='Could not reach the upload link (weak signal, or the link changed). Will retry.';else stop='Upload refused: '+(r.error||'unknown error')}
+    persist();if(V===v)renderVisit()}
+  if(stop){setStatus(stop,true);return}
+  if(all.every(s=>s.status==='sent')){setStatus('Sending the visit record…');
+    try{const j=await post({token:CFG.token,kind:'manifest',filename:`${base(v)}_manifest.csv`,text:manifestCSV(v),...visitFields(v)});if(j.ok){v.manifestSent=true;persist();setStatus(`All ${all.length} photos and the visit record are in Drive.`);toast('Upload complete')}else setStatus('Photos are in; the visit record was refused: '+(j.error||''),true)}
+    catch(e){setStatus('Photos are in; the visit record could not be sent yet. Tap Upload again when there is signal.',true)}}
+  else if(!Q.quiet){const left=all.filter(s=>s.status!=='sent').length;setStatus(`${left} photo${left>1?'s':''} still to send. Tap Upload to retry.`,true)}
+  else{const left=all.filter(s=>s.status!=='sent').length;setStatus(`Visit photos sent. ${left} shelf photo${left>1?'s':''} waiting for Upload visit.`)}}
+$('uploadBtn').addEventListener('click',()=>{if(!V)return;V.manifestSent=false;enqueue(V,false)});
+function resumeIfNeeded(){if(!V||!navigator.onLine||Q.running)return;if((V.extras||[]).some(s=>s.status!=='sent'))enqueue(V,true);else if(shots(V).some(s=>s.status==='failed'||s.status==='uploading'))enqueue(V,false)}
 window.addEventListener('online',resumeIfNeeded);document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeIfNeeded()});
 
 /* ---------- housekeeping ---------- */
 async function purgeOld(){const cutoff=Date.now()-KEEP_DAYS*864e5;for(const v of VISITS)for(const s of shots(v)){if(s.status==='sent'&&s.sentAt&&new Date(s.sentAt).getTime()<cutoff&&!s.purged){await dbDel(PH,s.name);s.purged=true}}persist()}
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
-(function boot(){renderCfg();VISITS=load('aegis.visits',[]);for(const v of VISITS){v.extras=v.extras||[];for(const s of shots(v))if(s.status==='uploading')s.status='failed'}
-  renderVisits();if(!CFG.url){$('settings').hidden=false}ctx();purgeOld()})();
+(function boot(){history.replaceState({aegis:'main',d:0},'');renderCfg();CLOCK=Object.assign(CLOCK,load('aegis.clock',{}));VISITS=load('aegis.visits',[]);
+  for(const v of VISITS){v.extras=v.extras||[];for(const g of v.groups){if(!g.cat)g.cat=v.cat||'POWBEV'}for(const s of shots(v))if(s.status==='uploading')s.status='failed'}
+  const w=load('aegis.wod',null);if(w&&w.date===parts(nowMs()).date)$('wod').value=w.word;
+  renderVisits();if(!CFG.url){$('settings').hidden=false}ctx();showClock();checkClock();purgeOld()})();
 })();
 </script>
 </body>
