@@ -12,6 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Public+Sans:wght@400;600;700&display=swap">
 <style>
 :root{--bg:#F6F3EC;--card:#FFFDF8;--ink:#12202B;--muted:#5A6873;--line:#D9D2C3;--accent:#F26B21;--accent-ink:#B8460B;--good:#1F7A4D;--warn:#B8860B;--bad:#B3261E;--good-bg:#E6F3EB;--warn-bg:#FBF1D6;--bad-bg:#FBE4E1;--display:'Oswald',Arial Narrow,Arial,sans-serif;--body:'Public Sans',system-ui,Arial,sans-serif}
@@ -102,6 +103,9 @@ button[disabled]{opacity:.45;cursor:default}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}.kv b{color:var(--muted);font-weight:600}
 .steps{display:grid;grid-template-columns:1fr 1fr;gap:8px}.step{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:13px}.step b{display:block;font-family:var(--display);font-size:17px;color:var(--accent-ink)}
 [hidden]{display:none!important}
+.pres{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);font-size:14px;cursor:pointer}.pres b{display:block}.pres.on{border-color:var(--accent);background:#FFF1E8}
+#map{height:58vh;min-height:300px;border-radius:10px;border:1px solid var(--line)}
+.xcard .thumbrow img{border-color:var(--line)}
 </style>
 </head>
 <body>
@@ -133,6 +137,10 @@ button[disabled]{opacity:.45;cursor:default}
       <label>Store name<input type="text" id="storeName" placeholder="e.g. Prince Sibonga" autocomplete="off"></label>
     </div>
     <p class="muted" id="sameDayNote" hidden></p>
+    <label>Find the store on the map (optional)<div style="display:flex;gap:8px"><input type="search" id="placeQ" placeholder="e.g. Puregold Taytay" autocomplete="off"><button class="small" id="placeSearch" style="flex:none">Search</button></div></label>
+    <div class="vlist" id="placeResults"></div>
+    <p class="muted" id="placePicked" hidden></p>
+    <div class="row"><button class="ghost small" id="pinBtn">Pin the location on a map</button><button class="ghost small" id="placeClear" hidden>Clear place</button></div>
     <button class="primary" id="startBtn">Start visit</button>
     <p class="muted">Location is recorded with each visit and stamped on every photo. Allow it when the phone asks.</p>
   </div>
@@ -170,6 +178,12 @@ button[disabled]{opacity:.45;cursor:default}
     <div style="display:flex;justify-content:space-between;align-items:baseline"><h3>Photos in this visit</h3><span class="muted" id="visitCount">0 photos</span></div>
     <p class="muted">Tap a photo to view, crop, delete or retake it. Nothing is sent until you tap Upload.</p>
     <div class="vlist" id="groups"></div>
+  </div>
+  <div class="card xcard">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><h3>Visit photos</h3><span class="muted" id="xCount">0 photos</span></div>
+    <p class="muted">Anything else worth keeping from this visit: storefront, signage, competitor displays, price tags. No checks, not read by the engine; uploads on its own when there is signal.</p>
+    <div class="thumbrow" id="xThumbs"></div>
+    <button class="ghost" id="openXCam">Take visit photos</button>
   </div>
   <div class="card">
     <h3>Upload</h3>
@@ -221,11 +235,23 @@ button[disabled]{opacity:.45;cursor:default}
   </div>
 </div>
 
+<!-- MAP PIN -->
+<div id="mapOv" class="overlay">
+  <div class="body">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2>Pin the store</h2><button class="ghost small" id="mapCancel">Cancel</button></div>
+    <p class="muted">Drag the map so the pin sits on the store, or tap the store. Zoom in for accuracy.</p>
+    <div id="map"></div>
+    <p class="muted" id="mapTxt"></p>
+    <button class="primary" id="mapSave">Use this pin</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsfeat/0.0.8/jsfeat-min.js"></script>
 <script>
 (function(){
 'use strict';
-const APP='BW Aegis App', VERSION='v2';
+const APP='BW Aegis App', VERSION='v2.1';
 const $=id=>document.getElementById(id);
 const CFG={url:'',token:'',auditors:['Auditor 1','Auditor 2']};
 let VISITS=[];            // all visits on this phone (metadata only)
@@ -235,6 +261,7 @@ let stream=null,track=null,imageCapture=null;
 let prevG=null,prevBmp=null,levelDeg=0,moving=false,motionOn=false;
 let pending=null,crop=null,cropDrag=null,cropCtx=null;
 let vw=null;              // {g,s} in viewer
+let PLACE=null,lastGPS=null,map=null,marker=null;   // place chosen for the next visit
 const DBN='aegis-capture-v2',PH='photos',TH='thumbs',KEEP_DAYS=7;
 const DEVICE=(function(){try{let d=localStorage.getItem('aegis.device');if(!d){d=Math.random().toString(36).slice(2,8).toUpperCase();localStorage.setItem('aegis.device',d)}return d}catch(e){return 'XXXXXX'}})();
 
@@ -288,11 +315,15 @@ function gpsText(g){if(!g)return 'no GPS';const la=Math.abs(g.lat).toFixed(4)+(g
 function getGPS(){return new Promise(res=>{if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy}),()=>res(null),{enableHighAccuracy:true,timeout:12000,maximumAge:120000})})}
 function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),2800)}
 function ctx(){$('ctx').textContent=V?`${V.store} · ${V.cat} · ${V.groups.length} group${V.groups.length===1?'':'s'}`:'no visit open'}
-function shots(v){return v.groups.flatMap(g=>g.shots)}
+function shots(v){return v.groups.flatMap(g=>g.shots).concat(v.extras||[])}
 function vStatus(v){const ss=shots(v);if(!ss.length)return {t:'empty',l:'off'};const sent=ss.filter(s=>s.status==='sent').length;if(v.done)return {t:'finished',l:'good'};if(sent===ss.length&&v.manifestSent)return {t:'uploaded',l:'good'};if(sent)return {t:`${ss.length-sent} waiting`,l:'warn'};return {t:'not uploaded',l:'bad'}}
 function fname(v,g,n){return `${v.store}_${v.cat}_${v.date.replace(/-/g,'')}_${v.hhmm}_g${pad2(g.n)}_${g.kind}_${g.type}_s${pad2(n)}.jpg`}
 function folderName(v){return `${v.date.replace(/-/g,'')}-${v.hhmm} ${v.auditor}`}
-const typeName={shelf:'Regular shelf',rack:'Tang rack',secondary:'Secondary display'};
+const typeName={shelf:'Regular shelf',rack:'Tang rack',secondary:'Secondary display',visit:'Visit photos'};
+function distM(a,b){if(!a||!b)return null;const R=6371000,toR=x=>x*Math.PI/180;const dLa=toR(b.lat-a.lat),dLo=toR(b.lng-a.lng);const s=Math.sin(dLa/2)**2+Math.cos(toR(a.lat))*Math.cos(toR(b.lat))*Math.sin(dLo/2)**2;return Math.round(2*R*Math.asin(Math.sqrt(s)))}
+function placeText(v){if(!v.place)return 'not set';const d=distM(v.gps,v.place);return `${v.place.name}${v.place.src==='pin'?' (pinned)':''}${d==null?'':' · '+(d>=1000?(d/1000).toFixed(1)+' km':d+' m')+' from phone'}`}
+function fnameX(v,n){return `${v.store}_${v.cat}_${v.date.replace(/-/g,'')}_${v.hhmm}_v${pad2(n)}.jpg`}
+function XG(v){return {n:0,kind:'visit',type:'visit',shots:v.extras||(v.extras=[])}}
 
 /* ---------- start screen ---------- */
 function renderVisits(){const el=$('visitsList');el.innerHTML='';const list=[...VISITS].sort((a,b)=>b.started<a.started?-1:1);$('visitsCount').textContent=list.length?`${list.length}`:'';
@@ -302,17 +333,37 @@ function renderVisits(){const el=$('visitsList');el.innerHTML='';const list=[...
     d.addEventListener('click',()=>openVisit(v));el.appendChild(d)})}
 $('storeCode').addEventListener('input',()=>{const code=$('storeCode').value.trim().toUpperCase();const {date}=nowParts();const same=VISITS.filter(v=>v.store===code&&v.date===date);const n=$('sameDayNote');
   if(code&&same.length){n.hidden=false;n.innerHTML=`${same.length} visit${same.length>1?'s':''} for <b>${code}</b> already today on this phone. Starting again creates <b>visit ${same.length+1}</b> in its own folder; or <button class="ghost small" id="contBtn">continue the last one</button>.`;$('contBtn').addEventListener('click',()=>openVisit(same[same.length-1]));const last=same[same.length-1];if(!$('storeName').value)$('storeName').value=last.name||''}else n.hidden=true});
+function showPlace(){const p=$('placePicked');if(PLACE){p.hidden=false;p.innerHTML=`Place: <b>${PLACE.name}</b>${PLACE.src==='pin'?' (pinned on map)':''}`;$('placeClear').hidden=false;if(!$('storeName').value&&PLACE.src!=='pin')$('storeName').value=PLACE.name.split(',')[0]}else{p.hidden=true;$('placeClear').hidden=true}}
+$('placeClear').addEventListener('click',()=>{PLACE=null;$('placeResults').innerHTML='';showPlace()});
+$('placeSearch').addEventListener('click',async()=>{const q=$('placeQ').value.trim();if(!q)return;const res=$('placeResults');res.innerHTML='<p class="muted">Searching…</p>';
+  if(!lastGPS)lastGPS=await getGPS();let url='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=ph&q='+encodeURIComponent(q);
+  if(lastGPS)url+=`&viewbox=${lastGPS.lng-0.4},${lastGPS.lat+0.4},${lastGPS.lng+0.4},${lastGPS.lat-0.4}`;
+  try{const r=await fetch(url,{headers:{'Accept':'application/json'}});const j=await r.json();res.innerHTML='';if(!j.length){res.innerHTML='<p class="muted">No match. Try a shorter name or the town, or pin the location on the map.</p>';return}
+    j.forEach(it=>{const d=document.createElement('div');d.className='pres';const nm=it.name||it.display_name.split(',')[0];const la=+it.lat,lo=+it.lon;const dd=lastGPS?distM(lastGPS,{lat:la,lng:lo}):null;
+      d.innerHTML=`<b>${nm}</b><span class="muted">${it.display_name.replace(nm+', ','')}${dd==null?'':' · '+(dd>=1000?(dd/1000).toFixed(1)+' km':dd+' m')+' away'}</span>`;
+      d.addEventListener('click',()=>{PLACE={name:nm,full:it.display_name,lat:la,lng:lo,src:'search'};res.querySelectorAll('.pres').forEach(x=>x.classList.remove('on'));d.classList.add('on');showPlace()});res.appendChild(d)})}
+  catch(e){res.innerHTML='<p class="muted">Search needs signal. You can pin the location on the map instead (map also needs signal) or just continue; the phone GPS is still recorded.</p>'}});
+$('pinBtn').addEventListener('click',async()=>{if(typeof L==='undefined'){toast('Map library did not load (no signal when the app opened).');return}
+  $('mapOv').style.display='flex';if(!lastGPS)lastGPS=await getGPS();const c=PLACE?[PLACE.lat,PLACE.lng]:lastGPS?[lastGPS.lat,lastGPS.lng]:[14.5995,120.9842];
+  if(!map){map=L.map('map',{zoomControl:true}).setView(c,PLACE||lastGPS?17:12);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+    const pin=L.divIcon({className:'',html:'<div style="width:26px;height:26px;background:#F26B21;border:3px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>',iconSize:[26,26],iconAnchor:[13,26]});marker=L.marker(c,{draggable:true,icon:pin}).addTo(map);
+    const upd=()=>{const p=marker.getLatLng();$('mapTxt').textContent=`Pin at ${gpsText({lat:p.lat,lng:p.lng,acc:0}).replace(' ±0 m','')}${lastGPS?' · '+distM(lastGPS,{lat:p.lat,lng:p.lng})+' m from the phone':''}`};
+    marker.on('dragend',upd);map.on('click',e=>{marker.setLatLng(e.latlng);upd()});map.on('moveend',()=>{});upd();if(lastGPS)L.circle([lastGPS.lat,lastGPS.lng],{radius:Math.max(10,lastGPS.acc),color:'#1F7A4D',weight:1}).addTo(map).bindTooltip('phone GPS')}
+  else{map.setView(c,17);marker.setLatLng(c)}setTimeout(()=>map.invalidateSize(),200)});
+$('mapCancel').addEventListener('click',()=>{$('mapOv').style.display='none'});
+$('mapSave').addEventListener('click',()=>{const p=marker.getLatLng();PLACE={name:$('storeName').value.trim()||$('storeCode').value.trim().toUpperCase()||'pinned location',lat:+p.lat.toFixed(6),lng:+p.lng.toFixed(6),src:'pin'};$('mapOv').style.display='none';showPlace()});
+
 $('startBtn').addEventListener('click',async()=>{const code=$('storeCode').value.trim().toUpperCase();if(!code){toast('Enter the store code');return}
   if(!CFG.url){toast('Set the upload link in Settings first');$('settings').hidden=false;return}
   $('startBtn').disabled=true;$('startBtn').textContent='Getting location…';const gps=await getGPS();$('startBtn').disabled=false;$('startBtn').textContent='Start visit';
   const np=nowParts();const seq=VISITS.filter(v=>v.store===code&&v.date===np.date).length+1;
-  V={id:`${code}_${np.date.replace(/-/g,'')}_${np.hhmm}_${DEVICE}`,store:code,name:$('storeName').value.trim(),cat:$('category').value,auditor:$('auditor').value,date:np.date,hhmm:np.hhmm,started:np.iso,seq,gps,device:DEVICE,groups:[],done:false,manifestSent:false};
-  VISITS.push(V);persist();if(!gps)toast('No GPS fix; photos will say "no GPS"');showVisit()});
+  V={id:`${code}_${np.date.replace(/-/g,'')}_${np.hhmm}_${DEVICE}`,store:code,name:$('storeName').value.trim(),cat:$('category').value,auditor:$('auditor').value,date:np.date,hhmm:np.hhmm,started:np.iso,seq,gps,device:DEVICE,groups:[],extras:[],place:PLACE,done:false,manifestSent:false};
+  PLACE=null;showPlace();$('placeResults').innerHTML='';$('placeQ').value='';lastGPS=gps||lastGPS;VISITS.push(V);persist();if(!gps)toast('No GPS fix; photos will say "no GPS"');showVisit()});
 
 /* ---------- visit screen ---------- */
 function openVisit(v){V=v;showVisit()}
 function showVisit(){$('start').hidden=true;$('visit').hidden=false;$('vTitle').textContent=`${V.store}${V.seq>1?` · visit ${V.seq}`:''}`;
-  $('vMeta').innerHTML=`<b>Store</b><span>${V.name||'(no name typed)'}</span><b>Started</b><span>${fmtDT(V.started)}</span><b>Auditor</b><span>${V.auditor}</span><b>Location</b><span>${gpsText(V.gps)}</span><b>Category</b><span>${V.cat}</span>`;
+  $('vMeta').innerHTML=`<b>Store</b><span>${V.name||'(no name typed)'}</span><b>Started</b><span>${fmtDT(V.started)}</span><b>Auditor</b><span>${V.auditor}</span><b>Phone GPS</b><span>${gpsText(V.gps)}</span><b>Place</b><span>${placeText(V)}</span><b>Category</b><span>${V.cat}</span>`;
   $('newGroup').hidden=!!V.done;renderGroups();ctx()}
 $('backBtn').addEventListener('click',()=>{V=null;$('visit').hidden=true;$('start').hidden=false;renderVisits();ctx()});
 async function renderGroups(){const el=$('groups');el.innerHTML='';let total=0;
@@ -323,6 +374,8 @@ async function renderGroups(){const el=$('groups');el.innerHTML='';let total=0;
       dbGet(TH,s.name).then(b=>{if(b)im.src=URL.createObjectURL(b)});th.addEventListener('click',()=>openViewer(g,s))}
     if(!g.shots.length&&!V.done){const b=document.createElement('button');b.className='ghost small';b.textContent='Remove empty group';b.addEventListener('click',()=>{V.groups=V.groups.filter(x=>x!==g);persist();renderGroups()});d.appendChild(b)}
     el.appendChild(d)}
+  const xs=V.extras||[];const xt=$('xThumbs');xt.innerHTML='';for(const s of xs){const th=document.createElement('div');th.className='th';const im=document.createElement('img');im.className=s.status;th.appendChild(im);const sp=document.createElement('span');sp.textContent='v'+pad2(s.n);th.appendChild(sp);xt.appendChild(th);dbGet(TH,s.name).then(b=>{if(b)im.src=URL.createObjectURL(b)});th.addEventListener('click',()=>openViewer(XG(V),s))}
+  $('xCount').textContent=`${xs.length} photo${xs.length===1?'':'s'} · ${xs.filter(s=>s.status==='sent').length} uploaded`;total+=xs.length;
   $('visitCount').textContent=total+(total===1?' photo':' photos');$('grpTitle').textContent=V.done?'Visit finished':`Add group ${V.groups.length+1}`;
   const st=vStatus(V);$('vPill').className='pill '+st.l;$('vPill').textContent=st.t;
   const allSent=total>0&&shots(V).every(s=>s.status==='sent')&&V.manifestSent;
@@ -333,6 +386,7 @@ async function renderGroups(){const el=$('groups');el.innerHTML='';let total=0;
   if(V.done)$('newGroup').hidden=false;ctx()}
 document.querySelectorAll('.choice').forEach(c=>c.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;c.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}));
 const picked=id=>$(id).querySelector('.on').dataset.v;
+$('openXCam').addEventListener('click',async()=>{cur=XG(V);prevG=null;prevBmp=null;await openCamera()});
 $('openCam').addEventListener('click',async()=>{cur={n:V.groups.length+1,kind:picked('kindPick'),type:picked('typePick'),shots:[],addedLater:!!V.done};V.groups.push(cur);persist();prevG=null;prevBmp=null;await openCamera()});
 $('discardBtn').addEventListener('click',async()=>{const b=$('discardBtn');if(b.dataset.a!=='1'){b.dataset.a='1';b.textContent='Tap again to discard everything in this visit';setTimeout(()=>{b.dataset.a='';b.textContent='Discard this visit'},3000);return}
   for(const s of shots(V)){await dbDel(PH,s.name);await dbDel(TH,s.name)}VISITS=VISITS.filter(v=>v!==V);persist();b.dataset.a='';b.textContent='Discard this visit';V=null;$('visit').hidden=true;$('start').hidden=false;renderVisits();ctx()});
@@ -340,28 +394,33 @@ $('finishBtn').addEventListener('click',()=>{V.done=true;V.finished=new Date().t
 
 /* ---------- camera ---------- */
 async function openCamera(){
-  $('cam').hidden=false;$('camGroup').textContent=`Group ${cur.n} · ${cur.kind[0].toUpperCase()+cur.kind.slice(1)} · ${{shelf:'Shelf',rack:'Tang rack',secondary:'Secondary'}[cur.type]}`;
-  $('camHint').textContent=cur.kind==='single'?'Post to post, top shelf to floor':cur.kind==='row'?'Start at the left end. Walk sideways, same distance.':'Start at the top. Keep the same distance.';
+  $('cam').hidden=false;const isX=cur.kind==='visit';$('endGroup').textContent=isX?'Done':'End group';
+  $('camGroup').textContent=isX?'Visit photos':`Group ${cur.n} · ${cur.kind[0].toUpperCase()+cur.kind.slice(1)} · ${{shelf:'Shelf',rack:'Tang rack',secondary:'Secondary'}[cur.type]}`;
+  $('camHint').textContent=isX?'Storefront, signage, displays, anything useful. Saved and uploaded as you go.':cur.kind==='single'?'Post to post, top shelf to floor':cur.kind==='row'?'Start at the left end. Walk sideways, same distance.':'Start at the top. Keep the same distance.';
   try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:4032},height:{ideal:3024}},audio:false});$('video').srcObject=stream;track=stream.getVideoTracks()[0];imageCapture=null;try{if(typeof ImageCapture==='function')imageCapture=new ImageCapture(track)}catch(e){}}
   catch(e){toast('Camera not available: '+(e.message||e));$('cam').hidden=true;return}
   if(!motionOn){try{if(typeof DeviceMotionEvent!=='undefined'&&DeviceMotionEvent.requestPermission){await DeviceMotionEvent.requestPermission()}}catch(e){}window.addEventListener('devicemotion',onMotion);motionOn=true}
   updateTiles();updateEdge()}
-function closeCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('cam').hidden=true;if(cur&&!cur.shots.length){V.groups=V.groups.filter(g=>g!==cur)}persist();renderGroups()}
+function closeCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('cam').hidden=true;if(cur&&cur.kind!=='visit'&&!cur.shots.length){V.groups=V.groups.filter(g=>g!==cur)}persist();renderGroups();if(cur&&cur.kind==='visit'&&navigator.onLine)uploadVisit(V,true)}
 $('camClose').addEventListener('click',closeCamera);
-$('endGroup').addEventListener('click',()=>{const n=cur.shots.length;closeCamera();toast(n?`Group ${cur.n} done with ${n} photo(s).`:'Empty group removed')});
+$('endGroup').addEventListener('click',()=>{const n=cur.shots.length,x=cur.kind==='visit';closeCamera();toast(x?`${n} visit photo(s) saved.`:n?`Group ${cur.n} done with ${n} photo(s).`:'Empty group removed')});
 function onMotion(e){const g=e.accelerationIncludingGravity;if(!g||g.x==null)return;const ang=Math.atan2(g.x,g.y)*180/Math.PI;levelDeg=0.8*levelDeg+0.2*(-ang);
   const lv=$('level');lv.style.transform=`rotate(${levelDeg}deg)`;const a=Math.abs(levelDeg);lv.className=a<=2?'ok':a<=5?'near':'';$('levelTxt').textContent=`level ${levelDeg.toFixed(0)}°`;
   const acc=e.acceleration;if(acc&&acc.x!=null){const m=Math.hypot(acc.x,acc.y,acc.z);moving=m>1.8;$('steady').style.display=moving?'block':'none'}}
 function updateTiles(){const t=$('tiles');t.className='tiles'+(cur.kind==='column'?' col':'');t.innerHTML='';
+  if(cur.kind==='visit'){t.innerHTML=`<i>${cur.shots.length} visit photo${cur.shots.length===1?'':'s'} this visit · ${cur.shots.filter(s=>s.status==='sent').length} uploaded</i>`;return}
   if(cur.kind==='single'){t.innerHTML=cur.shots.length?'<span>✓</span><i>one photo taken — End group, or take another to replace it</i>':'<span class="next">1</span><i>one photo for this bay</i>';return}
   cur.shots.forEach((s,i)=>{const e=document.createElement('span');e.textContent=i+1;t.appendChild(e)});const nx=document.createElement('span');nx.className='next';nx.textContent=cur.shots.length+1;t.appendChild(nx);const i=document.createElement('i');i.textContent=cur.shots.length?`shot ${cur.shots.length+1} · keep 2–3 packs of overlap`:'shot 1 · the left post in frame';t.appendChild(i)}
-function updateEdge(){const ed=$('edge'),tip=$('edgeTip');if(cur.kind==='single'||!prevBmp){ed.style.display='none';tip.style.display='none';return}
+function updateEdge(){const ed=$('edge'),tip=$('edgeTip');if(cur.kind==='single'||cur.kind==='visit'||!prevBmp){ed.style.display='none';tip.style.display='none';return}
   ed.className=cur.kind==='column'?'col':'';ed.style.display='block';tip.style.display='block';const c=$('edgeCanvas');const x=c.getContext('2d');
   if(cur.kind==='row'){c.width=Math.round(prevBmp.width*0.18);c.height=prevBmp.height;x.drawImage(prevBmp,prevBmp.width-c.width,0,c.width,c.height,0,0,c.width,c.height);tip.textContent='Move right until the packs at the edge line up with these'}
   else{c.width=prevBmp.width;c.height=Math.round(prevBmp.height*0.18);x.drawImage(prevBmp,0,prevBmp.height-c.height,c.width,c.height,0,0,c.width,c.height);tip.textContent='Move down until the shelf at the top lines up with this'}}
 async function grab(){if(imageCapture){try{return await imageCapture.takePhoto()}catch(e){}}
   const v=$('video');const c=document.createElement('canvas');const s=track&&track.getSettings?track.getSettings():{};c.width=v.videoWidth||s.width;c.height=v.videoHeight||s.height;c.getContext('2d').drawImage(v,0,0,c.width,c.height);return await new Promise(r=>c.toBlob(r,'image/jpeg',0.92))}
-$('shutter').addEventListener('click',async()=>{if(moving){toast('Hold steady, then shoot');return}$('shutter').disabled=true;try{const blob=await grab();await review(blob)}catch(e){toast('Could not take the photo: '+(e.message||e))}finally{$('shutter').disabled=false}});
+async function keepX(blob){const bmp=await loadBitmap(blob);const n=(V.extras||[]).length+1,name=fnameX(V,n);const sc=stamp(bmp,null,n);const out=await new Promise(r=>sc.toBlob(r,'image/jpeg',0.9));
+  const tc=document.createElement('canvas');tc.width=180;tc.height=240;const s=Math.max(180/bmp.width,240/bmp.height);tc.getContext('2d').drawImage(sc,(180-bmp.width*s)/2,(240-bmp.height*s)/2,bmp.width*s,bmp.height*s);const thumb=await new Promise(r=>tc.toBlob(r,'image/jpeg',0.7));
+  await dbPut(PH,name,out);await dbPut(TH,name,thumb);V.extras.push({name,n,w:bmp.width,h:bmp.height,sharp:'',tilt:'',ov:null,dup:null,level:'',crop:null,time:new Date().toISOString(),status:'local'});persist();updateTiles();toast('Saved · v'+pad2(n))}
+$('shutter').addEventListener('click',async()=>{if(moving){toast('Hold steady, then shoot');return}$('shutter').disabled=true;try{const blob=await grab();if(cur.kind==='visit')await keepX(blob);else await review(blob)}catch(e){toast('Could not take the photo: '+(e.message||e))}finally{$('shutter').disabled=false}});
 
 /* ---------- review after a shot ---------- */
 async function loadBitmap(blob){try{return await createImageBitmap(blob,{imageOrientation:'from-image'})}catch(e){return await createImageBitmap(blob)}}
@@ -391,7 +450,7 @@ function stamp(bmp,g,n){ // burn the ownership stamp into the pixels; returns a 
   const c=document.createElement('canvas');c.width=bmp.width;c.height=bmp.height;const x=c.getContext('2d');x.drawImage(bmp,0,0);
   const fs=Math.round(c.width*0.022),pad=Math.round(fs*0.6);x.textBaseline='alphabetic';x.lineJoin='round';
   function line(t,px,py,bold,align){x.font=`${bold?'700':'400'} ${fs}px "Public Sans",Arial,sans-serif`;x.textAlign=align||'left';x.lineWidth=Math.max(3,fs*0.14);x.strokeStyle='rgba(0,0,0,.9)';x.strokeText(t,px,py);x.fillStyle='#fff';x.fillText(t,px,py)}
-  const code=`g${pad2(g.n)} · ${g.kind} · s${pad2(n)}`;
+  const code=g?`g${pad2(g.n)} · ${g.kind} · s${pad2(n)}`:`VISIT PHOTO v${pad2(n)}`;
   line(`${APP}  ·  ${fmtDT(new Date().toISOString())}  ·  ${V.store} ${V.name||''}`.trim(),pad,c.height-pad-fs*1.45,true);
   line(`${gpsText(V.gps)}  ·  ${code}  ·  ${V.auditor}`,pad,c.height-pad,false);
   line(code,c.width-pad,pad+fs,true,'right');
@@ -425,9 +484,9 @@ window.addEventListener('pointerup',()=>{cropDrag=null});
 
 /* ---------- viewer: view / crop / delete / retake a kept photo ---------- */
 let vwUrl=null;
-async function openViewer(g,s){vw={g,s};$('viewer').style.display='flex';$('vwTitle').textContent=`Group ${g.n} · s${pad2(s.n)}`;$('vwCropBox').style.display='none';$('vwCropHelp').hidden=true;$('vwActions').hidden=false;$('vwCropActions').hidden=true;
+async function openViewer(g,s){vw={g,s};$('viewer').style.display='flex';const isX=g.kind==='visit';$('vwTitle').textContent=isX?`Visit photo v${pad2(s.n)}`:`Group ${g.n} · s${pad2(s.n)}`;$('vwCrop').hidden=isX;$('vwRetake').hidden=isX;$('vwCropBox').style.display='none';$('vwCropHelp').hidden=true;$('vwActions').hidden=false;$('vwCropActions').hidden=true;
   const b=await dbGet(PH,s.name)||await dbGet(TH,s.name);if(vwUrl)URL.revokeObjectURL(vwUrl);vwUrl=b?URL.createObjectURL(b):'';$('vwImg').src=vwUrl;
-  const c=s.crop;$('vwMeta').innerHTML=`<b>File</b><span style="word-break:break-all">${s.name}</span><b>Checks</b><span>sharpness ${s.sharp} · level ${s.tilt}° · ${s.ov==null?'first in group':'overlap '+Math.round(s.ov*100)+'%'}${s.dup?' · duplicate of group '+s.dup:''} · <span class="pill ${s.level}">${s.level==='good'?'good':s.level==='warn'?'usable':'weak'}</span></span><b>Crop</b><span>${c?`left ${Math.round(c.l*100)}% · top ${Math.round(c.t*100)}% · right ${Math.round((1-c.r)*100)}% · bottom ${Math.round((1-c.b)*100)}% removed`:'none'}</span><b>Upload</b><span>${s.status==='sent'?'in Drive':s.status==='failed'?'failed, will retry':'on this phone, not sent yet'}</span>`;
+  const c=s.crop;$('vwMeta').innerHTML=isX?`<b>File</b><span style="word-break:break-all">${s.name}</span><b>Upload</b><span>${s.status==='sent'?'in Drive':s.status==='failed'?'failed, will retry':'waiting for signal'}</span>`:`<b>File</b><span style="word-break:break-all">${s.name}</span><b>Checks</b><span>sharpness ${s.sharp} · level ${s.tilt}° · ${s.ov==null?'first in group':'overlap '+Math.round(s.ov*100)+'%'}${s.dup?' · duplicate of group '+s.dup:''} · <span class="pill ${s.level}">${s.level==='good'?'good':s.level==='warn'?'usable':'weak'}</span></span><b>Crop</b><span>${c?`left ${Math.round(c.l*100)}% · top ${Math.round(c.t*100)}% · right ${Math.round((1-c.r)*100)}% · bottom ${Math.round((1-c.b)*100)}% removed`:'none'}</span><b>Upload</b><span>${s.status==='sent'?'in Drive':s.status==='failed'?'failed, will retry':'on this phone, not sent yet'}</span>`;
   const locked=s.status==='sent'||V.done;$('vwCrop').disabled=locked;$('vwDelete').disabled=locked;$('vwRetake').disabled=locked;
   if(locked)$('vwMeta').innerHTML+='<b>Note</b><span>Already uploaded: cannot be changed from the phone. Ask QC to adjust it in the register.</span>'}
 $('vwClose').addEventListener('click',()=>{$('viewer').style.display='none';crop=null;cropCtx=null;vw=null;renderGroups()});
@@ -435,7 +494,9 @@ $('vwCrop').addEventListener('click',()=>{if(!vw)return;$('vwActions').hidden=tr
 $('vwCropCancel').addEventListener('click',()=>{$('vwCropBox').style.display='none';$('vwCropHelp').hidden=true;$('vwActions').hidden=false;$('vwCropActions').hidden=true;crop=null;cropCtx=null});
 $('vwCropClear').addEventListener('click',()=>{if(!vw)return;vw.s.crop=null;persist();$('vwCropCancel').click();openViewer(vw.g,vw.s);toast('Crop removed')});
 $('vwCropSave').addEventListener('click',()=>{if(!vw||!crop)return;const c=crop;const isFull=c.l<0.005&&c.t<0.005&&c.r>0.995&&c.b>0.995;vw.s.crop=isFull?null:{l:+c.l.toFixed(3),t:+c.t.toFixed(3),r:+c.r.toFixed(3),b:+c.b.toFixed(3)};persist();$('vwCropCancel').click();openViewer(vw.g,vw.s);toast(isFull?'No crop':'Crop saved')});
-async function deleteShot(g,s){await dbDel(PH,s.name);await dbDel(TH,s.name);g.shots=g.shots.filter(x=>x!==s);
+async function deleteShot(g,s){await dbDel(PH,s.name);await dbDel(TH,s.name);
+  if(g.kind==='visit'){V.extras=V.extras.filter(x=>x!==s);for(const x of V.extras){const want=V.extras.indexOf(x)+1;if(x.n!==want){const nn=fnameX(V,want);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,nn,b);if(t)await dbPut(TH,nn,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=nn;x.n=want}}persist();return}
+  g.shots=g.shots.filter(x=>x!==s);
   // renumber the shots after it so the group stays s01..sNN
   for(const x of g.shots){const want=g.shots.indexOf(x)+1;if(x.n!==want){const newName=fname(V,g,want);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,newName,b);if(t)await dbPut(TH,newName,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=newName;x.n=want}}
   if(!g.shots.length){V.groups=V.groups.filter(x=>x!==g)}persist()}
@@ -448,20 +509,22 @@ $('vwRetake').addEventListener('click',async()=>{if(!vw)return;const {g,s}=vw;aw
 /* ---------- upload ---------- */
 let pumping=false;
 function b64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(blob)})}
-function manifestCSV(v){const lines=['visit_id,file,store_code,store_name,category,auditor,phone,date,time,visit_seq,gps_lat,gps_lng,gps_acc_m,group,kind,type,added_later,shot,width,height,sharpness,tilt_deg,overlap_pct,duplicate_of_group,verdict,crop_l,crop_t,crop_r,crop_b,time_taken'];
-  for(const g of v.groups)for(const s of g.shots){const c=s.crop||{};lines.push([v.id,s.name,v.store,JSON.stringify(v.name||''),v.cat,JSON.stringify(v.auditor),v.device,v.date,v.hhmm,v.seq,v.gps?v.gps.lat.toFixed(6):'',v.gps?v.gps.lng.toFixed(6):'',v.gps?Math.round(v.gps.acc):'',g.n,g.kind,g.type,g.addedLater?1:0,s.n,s.w,s.h,s.sharp,s.tilt,s.ov==null?'':Math.round(s.ov*100),s.dup||'',s.level,c.l??'',c.t??'',c.r??'',c.b??'',s.time].join(','))}return lines.join('\n')}
-function visitFields(v){return {visitId:v.id,store:v.store,storeName:v.name||'',category:v.cat,auditor:v.auditor,device:v.device,date:v.date,time:v.hhmm,seq:v.seq,folder:folderName(v),gpsLat:v.gps?v.gps.lat:'',gpsLng:v.gps?v.gps.lng:'',gpsAcc:v.gps?Math.round(v.gps.acc):'',groups:v.groups.length,photos:shots(v).length,started:v.started,appVersion:VERSION}}
+function manifestCSV(v){const lines=['visit_id,file,store_code,store_name,category,auditor,phone,date,time,visit_seq,gps_lat,gps_lng,gps_acc_m,place_name,place_lat,place_lng,place_src,place_dist_m,group,kind,type,added_later,shot,width,height,sharpness,tilt_deg,overlap_pct,duplicate_of_group,verdict,crop_l,crop_t,crop_r,crop_b,time_taken'];
+  for(const g of v.groups)for(const s of g.shots){const c=s.crop||{};lines.push([v.id,s.name,v.store,JSON.stringify(v.name||''),v.cat,JSON.stringify(v.auditor),v.device,v.date,v.hhmm,v.seq,v.gps?v.gps.lat.toFixed(6):'',v.gps?v.gps.lng.toFixed(6):'',v.gps?Math.round(v.gps.acc):'',JSON.stringify(v.place?v.place.name:''),v.place?v.place.lat:'',v.place?v.place.lng:'',v.place?v.place.src:'',v.place&&v.gps?distM(v.gps,v.place):'',g.n,g.kind,g.type,g.addedLater?1:0,s.n,s.w,s.h,s.sharp,s.tilt,s.ov==null?'':Math.round(s.ov*100),s.dup||'',s.level,c.l??'',c.t??'',c.r??'',c.b??'',s.time].join(','))}return lines.join('\n')}
+function visitFields(v){return {visitId:v.id,store:v.store,storeName:v.name||'',category:v.cat,auditor:v.auditor,device:v.device,date:v.date,time:v.hhmm,seq:v.seq,folder:folderName(v),gpsLat:v.gps?v.gps.lat:'',gpsLng:v.gps?v.gps.lng:'',gpsAcc:v.gps?Math.round(v.gps.acc):'',placeName:v.place?v.place.name:'',placeLat:v.place?v.place.lat:'',placeLng:v.place?v.place.lng:'',placeSrc:v.place?v.place.src:'',placeDistM:v.place&&v.gps?distM(v.gps,v.place):'',groups:v.groups.length,photos:v.groups.reduce((a,g)=>a+g.shots.length,0),visitPhotos:(v.extras||[]).length,started:v.started,appVersion:VERSION}}
 async function post(body){const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify(body)});return await r.json()}
-async function uploadVisit(v){if(pumping)return;if(!CFG.url){toast('Set the upload link in Settings');return}pumping=true;const st=$('upStatus');st.className='status';
+async function uploadVisit(v,quiet){if(pumping)return;if(!CFG.url){if(!quiet)toast('Set the upload link in Settings');return}pumping=true;const st=$('upStatus');st.className='status';
   try{const all=shots(v);const todo=all.filter(s=>s.status!=='sent');let done=all.length-todo.length,failed=0,stop=false;
-    for(const g of v.groups)for(const s of g.shots){if(s.status==='sent'||stop)continue;
+    const units=quiet?[XG(v)]:[XG(v),...v.groups];
+    for(const g of units)for(const s of g.shots){if(s.status==='sent'||stop)continue;
       if(!navigator.onLine){st.className='status bad';st.textContent=`No signal. ${all.length-done} photo(s) waiting; upload resumes when the phone is back online.`;stop=true;break}
       s.status='uploading';renderGroups();st.textContent=`Uploading photo ${done+1} of ${all.length}…`;
       const blob=await dbGet(PH,s.name);if(!blob){s.status='failed';failed++;st.className='status bad';st.textContent=`${s.name} is no longer on this phone.`;continue}
-      try{const j=await post({token:CFG.token,kind:'photo',filename:s.name,mime:'image/jpeg',data:await b64(blob),...visitFields(v),group:g.n,groupType:g.kind+'/'+g.type,shot:s.n,sharpness:s.sharp,tilt:s.tilt,overlap:s.ov==null?'':Math.round(s.ov*100),verdict:s.level,crop:s.crop?JSON.stringify(s.crop):'',dup:s.dup||''});
+      try{const j=await post({token:CFG.token,kind:'photo',filename:s.name,mime:'image/jpeg',data:await b64(blob),...visitFields(v),group:g.kind==='visit'?'visit':g.n,groupType:g.kind+'/'+g.type,shot:s.n,sharpness:s.sharp,tilt:s.tilt,overlap:s.ov==null?'':Math.round(s.ov*100),verdict:s.level,crop:s.crop?JSON.stringify(s.crop):'',dup:s.dup||''});
         if(j.ok){s.status='sent';s.sentAt=new Date().toISOString();done++}else{s.status='failed';failed++;st.className='status bad';st.textContent=j.error==='bad token'?'Upload refused: the token phrase does not match the script. Check Settings.':'Upload refused: '+(j.error||'unknown error');stop=j.error==='bad token'}}
       catch(e){s.status='failed';failed++;st.className='status bad';st.textContent='Could not reach the upload link (no signal, or the link changed). Will retry.';stop=true}
       persist();renderGroups()}
+    if(quiet){renderGroups();return}
     if(!stop&&shots(v).every(s=>s.status==='sent')){st.textContent='Sending the visit record…';
       try{const j=await post({token:CFG.token,kind:'manifest',filename:`${v.store}_${v.cat}_${v.date.replace(/-/g,'')}_${v.hhmm}_manifest.csv`,text:manifestCSV(v),...visitFields(v)});if(j.ok){v.manifestSent=true;persist();st.textContent=`All ${all.length} photos and the visit record are in Drive.`;toast('Upload complete')}else{st.className='status bad';st.textContent='Photos are in; the visit record was refused: '+(j.error||'')}}
       catch(e){st.className='status bad';st.textContent='Photos are in; the visit record could not be sent yet. Tap Upload again when there is signal.'}}
@@ -469,13 +532,13 @@ async function uploadVisit(v){if(pumping)return;if(!CFG.url){toast('Set the uplo
     renderGroups()}
   finally{pumping=false}}
 $('uploadBtn').addEventListener('click',()=>uploadVisit(V));
-function resumeIfNeeded(){if(V&&!V.done&&shots(V).some(s=>s.status==='failed'||s.status==='uploading')&&navigator.onLine)uploadVisit(V)}
+function resumeIfNeeded(){if(!V||!navigator.onLine)return;if((V.extras||[]).some(s=>s.status!=='sent'))uploadVisit(V,true);else if(!V.done&&shots(V).some(s=>s.status==='failed'||s.status==='uploading'))uploadVisit(V)}
 window.addEventListener('online',resumeIfNeeded);document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeIfNeeded()});
 
 /* ---------- housekeeping ---------- */
 async function purgeOld(){const cutoff=Date.now()-KEEP_DAYS*864e5;for(const v of VISITS)for(const s of shots(v)){if(s.status==='sent'&&s.sentAt&&new Date(s.sentAt).getTime()<cutoff&&!s.purged){await dbDel(PH,s.name);s.purged=true}}persist()}
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
-(function boot(){renderCfg();VISITS=load('aegis.visits',[]);for(const v of VISITS)for(const s of shots(v))if(s.status==='uploading')s.status='failed';
+(function boot(){renderCfg();VISITS=load('aegis.visits',[]);for(const v of VISITS){v.extras=v.extras||[];for(const s of shots(v))if(s.status==='uploading')s.status='failed'}
   renderVisits();if(!CFG.url){$('settings').hidden=false}ctx();purgeOld()})();
 })();
 </script>
