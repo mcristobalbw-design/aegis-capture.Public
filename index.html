@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -141,6 +140,7 @@ button[disabled]{opacity:.45;cursor:default}
     <label>Access token<input type="text" id="setToken" placeholder="BWAEGIS-0000" autocapitalize="characters" autocomplete="off"></label>
     <button class="primary" id="loginBtn">Sign in</button>
     <p class="status" id="setStatus"></p>
+    <p class="muted" id="verLine2" style="font-size:12px"></p>
   </div>
   <div id="acctBox" hidden>
     <h2>Account</h2>
@@ -164,6 +164,7 @@ button[disabled]{opacity:.45;cursor:default}
   <button class="primary" id="goCont" hidden style="padding:20px;background:var(--good)">Continue today's visit</button>
   <button class="ghost" id="goHist" style="padding:18px">My visits <span id="histBadge"></span></button>
   <p class="muted" id="homeStrip" style="text-align:center"></p>
+  <p class="muted" id="verLine" style="text-align:center;font-size:12px"></p>
 </section>
 
 <!-- NEW VISIT -->
@@ -272,6 +273,8 @@ button[disabled]{opacity:.45;cursor:default}
   </div>
   <div class="bottom">
     <div class="lensRow" id="lensRow"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;color:#D9D2C3;font-size:12px"><span id="camDiag">camera…</span><button class="small" id="fileCamBtn" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4)">Use phone camera</button></div>
+    <input type="file" id="fileCam" accept="image/*" capture="environment" hidden>
     <div class="tiles" id="tiles"></div>
     <div class="shutterRow"><button class="ghost" id="endGroup">End group</button><button id="shutter" aria-label="Take photo"></button><span style="width:96px"></span></div>
   </div>
@@ -318,7 +321,7 @@ button[disabled]{opacity:.45;cursor:default}
 <script>
 (function(){
 'use strict';
-const APP='BW Aegis App', VERSION='v3.2';
+const APP='BW Aegis App', VERSION='v3.3';
 const $=id=>document.getElementById(id);
 const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxHPqdY8X5CckGOREXFPZdkji-MJijE0HEiV2hr5TR7lSmRJpFJWZySSNU5MjJ9UY2Z/exec';
 const CFG={url:DEFAULT_URL,token:'',name:'',role:''};
@@ -326,7 +329,7 @@ const CATS=[['POWBEV','Powdered Beverage'],['BISCUITS','Biscuits'],['CHOCO','Cho
 const catName=c=>(CATS.find(x=>x[0]===c)||[c,c])[1];
 let VISITS=[],V=null,CAT=null,cur=null;
 let stream=null,track=null,imageCapture=null,lensList=[],lensId=null;
-let prevG=null,prevBmp=null,levelDeg=0,moving=false,motionOn=false;
+let prevG=null,prevBmp=null,levelDeg=0,moving=false,motionOn=false,motionOK=null,motionSamples=[];let shutterBusy=false,camProfile=0;
 let pending=null,crop=null,cropDrag=null,cropCtx=null,vw=null,vwUrl=null,vwCropped=false;
 let PLACE=null,lastGPS=null,map=null,marker=null;
 let CLOCK={offset:0,checked:null,raw:0};   // ms to add to the phone clock to get Google's time
@@ -348,7 +351,8 @@ const pad2=n=>String(n).padStart(2,'0');
 function nowMs(){return Date.now()+CLOCK.offset}
 function parts(ms){const d=new Date(ms);return {date:`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`,hhmm:`${pad2(d.getHours())}${pad2(d.getMinutes())}`,iso:d.toISOString()}}
 function fmtDT(iso){const d=new Date(iso);const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`}
-async function checkClock(){if(!CFG.url||!navigator.onLine)return;try{const t0=Date.now();const r=await fetch(CFG.url,{cache:'no-store'});const j=await r.json();if(!j.time)return;const t1=Date.now();const server=new Date(j.time).getTime()+(t1-t0)/2;const raw=server-t1;CLOCK={offset:Math.abs(raw)>120000?raw:0,checked:new Date().toISOString(),raw};save('aegis.clock',CLOCK);showClock()}catch(e){}}
+async function checkClock(){if(!CFG.url||!navigator.onLine)return;try{const t0=Date.now();const r=await fetch(CFG.url,{cache:'no-store'});const j=await r.json();if(j.version){CFG.scriptVer=j.version;save('aegis.cfg',CFG);showVer()}if(!j.time)return;const t1=Date.now();const server=new Date(j.time).getTime()+(t1-t0)/2;const raw=server-t1;CLOCK={offset:Math.abs(raw)>120000?raw:0,checked:new Date().toISOString(),raw};save('aegis.clock',CLOCK);showClock()}catch(e){}}
+function showVer(){const t=`Aegis ${VERSION} · script ${CFG.scriptVer||'?'} · phone ${DEVICE}`;$('verLine').textContent=t;$('verLine2').textContent=t}
 function showClock(){const n=$('clockNote');if(CLOCK.offset){const m=Math.round(Math.abs(CLOCK.offset)/60000);n.hidden=false;n.textContent=`Phone clock is ${m>=60?Math.floor(m/60)+' h '+(m%60)+' min':m+' min'} ${CLOCK.offset>0?'behind':'ahead'}; Google's time is used on stamps.`}else n.hidden=true}
 
 /* ---------- image analysis ---------- */
@@ -392,7 +396,7 @@ function base(v){return `${v.store}_${v.date.replace(/-/g,'')}_${v.hhmm}`}
 function fname(v,g,n){return `${base(v)}_${g.cat}_g${pad2(g.n)}_${g.kind}_${g.type}_s${pad2(n)}.jpg`}
 function fnameX(v,n){return `${base(v)}_v${pad2(n)}.jpg`}
 function XG(v){return {n:0,cat:'',kind:'visit',type:'visit',shots:v.extras||(v.extras=[])}}
-function folderName(v){return `${v.date.replace(/-/g,'')}-${v.hhmm} ${v.auditor}`}
+function folderName(v){return `${v.name?v.name+' ':''}${v.store}${v.seq>1?' ('+v.seq+')':''}`}
 function catGroups(v,c){return v.groups.filter(g=>g.cat===c)}
 function catsCovered(v){return [...new Set(v.groups.filter(g=>g.shots.length).map(g=>g.cat))]}
 const typeName={shelf:'Shelf',rack:'Frame/Rack',visit:'Visit photos'};
@@ -436,7 +440,7 @@ $('logoutBtn').addEventListener('click',()=>{const b=$('logoutBtn');if(b.dataset
 $('saveUrl').addEventListener('click',()=>{const u=$('setUrl').value.trim();const st=$('acctStatus');
   if(/googleusercontent\.com/.test(u)||!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(u)){st.className='status bad';st.textContent='The upload link should start with https://script.google.com/macros/s/ and end in /exec.';return}
   CFG.url=u;save('aegis.cfg',CFG);st.className='status';st.textContent='Link saved.'});
-$('testSet').addEventListener('click',async()=>{const st=$('acctStatus');st.className='status';st.textContent='Testing…';try{const r=await fetch(CFG.url,{cache:'no-store'});const j=await r.json();st.textContent=j.ok?`Server answers (script ${j.version||'?'}). Good.`:'Server answered but not as expected.'}catch(e){st.className='status bad';st.textContent='Could not reach the server.'}});
+$('testSet').addEventListener('click',async()=>{const st=$('acctStatus');st.className='status';st.textContent='Testing…';try{const r=await fetch(CFG.url,{cache:'no-store'});const j=await r.json();if(j.version){CFG.scriptVer=j.version;save('aegis.cfg',CFG);showVer()}st.textContent=j.ok?`Server answers (script ${j.version||'?'}). Good.`:'Server answered but not as expected.'}catch(e){st.className='status bad';st.textContent='Could not reach the server.'}});
 
 /* ---------- main page ---------- */
 function todayUnfinished(){const {date}=parts(nowMs());return VISITS.filter(v=>v.date===date&&!v.done).sort((a,b)=>b.started<a.started?-1:1)}
@@ -534,19 +538,27 @@ $('xBack').addEventListener('click',()=>back());
 $('openXCam').addEventListener('click',async()=>{cur=XG(V);prevG=null;prevBmp=null;await openCamera()});
 
 /* ---------- camera ---------- */
-async function listLenses(){try{const devs=await navigator.mediaDevices.enumerateDevices();const vids=devs.filter(d=>d.kind==='videoinput');const backs=vids.filter(d=>/back|rear|environment/i.test(d.label));lensList=(backs.length?backs:vids).map((d,i)=>({id:d.deviceId,label:d.label||('Camera '+(i+1))}))}catch(e){lensList=[]}}
+async function listLenses(){try{const devs=await Promise.race([navigator.mediaDevices.enumerateDevices(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('slow')),1500))]);const vids=devs.filter(d=>d.kind==='videoinput');const backs=vids.filter(d=>/back|rear|environment/i.test(d.label));lensList=(backs.length?backs:vids).map((d,i)=>({id:d.deviceId,label:d.label||('Camera '+(i+1))}))}catch(e){lensList=[]}}
 function lensName(i){const l=lensList[i];if(!l||i<0)return 'main';const s=l.label.toLowerCase();if(/ultra|wide|0\.5|0\.6/.test(s))return 'wide';if(/tele|zoom|3x|5x|10x/.test(s))return 'tele';return i===0?'main':'lens'+(i+1)}
 function curLens(){const i=lensList.findIndex(l=>l.id===lensId);const n=lensName(i);const z=track&&track.getSettings?track.getSettings().zoom:null;return z&&z<0.95?'wide':n}
 function renderLens(){const r=$('lensRow');r.innerHTML='';
-  if(lensList.length>1){const lab=document.createElement('span');lab.textContent='Lens:';r.appendChild(lab);lensList.forEach((l,i)=>{const b=document.createElement('button');const nm=lensName(i);b.textContent=nm==='main'?'Main 1×':nm==='wide'?'Wide':nm==='tele'?'Tele':'Cam '+(i+1);b.className=l.id===lensId?'on':'';b.addEventListener('click',async()=>{if(l.id!==lensId){lensId=l.id;save('aegis.lens',lensId);try{await startStream()}catch(e){toast('That camera did not open')}}});r.appendChild(b)})}
+  if(lensList.length>1){const lab=document.createElement('span');lab.textContent='Lens:';r.appendChild(lab);lensList.forEach((l,i)=>{const b=document.createElement('button');const nm=lensName(i);b.textContent=nm==='main'?'Main 1×':nm==='wide'?'Wide':nm==='tele'?'Tele':'Cam '+(i+1);b.className=l.id===lensId?'on':'';b.addEventListener('click',async()=>{if(l.id!==lensId){lensId=l.id;save('aegis.lens',lensId);camProfile=0;try{await startStream()}catch(e){camFail(e)}}});r.appendChild(b)})}
   if(track&&track.getCapabilities){const cap=track.getCapabilities();if(cap.zoom&&cap.zoom.max>cap.zoom.min){const s=track.getSettings();const z=document.createElement('input');z.type='range';z.min=cap.zoom.min;z.max=Math.min(cap.zoom.max,4);z.step=cap.zoom.step||0.1;z.value=s.zoom||cap.zoom.min;const zt=document.createElement('span');zt.textContent=(+z.value).toFixed(1)+'×';z.addEventListener('input',()=>{zt.textContent=(+z.value).toFixed(1)+'×';track.applyConstraints({advanced:[{zoom:+z.value}]}).catch(()=>{})});r.appendChild(z);r.appendChild(zt)}}
   if(curLens()==='wide'){const n=document.createElement('span');n.style.cssText='flex-basis:100%;color:#D9D2C3;font-size:12px';n.textContent='Wide bends the shelves at the edges: use it only for tight aisles; step back with Main when you can.';r.appendChild(n)}}
-async function startStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
-  const base={width:{ideal:4032},height:{ideal:3024},aspectRatio:{ideal:4/3}};const c=lensId?{deviceId:{exact:lensId},...base}:{facingMode:{ideal:'environment'},...base};
-  stream=await navigator.mediaDevices.getUserMedia({video:c,audio:false});const v=$('video');v.srcObject=stream;v.hidden=false;track=stream.getVideoTracks()[0];
+const PROFILES=[{width:{ideal:4032},height:{ideal:3024},aspectRatio:{ideal:4/3}},{width:{ideal:1920},height:{ideal:1440}},{width:{ideal:1280},height:{ideal:960}},{}];
+function firstFrame(v,ms){return new Promise(res=>{let done=false;const ok=()=>{if(!done){done=true;clearInterval(iv);res(true)}};
+  if('requestVideoFrameCallback' in v)v.requestVideoFrameCallback(()=>ok());
+  const iv=setInterval(()=>{if(v.videoWidth>0&&v.currentTime>0&&!v.paused)ok()},250);   // frames are flowing
+  setTimeout(()=>{if(!done){done=true;clearInterval(iv);res(false)}},ms)})}
+async function startStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}const v=$('video');let lastErr=null;
+  for(let i=camProfile;i<PROFILES.length;i++){const base=PROFILES[i];const c=lensId?{deviceId:{exact:lensId},...base}:{facingMode:{ideal:'environment'},...base};
+    try{stream=await navigator.mediaDevices.getUserMedia({video:c,audio:false})}catch(e){lastErr=e;continue}
+    v.srcObject=stream;v.hidden=false;track=stream.getVideoTracks()[0];try{await Promise.race([v.play(),new Promise(r=>setTimeout(r,800))])}catch(e){}
+    const got=await firstFrame(v,1800);if(got){camProfile=i;break}
+    stream.getTracks().forEach(t=>t.stop());stream=null;track=null}
+  if(!stream)throw(lastErr||new Error('no picture from the camera'));
   imageCapture=null;try{if(typeof ImageCapture==='function')imageCapture=new ImageCapture(track)}catch(e){}
-  await new Promise(r=>{if(v.videoWidth)r();else{v.onloadedmetadata=()=>r();setTimeout(r,1500)}});fitFrame();
-  if(!lensId&&track.getSettings)lensId=track.getSettings().deviceId||null;if(!lensList.length)await listLenses();renderLens()}
+  fitFrame();if(!lensId&&track.getSettings)lensId=track.getSettings().deviceId||null;if(!lensList.length)await listLenses();renderLens();diag()}
 function fitFrame(){const v=$('video'),mid=$('camMid'),f=$('frame');const ar=(v.videoWidth&&v.videoHeight)?v.videoWidth/v.videoHeight:3/4;const W=mid.clientWidth,H=mid.clientHeight;let fw=W,fh=W/ar;if(fh>H){fh=H;fw=H*ar}f.style.width=Math.floor(fw)+'px';f.style.height=Math.floor(fh)+'px';if(!f.contains(v))f.insertBefore(v,f.firstChild)}
 window.addEventListener('resize',()=>{if(!$('cam').hidden)fitFrame()});$('video').addEventListener('resize',()=>{if(!$('cam').hidden)fitFrame()});$('video').addEventListener('loadedmetadata',()=>{if(!$('cam').hidden)fitFrame()});
 function refit(){[0,100,400,1000].forEach(t=>setTimeout(()=>{if(!$('cam').hidden)fitFrame()},t))}
@@ -555,19 +567,23 @@ async function openCamera(){
   $('camGroup').textContent=isX?'Visit photos':`${catName(cur.cat)} · Group ${cur.n} · ${cur.kind[0].toUpperCase()+cur.kind.slice(1)} · ${typeName[cur.type]}`;
   $('camHint').textContent=isX?'Storefront, signage, displays, anything useful. Saved and uploaded as you go.':cur.kind==='single'?'Post to post, top shelf to floor':cur.kind==='row'?'Start with the left post in frame. Walk sideways, same distance.':'Start at the top. Keep the same distance.';
   lensId=lensId||load('aegis.lens',null);
-  try{await startStream()}catch(e){if(lensId){lensId=null;try{await startStream()}catch(e2){toast('Camera not available: '+(e2.message||e2));back();return}}else{toast('Camera not available: '+(e.message||e));back();return}}
+  motionOK=null;motionSamples=[];$('camDiag').textContent='opening camera…';
+  try{await startStream()}catch(e){if(lensId){lensId=null;try{await startStream()}catch(e2){camFail(e2)}}else camFail(e)}
   if(!motionOn){try{if(typeof DeviceMotionEvent!=='undefined'&&DeviceMotionEvent.requestPermission){await DeviceMotionEvent.requestPermission()}}catch(e){}window.addEventListener('devicemotion',onMotion);motionOn=true}
   refit();updateTiles();updateEdge()}
+function camFail(e){$('camDiag').textContent='no picture from the camera on this phone';toast('The in-app camera is not working on this phone. Tap "Use phone camera" to shoot with the phone\'s own camera.',5000)}
 function doCloseCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('cam').hidden=true;$('video').hidden=true;const g=cur;cur=null;
   if(g&&g.kind!=='visit'&&!g.shots.length){V.groups=V.groups.filter(x=>x!==g)}persist();
   if(g&&g.kind==='visit'){renderX();if(navigator.onLine)enqueue(V,true)}else renderCat()}
 $('camClose').addEventListener('click',()=>back());
-$('endGroup').addEventListener('click',()=>{const n=cur.shots.length,x=cur.kind==='visit',gn=cur.n;
+$('endGroup').addEventListener('click',()=>{if(!cur)return;if(shutterBusy){toast('Wait for the photo to finish');return}const n=cur.shots.length,x=cur.kind==='visit',gn=cur.n;
   if(!x&&cur.kind==='row'&&n>0&&!cur.rightOk&&$('endGroup').dataset.a!=='1'){const last=cur.shots[n-1];if(last.gray&&!postEdge(last.gray,'r')){$('endGroup').dataset.a='1';$('endGroup').textContent='No right post seen · End anyway?';setTimeout(()=>{$('endGroup').dataset.a='';$('endGroup').textContent='End group'},4000);return}}
   $('endGroup').dataset.a='';back();toast(x?`${n} visit photo(s) saved.`:n?`Group ${gn} done with ${n} photo(s).`:'Empty group removed')});
 function onMotion(e){const g=e.accelerationIncludingGravity;if(!g||g.x==null)return;const ang=Math.atan2(g.x,g.y)*180/Math.PI;levelDeg=0.8*levelDeg+0.2*(-ang);
   const lv=$('level');lv.style.transform=`rotate(${levelDeg}deg)`;const a=Math.abs(levelDeg);lv.className=a<=2?'ok':a<=5?'near':'';$('levelTxt').textContent=`level ${levelDeg.toFixed(0)}°`;
-  const acc=e.acceleration;if(acc&&acc.x!=null){const m=Math.hypot(acc.x,acc.y,acc.z);moving=m>1.8;$('steady').style.display=moving?'block':'none'}}
+  const acc=e.acceleration;if(acc&&acc.x!=null){const m=Math.hypot(acc.x,acc.y,acc.z);
+    if(motionOK===null){motionSamples.push(m);if(motionSamples.length>=20){const s=[...motionSamples].sort((a,b)=>a-b);motionOK=s[10]<4;diag()}return}
+    if(!motionOK)return;moving=m>1.8;$('steady').style.display=moving?'block':'none'}}
 function updateTiles(){if(!cur)return;const t=$('tiles');t.className='tiles'+(cur.kind==='column'?' col':'');t.innerHTML='';
   if(cur.kind==='visit'){t.innerHTML=`<i>${cur.shots.length} visit photo${cur.shots.length===1?'':'s'} this visit · ${cur.shots.filter(s=>s.status==='sent').length} uploaded</i>`;return}
   if(cur.kind==='single'){t.innerHTML=cur.shots.length?'<span>✓</span><i>one photo taken: End group, or shoot again to replace it</i>':'<span class="next">1</span><i>one photo for this bay</i>';return}
@@ -578,12 +594,19 @@ function updateEdge(){if(!cur)return;const ed=$('edge'),tip=$('edgeTip');if(cur.
   else{c.width=prevBmp.width;c.height=Math.round(prevBmp.height*0.18);x.drawImage(prevBmp,0,prevBmp.height-c.height,c.width,c.height,0,0,c.width,c.height);tip.textContent='Move down until the shelf at the top lines up with this'}}
 async function loadBitmap(blob){try{return await createImageBitmap(blob,{imageOrientation:'from-image'})}catch(e){return await createImageBitmap(blob)}}
 async function grab(){ // returns a bitmap that shows exactly what the frame showed
-  const v=$('video');const pa=v.videoWidth/v.videoHeight;let bmp=null;
-  if(imageCapture){try{bmp=await loadBitmap(await imageCapture.takePhoto())}catch(e){bmp=null}}
+  const v=$('video');if(!stream||!v.videoWidth)throw new Error('no picture from the camera');const pa=v.videoWidth/v.videoHeight;let bmp=null;
+  if(imageCapture){try{const blob=await Promise.race([imageCapture.takePhoto(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3500))]);bmp=await loadBitmap(blob)}catch(e){bmp=null}}
   if(!bmp){const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);return await createImageBitmap(c)}
   const ba=bmp.width/bmp.height;if(Math.abs(ba-pa)/pa>0.02){let w=bmp.width,h=bmp.height;if(ba>pa)w=Math.round(h*pa);else h=Math.round(w/pa);const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(bmp,(bmp.width-w)/2,(bmp.height-h)/2,w,h,0,0,w,h);return await createImageBitmap(c)}
   return bmp}
-$('shutter').addEventListener('click',async()=>{if(moving){toast('Hold steady, then shoot');return}$('shutter').disabled=true;try{const bmp=await grab();if(cur.kind==='visit')await keepX(bmp);else await review(bmp)}catch(e){toast('Could not take the photo: '+(e.message||e))}finally{$('shutter').disabled=false}});
+$('shutter').addEventListener('click',async()=>{if(!cur||shutterBusy)return;shutterBusy=true;$('shutter').disabled=true;
+  try{const bmp=await grab();if(!cur)return;if(cur.kind==='visit')await keepX(bmp);else await review(bmp)}
+  catch(e){const m=String(e&&e.message||e);toast(/no picture/i.test(m)?'The camera is not sending a picture on this phone. Tap "Use phone camera" instead.':'Could not take the photo: '+m,4000)}
+  finally{shutterBusy=false;$('shutter').disabled=false}});
+function diag(){const v=$('video');const vw=v.videoWidth||0,vh=v.videoHeight||0;$('camDiag').textContent=`${vw&&vh?vw+'×'+vh:'no picture'}${camProfile?' (reduced)':''} · ${curLens()} · ${imageCapture?'photo':'frame'} · motion ${motionOK===null?'…':motionOK?'ok':'ignored'}`}
+$('fileCamBtn').addEventListener('click',()=>{if(!cur||shutterBusy)return;$('fileCam').value='';$('fileCam').click()});
+$('fileCam').addEventListener('change',async()=>{const f=$('fileCam').files&&$('fileCam').files[0];if(!f||!cur)return;shutterBusy=true;$('shutter').disabled=true;
+  try{const bmp=await loadBitmap(f);if(!cur)return;if(cur.kind==='visit')await keepX(bmp);else await review(bmp)}catch(e){toast('Could not read that photo: '+(e.message||e))}finally{shutterBusy=false;$('shutter').disabled=false}});
 
 /* ---------- review ---------- */
 function evaluate(m,g,nShot){const rows=[];let worst='good';const lvl=l=>{if(l==='bad')worst='bad';else if(l==='warn'&&worst!=='bad')worst='warn'};
@@ -690,7 +713,7 @@ function enqueue(v,quiet){if(!signedIn()){if(!quiet){toast('Sign in first');open
   if(Q.running){Q.again=true;if(!quiet)Q.quiet=false;if(!quiet)toast('Upload already running; your shelf photos are queued behind it.');return}
   Q.running=true;Q.quiet=!!quiet;Q.v=v;if(V===v)renderVisit();runQueue().catch(e=>setStatus('Upload stopped: '+(e.message||e),true)).finally(()=>{Q.running=false;if(V===v)renderVisit();if(Q.again){const q=Q.quiet;Q.again=false;enqueue(v,q)}})}
 async function sendOne(v,g,s){const blob=await dbGet(PH,s.name);if(!blob){s.status='failed';return {ok:false,error:'file missing on phone'}}
-  try{const j=await post({token:CFG.token,name:CFG.name,kind:'photo',filename:s.name,mime:'image/jpeg',data:await b64(blob),...visitFields(v),category:g.cat||'VISIT',group:g.kind==='visit'?'visit':g.n,groupType:g.kind+'/'+g.type,lens:g.lens||'',shot:s.n,sharpness:s.sharp,tilt:s.tilt,overlap:s.ov==null?'':Math.round(s.ov*100),verdict:s.level,crop:s.crop?JSON.stringify(s.crop):'',dup:s.dup||''});
+  try{const j=await post({token:CFG.token,name:CFG.name,kind:'photo',filename:s.name,mime:'image/jpeg',data:await b64(blob),...visitFields(v),category:g.cat||'VISIT',categoryName:g.kind==='visit'?'Visit photos':catName(g.cat),group:g.kind==='visit'?'visit':g.n,groupType:g.kind+'/'+g.type,lens:g.lens||'',shot:s.n,sharpness:s.sharp,tilt:s.tilt,overlap:s.ov==null?'':Math.round(s.ov*100),verdict:s.level,crop:s.crop?JSON.stringify(s.crop):'',dup:s.dup||''});
     if(j.ok){s.status='sent';s.sentAt=new Date().toISOString()}else s.status='failed';return j}
   catch(e){s.status='failed';return {ok:false,net:true,error:String(e&&e.message||e)}}}
 async function runQueue(){const v=Q.v;const units=[[XG(v),true],...v.groups.map(g=>[g,false])];
@@ -717,9 +740,8 @@ async function purgeOld(){const cutoff=Date.now()-KEEP_DAYS*864e5;for(const v of
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
 (function boot(){history.replaceState({aegis:'main',d:0},'');renderCfg();CLOCK=Object.assign(CLOCK,load('aegis.clock',{}));VISITS=load('aegis.visits',[]);
   for(const v of VISITS){v.extras=v.extras||[];for(const g of v.groups){if(!g.cat)g.cat=v.cat||'POWBEV'}for(const s of shots(v))if(s.status==='uploading')s.status='failed'}
-  renderHome();if(!signedIn()){$('settings').hidden=false}ctx();checkClock();purgeOld()})();
+  renderHome();showVer();if(!signedIn()){$('settings').hidden=false}ctx();checkClock();purgeOld()})();
 })();
 </script>
 </body>
 </html>
-Displaying index.html.
