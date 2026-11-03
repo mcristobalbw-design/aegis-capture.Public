@@ -321,7 +321,7 @@ button[disabled]{opacity:.45;cursor:default}
 <script>
 (function(){
 'use strict';
-const APP='BW Aegis App', VERSION='v3.3';
+const APP='BW Aegis App', VERSION='v3.4';
 const $=id=>document.getElementById(id);
 const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxHPqdY8X5CckGOREXFPZdkji-MJijE0HEiV2hr5TR7lSmRJpFJWZySSNU5MjJ9UY2Z/exec';
 const CFG={url:DEFAULT_URL,token:'',name:'',role:''};
@@ -545,7 +545,8 @@ function renderLens(){const r=$('lensRow');r.innerHTML='';
   if(lensList.length>1){const lab=document.createElement('span');lab.textContent='Lens:';r.appendChild(lab);lensList.forEach((l,i)=>{const b=document.createElement('button');const nm=lensName(i);b.textContent=nm==='main'?'Main 1×':nm==='wide'?'Wide':nm==='tele'?'Tele':'Cam '+(i+1);b.className=l.id===lensId?'on':'';b.addEventListener('click',async()=>{if(l.id!==lensId){lensId=l.id;save('aegis.lens',lensId);camProfile=0;try{await startStream()}catch(e){camFail(e)}}});r.appendChild(b)})}
   if(track&&track.getCapabilities){const cap=track.getCapabilities();if(cap.zoom&&cap.zoom.max>cap.zoom.min){const s=track.getSettings();const z=document.createElement('input');z.type='range';z.min=cap.zoom.min;z.max=Math.min(cap.zoom.max,4);z.step=cap.zoom.step||0.1;z.value=s.zoom||cap.zoom.min;const zt=document.createElement('span');zt.textContent=(+z.value).toFixed(1)+'×';z.addEventListener('input',()=>{zt.textContent=(+z.value).toFixed(1)+'×';track.applyConstraints({advanced:[{zoom:+z.value}]}).catch(()=>{})});r.appendChild(z);r.appendChild(zt)}}
   if(curLens()==='wide'){const n=document.createElement('span');n.style.cssText='flex-basis:100%;color:#D9D2C3;font-size:12px';n.textContent='Wide bends the shelves at the edges: use it only for tight aisles; step back with Main when you can.';r.appendChild(n)}}
-const PROFILES=[{width:{ideal:4032},height:{ideal:3024},aspectRatio:{ideal:4/3}},{width:{ideal:1920},height:{ideal:1440}},{width:{ideal:1280},height:{ideal:960}},{}];
+const PROFILES=[{width:{ideal:1920},height:{ideal:1440},aspectRatio:{ideal:4/3}},{width:{ideal:1280},height:{ideal:960}},{width:{ideal:640},height:{ideal:480}},{}];
+let photoW=0;   // full-resolution photo width the camera offers through the photo path
 function firstFrame(v,ms){return new Promise(res=>{let done=false;const ok=()=>{if(!done){done=true;clearInterval(iv);res(true)}};
   if('requestVideoFrameCallback' in v)v.requestVideoFrameCallback(()=>ok());
   const iv=setInterval(()=>{if(v.videoWidth>0&&v.currentTime>0&&!v.paused)ok()},250);   // frames are flowing
@@ -557,7 +558,7 @@ async function startStream(){if(stream){stream.getTracks().forEach(t=>t.stop());
     const got=await firstFrame(v,1800);if(got){camProfile=i;break}
     stream.getTracks().forEach(t=>t.stop());stream=null;track=null}
   if(!stream)throw(lastErr||new Error('no picture from the camera'));
-  imageCapture=null;try{if(typeof ImageCapture==='function')imageCapture=new ImageCapture(track)}catch(e){}
+  imageCapture=null;photoW=0;try{if(typeof ImageCapture==='function'){imageCapture=new ImageCapture(track);try{const pc=await Promise.race([imageCapture.getPhotoCapabilities(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('slow')),1500))]);if(pc&&pc.imageWidth&&pc.imageWidth.max)photoW=Math.min(pc.imageWidth.max,4096)}catch(e){}}}catch(e){}
   fitFrame();if(!lensId&&track.getSettings)lensId=track.getSettings().deviceId||null;if(!lensList.length)await listLenses();renderLens();diag()}
 function fitFrame(){const v=$('video'),mid=$('camMid'),f=$('frame');const ar=(v.videoWidth&&v.videoHeight)?v.videoWidth/v.videoHeight:3/4;const W=mid.clientWidth,H=mid.clientHeight;let fw=W,fh=W/ar;if(fh>H){fh=H;fw=H*ar}f.style.width=Math.floor(fw)+'px';f.style.height=Math.floor(fh)+'px';if(!f.contains(v))f.insertBefore(v,f.firstChild)}
 window.addEventListener('resize',()=>{if(!$('cam').hidden)fitFrame()});$('video').addEventListener('resize',()=>{if(!$('cam').hidden)fitFrame()});$('video').addEventListener('loadedmetadata',()=>{if(!$('cam').hidden)fitFrame()});
@@ -595,7 +596,7 @@ function updateEdge(){if(!cur)return;const ed=$('edge'),tip=$('edgeTip');if(cur.
 async function loadBitmap(blob){try{return await createImageBitmap(blob,{imageOrientation:'from-image'})}catch(e){return await createImageBitmap(blob)}}
 async function grab(){ // returns a bitmap that shows exactly what the frame showed
   const v=$('video');if(!stream||!v.videoWidth)throw new Error('no picture from the camera');const pa=v.videoWidth/v.videoHeight;let bmp=null;
-  if(imageCapture){try{const blob=await Promise.race([imageCapture.takePhoto(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3500))]);bmp=await loadBitmap(blob)}catch(e){bmp=null}}
+  if(imageCapture){try{const opts=photoW?{imageWidth:photoW}:undefined;const blob=await Promise.race([opts?imageCapture.takePhoto(opts).catch(()=>imageCapture.takePhoto()):imageCapture.takePhoto(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),4000))]);bmp=await loadBitmap(blob)}catch(e){bmp=null}}
   if(!bmp){const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);return await createImageBitmap(c)}
   const ba=bmp.width/bmp.height;if(Math.abs(ba-pa)/pa>0.02){let w=bmp.width,h=bmp.height;if(ba>pa)w=Math.round(h*pa);else h=Math.round(w/pa);const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(bmp,(bmp.width-w)/2,(bmp.height-h)/2,w,h,0,0,w,h);return await createImageBitmap(c)}
   return bmp}
@@ -603,7 +604,7 @@ $('shutter').addEventListener('click',async()=>{if(!cur||shutterBusy)return;shut
   try{const bmp=await grab();if(!cur)return;if(cur.kind==='visit')await keepX(bmp);else await review(bmp)}
   catch(e){const m=String(e&&e.message||e);toast(/no picture/i.test(m)?'The camera is not sending a picture on this phone. Tap "Use phone camera" instead.':'Could not take the photo: '+m,4000)}
   finally{shutterBusy=false;$('shutter').disabled=false}});
-function diag(){const v=$('video');const vw=v.videoWidth||0,vh=v.videoHeight||0;$('camDiag').textContent=`${vw&&vh?vw+'×'+vh:'no picture'}${camProfile?' (reduced)':''} · ${curLens()} · ${imageCapture?'photo':'frame'} · motion ${motionOK===null?'…':motionOK?'ok':'ignored'}`}
+function diag(){const v=$('video');const vw=v.videoWidth||0,vh=v.videoHeight||0;$('camDiag').textContent=`preview ${vw&&vh?vw+'×'+vh:'none'}${camProfile?' (reduced)':''} · photo ${photoW?photoW+'px':imageCapture?'camera':'from preview'} · ${curLens()} · motion ${motionOK===null?'…':motionOK?'ok':'ignored'}`}
 $('fileCamBtn').addEventListener('click',()=>{if(!cur||shutterBusy)return;$('fileCam').value='';$('fileCam').click()});
 $('fileCam').addEventListener('change',async()=>{const f=$('fileCam').files&&$('fileCam').files[0];if(!f||!cur)return;shutterBusy=true;$('shutter').disabled=true;
   try{const bmp=await loadBitmap(f);if(!cur)return;if(cur.kind==='visit')await keepX(bmp);else await review(bmp)}catch(e){toast('Could not read that photo: '+(e.message||e))}finally{shutterBusy=false;$('shutter').disabled=false}});
@@ -645,8 +646,9 @@ $('keepBtn').addEventListener('click',async()=>{if(!pending||!pending.ev)return;
   try{
     if(cur.kind==='single'&&cur.shots.length){const old=cur.shots.pop();await dbDel(PH,old.name);await dbDel(TH,old.name)}
     const n=cur.shots.length+1,name=fname(V,cur,n);
-    const sc=stamp(bmp,cur,n);const blob=await new Promise(r=>sc.toBlob(r,'image/jpeg',0.82));const thumb=await thumbOf(sc,bmp.width,bmp.height);
-    const rec={name,n,w:m.w,h:m.h,sharp:+m.sharp.toFixed(1),tilt:+m.tilt.toFixed(1),ov:m.ov&&m.ov.f?+m.ov.f.toFixed(2):null,dup:m.dup,postL:m.postL,postR:m.postR,level:ev.worst,crop,time:new Date(nowMs()).toISOString(),status:'local',gray:G};
+    let sb=bmp;const L=3264;if(Math.max(bmp.width,bmp.height)>L){const s=L/Math.max(bmp.width,bmp.height);const c=document.createElement('canvas');c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);sb=c}
+    const sc=stamp(sb,cur,n);const blob=await new Promise(r=>sc.toBlob(r,'image/jpeg',0.82));const thumb=await thumbOf(sc,sc.width,sc.height);
+    const rec={name,n,w:sc.width,h:sc.height,sharp:+m.sharp.toFixed(1),tilt:+m.tilt.toFixed(1),ov:m.ov&&m.ov.f?+m.ov.f.toFixed(2):null,dup:m.dup,postL:m.postL,postR:m.postR,level:ev.worst,crop,time:new Date(nowMs()).toISOString(),status:'local',gray:G};
     cur.lens=curLens();if(cur.kind==='row'&&m.postR)cur.rightOk=true;
     await dbPut(PH,name,blob);await dbPut(TH,name,thumb);
     cur.shots.push(rec);persist();prevG=G;prevBmp=bmp;pending=null;toast('Kept · s'+pad2(n));
