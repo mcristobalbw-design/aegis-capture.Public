@@ -1,3 +1,6 @@
+
+index.html
+100%
 <!doctype html>
 <html lang="en">
 <head>
@@ -133,60 +136,80 @@ button[disabled]{opacity:.45;cursor:default}
 
 <!-- SETTINGS -->
 <section class="card" id="settings" hidden>
-  <h2>Settings</h2>
-  <p class="muted">Done once per phone. The upload link and token come from the project owner.</p>
-  <label>Upload link (Google script URL ending in /exec)<input type="url" id="setUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"></label>
-  <label>Token phrase<input type="text" id="setToken" autocomplete="off"></label>
-  <label>Auditor names (one per line)<textarea id="setAuditors"></textarea></label>
-  <div class="row"><button class="primary" id="saveSet">Save</button><button class="ghost" id="testSet">Test upload link</button></div>
-  <p class="status" id="setStatus"></p>
+  <div id="loginBox">
+    <h2>Sign in</h2>
+    <p class="muted">Use the access token Brandworks gave you. Needs signal the first time.</p>
+    <label>Your name<input type="text" id="setName" placeholder="as on your Brandworks ID" autocomplete="name"></label>
+    <label>Access token<input type="text" id="setToken" placeholder="BWAEGIS-0000" autocapitalize="characters" autocomplete="off"></label>
+    <button class="primary" id="loginBtn">Sign in</button>
+    <p class="status" id="setStatus"></p>
+  </div>
+  <div id="acctBox" hidden>
+    <h2>Account</h2>
+    <div class="kv" id="acctMeta"></div>
+    <div class="row"><button class="ghost" id="testSet">Test connection</button><button class="danger" id="logoutBtn">Sign out</button></div>
+    <p class="status" id="acctStatus"></p>
+    <details><summary class="muted">Advanced</summary><label style="margin-top:8px">Upload link<input type="url" id="setUrl" autocomplete="off"></label><button class="ghost small" id="saveUrl" style="margin-top:8px">Save link</button></details>
+  </div>
   <p class="muted" id="storageInfo"></p>
 </section>
 
-<!-- MAIN -->
+<!-- HOME -->
 <section id="start" style="display:flex;flex-direction:column;gap:16px">
-  <div class="tabs"><button class="on" id="tabNew">New visit</button><button id="tabHist">Visits <span id="histBadge"></span></button></div>
+  <div class="card">
+    <h2 id="hiLine">Hello</h2>
+    <p class="muted" id="dateLine"></p>
+    <label>Word of the day<div style="display:flex;gap:8px;align-items:center"><input type="text" id="wod" placeholder="type today's word" autocapitalize="characters" autocomplete="off"><span class="pill" id="wodPill" hidden>set</span></div></label>
+    <p class="muted" id="clockNote" hidden></p>
+  </div>
+  <button class="primary" id="goNew" style="padding:20px">Start a store visit</button>
+  <button class="primary" id="goCont" hidden style="padding:20px;background:var(--good)">Continue today's visit</button>
+  <button class="ghost" id="goHist" style="padding:18px">My visits <span id="histBadge"></span></button>
+  <p class="muted" id="homeStrip" style="text-align:center"></p>
+</section>
+
+<!-- NEW VISIT -->
+<section id="newPage" hidden style="display:flex;flex-direction:column;gap:16px">
   <div class="card" id="newCard">
-    <h2>Start a store visit</h2>
-    <div class="row">
-      <label>Auditor<select id="auditor"></select></label>
-      <label>Word of the day<input type="text" id="wod" placeholder="today's word" autocapitalize="characters" autocomplete="off"></label>
-    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>Start a store visit</h2><button class="ghost small" id="newBack">← Home</button></div>
     <div class="row">
       <label>Store code<input type="text" id="storeCode" placeholder="e.g. CT0243660" autocapitalize="characters" autocomplete="off"></label>
       <label>Store name<input type="text" id="storeName" placeholder="e.g. Prince Sibonga" autocomplete="off"></label>
     </div>
+    <input type="hidden" id="auditor">
     <p class="muted" id="sameDayNote" hidden></p>
     <label>Find the store on the map (optional)<div style="display:flex;gap:8px"><input type="search" id="placeQ" placeholder="e.g. Puregold Taytay" autocomplete="off"><button class="small" id="placeSearch" style="flex:none">Search</button></div></label>
     <div class="vlist" id="placeResults"></div>
     <p class="muted" id="placePicked" hidden></p>
     <div class="row"><button class="ghost small" id="pinBtn">Pin the location on a map</button><button class="ghost small" id="placeClear" hidden>Clear place</button></div>
-    <p class="notice" id="clockNote" hidden></p>
     <button class="primary" id="startBtn">Start visit</button>
-    <p class="muted">Location is recorded with each visit and stamped on every photo. Allow it when the phone asks.</p>
+    <p class="muted">Location is recorded and stamped on every photo. Allow it when the phone asks.</p>
   </div>
-  <div class="card" id="histCard" hidden>
-    <div style="display:flex;justify-content:space-between;align-items:baseline"><h2>Visits on this phone</h2><span class="muted" id="visitsCount"></span></div>
+</section>
+
+<!-- MY VISITS -->
+<section id="histPage" hidden style="display:flex;flex-direction:column;gap:16px">
+  <div class="card" id="histCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>My visits</h2><button class="ghost small" id="histBack">← Home</button></div>
     <input type="search" id="histQ" placeholder="Search store code or name">
     <p class="notice" id="histWaiting" hidden></p>
     <div class="vlist" id="visitsList"><p class="muted">No visits yet.</p></div>
+    <p class="muted" id="visitsCount"></p>
   </div>
 </section>
 
 <!-- VISIT -->
 <section id="visit" hidden style="display:flex;flex-direction:column;gap:16px">
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h2 id="vTitle">Visit</h2><span class="pill" id="vPill"></span></div>
-    <div class="kv" id="vMeta"></div>
-    <button class="ghost small" id="backBtn">← Back to visits</button>
+  <div class="card" style="gap:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><h2 id="vTitle">Visit</h2><p class="muted" id="vSub"></p></div><button class="ghost small" id="backBtn">← Home</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:center"><span class="pill" id="vPill"></span><button class="ghost small" id="vInfoBtn">details ⓘ</button></div>
+    <div class="kv" id="vMeta" hidden></div>
   </div>
   <div class="card">
     <h3>What are you shooting?</h3>
-    <p class="muted">Pick a category for shelf photos the engine will read, or Visit photos for anything else (storefront, stands, endcaps, checkout, price tags).</p>
     <div class="tiles2" id="catTiles"></div>
   </div>
-  <div class="card">
-    <h3>Upload</h3>
+  <div class="card" style="gap:10px">
     <div class="progress"><i id="bar"></i></div>
     <p class="status" id="upStatus">Not uploaded yet.</p>
     <div class="row"><button class="primary" id="uploadBtn">Upload visit</button><button class="primary" id="finishBtn" disabled>Finish visit</button></div>
@@ -202,7 +225,6 @@ button[disabled]{opacity:.45;cursor:default}
   </div>
   <div class="card" id="newGroup">
     <h3 id="grpTitle">Add group 1</h3>
-    <p class="muted">One group = one piece of shelf the computer joins as a single surface. Shoot the whole bay, post to post, top shelf to floor.</p>
     <label>Shape</label>
     <div class="choice" id="kindPick">
       <button data-v="single" class="on"><b>Single</b>one photo</button>
@@ -214,11 +236,12 @@ button[disabled]{opacity:.45;cursor:default}
       <button data-v="shelf" class="on"><b>Shelf</b>regular gondola</button>
       <button data-v="rack"><b>Frame/Rack</b>strip or rack frame counts as the brand's length</button>
     </div>
+    <p class="muted">Whole bay: post to post, top shelf to floor. One group = one piece of shelf the engine joins.</p>
     <button class="primary" id="openCam">Open camera</button>
   </div>
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:baseline"><h3>Groups in this category</h3><span class="muted" id="catCount">0 photos</span></div>
-    <p class="muted">Tap a photo to view, crop, delete or retake it. Nothing is sent until you tap Upload on the visit page.</p>
+    <p class="muted">Tap a photo to view, crop, delete or retake it.</p>
     <div class="vlist" id="groups"></div>
   </div>
 </section>
@@ -227,7 +250,7 @@ button[disabled]{opacity:.45;cursor:default}
 <section id="xPage" hidden style="display:flex;flex-direction:column;gap:16px">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>Visit photos</h2><button class="ghost small" id="xBack">← Visit</button></div>
-    <p class="muted">Anything worth keeping from this visit: storefront, signage, stands, endcaps, checkout displays, price tags. No checks, not read by the engine; uploads on its own when there is signal.</p>
+    <p class="muted">Storefront, signage, stands, endcaps, checkout, price tags. Not read by the engine; uploads on its own.</p>
     <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="muted" id="xCount">0 photos</span></div>
     <div class="thumbrow" id="xThumbs"></div>
     <button class="primary" id="openXCam">Take visit photos</button>
@@ -297,9 +320,10 @@ button[disabled]{opacity:.45;cursor:default}
 <script>
 (function(){
 'use strict';
-const APP='BW Aegis App', VERSION='v3';
+const APP='BW Aegis App', VERSION='v3.2';
 const $=id=>document.getElementById(id);
-const CFG={url:'',token:'',auditors:['Auditor 1','Auditor 2']};
+const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxHPqdY8X5CckGOREXFPZdkji-MJijE0HEiV2hr5TR7lSmRJpFJWZySSNU5MjJ9UY2Z/exec';
+const CFG={url:DEFAULT_URL,token:'',name:'',role:''};
 const CATS=[['POWBEV','Powdered Beverage'],['BISCUITS','Biscuits'],['CHOCO','Chocolates'],['BREADFILL','Breadfill'],['CHILLER','Chiller']];
 const catName=c=>(CATS.find(x=>x[0]===c)||[c,c])[1];
 let VISITS=[],V=null,CAT=null,cur=null;
@@ -327,7 +351,7 @@ function nowMs(){return Date.now()+CLOCK.offset}
 function parts(ms){const d=new Date(ms);return {date:`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`,hhmm:`${pad2(d.getHours())}${pad2(d.getMinutes())}`,iso:d.toISOString()}}
 function fmtDT(iso){const d=new Date(iso);const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`}
 async function checkClock(){if(!CFG.url||!navigator.onLine)return;try{const t0=Date.now();const r=await fetch(CFG.url,{cache:'no-store'});const j=await r.json();if(!j.time)return;const t1=Date.now();const server=new Date(j.time).getTime()+(t1-t0)/2;const raw=server-t1;CLOCK={offset:Math.abs(raw)>120000?raw:0,checked:new Date().toISOString(),raw};save('aegis.clock',CLOCK);showClock()}catch(e){}}
-function showClock(){const n=$('clockNote');if(CLOCK.offset){const m=Math.round(Math.abs(CLOCK.offset)/60000);n.hidden=false;n.textContent=`This phone's clock is ${m>=60?Math.floor(m/60)+' h '+(m%60)+' min':m+' min'} ${CLOCK.offset>0?'behind':'ahead'}. Google's time is used for file names and stamps.`}else n.hidden=true}
+function showClock(){const n=$('clockNote');if(CLOCK.offset){const m=Math.round(Math.abs(CLOCK.offset)/60000);n.hidden=false;n.textContent=`Phone clock is ${m>=60?Math.floor(m/60)+' h '+(m%60)+' min':m+' min'} ${CLOCK.offset>0?'behind':'ahead'}; Google's time is used on stamps.`}else n.hidden=true}
 
 /* ---------- image analysis ---------- */
 function toGray(bmp,W){const H=Math.round(bmp.height*W/bmp.width);const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bmp,0,0,W,H);const d=x.getImageData(0,0,W,H).data;const g=new Float32Array(W*H),u8=new Uint8Array(W*H);for(let i=0,j=0;i<d.length;i+=4,j++){g[j]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];u8[j]=g[j]}return {g,u8,W,H}}
@@ -380,7 +404,7 @@ function ctx(){$('ctx').textContent=V?`${V.store} · ${V.groups.length} group${V
 let depth=0;
 function push(name){depth++;history.pushState({aegis:name,d:depth},'')}
 function back(n){if(depth>0)history.go(-Math.min(n||1,depth))}
-function topScreen(){if($('review').style.display==='flex')return 'review';if($('viewer').style.display==='flex')return 'viewer';if($('mapOv').style.display==='flex')return 'map';if(!$('cam').hidden)return 'cam';if(!$('settings').hidden)return 'settings';if(!$('catPage').hidden)return 'cat';if(!$('xPage').hidden)return 'x';if(!$('visit').hidden)return 'visit';return 'main'}
+function topScreen(){if($('review').style.display==='flex')return 'review';if($('viewer').style.display==='flex')return 'viewer';if($('mapOv').style.display==='flex')return 'map';if(!$('cam').hidden)return 'cam';if(!$('settings').hidden)return 'settings';if(!$('catPage').hidden)return 'cat';if(!$('xPage').hidden)return 'x';if(!$('visit').hidden)return 'visit';if(!$('newPage').hidden)return 'new';if(!$('histPage').hidden)return 'hist';return 'main'}
 function closeTop(){const t=topScreen();
   if(t==='review'){if(pending){push('review');toast('Choose Keep or Retake first');return}$('review').style.display='none';return}
   if(t==='viewer'){doCloseViewer();return}
@@ -389,27 +413,51 @@ function closeTop(){const t=topScreen();
   if(t==='settings'){$('settings').hidden=true;return}
   if(t==='cat'){$('catPage').hidden=true;CAT=null;$('visit').hidden=false;renderVisit();return}
   if(t==='x'){$('xPage').hidden=true;$('visit').hidden=false;renderVisit();return}
-  if(t==='visit'){V=null;$('visit').hidden=true;$('start').hidden=false;renderVisits();ctx();return}}
+  if(t==='visit'){V=null;$('visit').hidden=true;$('newPage').hidden=true;$('histPage').hidden=true;$('start').hidden=false;renderHome();ctx();return}
+  if(t==='new'){$('newPage').hidden=true;$('start').hidden=false;renderHome();return}
+  if(t==='hist'){$('histPage').hidden=true;$('start').hidden=false;renderHome();return}}
 window.addEventListener('popstate',e=>{const d=(e.state&&typeof e.state.d==='number')?e.state.d:0;if(d>=depth){depth=d;return}const steps=depth-d;depth=d;for(let i=0;i<steps;i++){try{closeTop()}catch(err){}}});
 
-/* ---------- settings ---------- */
-Object.assign(CFG,load('aegis.cfg',{}));
-function renderCfg(){$('setUrl').value=CFG.url||'';$('setToken').value=CFG.token||'';$('setAuditors').value=(CFG.auditors||[]).join('\n');const sel=$('auditor'),keep=sel.value||load('aegis.auditor','');sel.innerHTML='';(CFG.auditors||[]).forEach(a=>{const o=document.createElement('option');o.value=a;o.textContent=a;sel.appendChild(o)});if(keep)sel.value=keep}
-$('gearBtn').addEventListener('click',async()=>{if(!$('settings').hidden){if(history.state&&history.state.aegis==='settings')back();else $('settings').hidden=true;return}$('settings').hidden=false;push('settings');renderCfg();const n=(await dbKeys(PH)).length;$('storageInfo').textContent=`${n} full-size photo(s) kept on this phone (originals are removed ${KEEP_DAYS} days after upload; thumbnails stay). App ${VERSION}, phone id ${DEVICE}.`});
-$('saveSet').addEventListener('click',()=>{const u=$('setUrl').value.trim();const st=$('setStatus');
-  if(/googleusercontent\.com/.test(u)){st.className='status bad';st.textContent='That is the address the browser was redirected to, not the upload link. Use the Web app URL from Apps Script: it starts with https://script.google.com/macros/s/ and ends in /exec.';return}
-  if(u&&!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(u)){st.className='status bad';st.textContent='The upload link should start with https://script.google.com/macros/s/ and end in /exec.';return}
-  CFG.url=u;CFG.token=$('setToken').value.trim();CFG.auditors=$('setAuditors').value.split('\n').map(s=>s.trim()).filter(Boolean);save('aegis.cfg',CFG);renderCfg();st.className='status';st.textContent='Saved.';checkClock()});
-$('testSet').addEventListener('click',async()=>{const st=$('setStatus');st.className='status';st.textContent='Testing…';try{const r=await fetch($('setUrl').value.trim(),{cache:'no-store'});const j=await r.json();st.textContent=j.ok?`Upload link answers (script ${j.version||'?'}). Good.`:'Link answered but not as expected.'}catch(e){st.className='status bad';st.textContent='Could not reach the link. Check it is the /exec address and the deployment is "Anyone".'}});
+/* ---------- sign in / account ---------- */
+Object.assign(CFG,load('aegis.cfg',{}));if(!CFG.url)CFG.url=DEFAULT_URL;
+function signedIn(){return !!(CFG.token&&CFG.name)}
+function renderCfg(){$('auditor').value=CFG.name||'';if(typeof renderHome==='function')try{renderHome()}catch(e){}$('loginBox').hidden=signedIn();$('acctBox').hidden=!signedIn();$('setUrl').value=CFG.url||'';
+  if(signedIn())$('acctMeta').innerHTML=`<b>Name</b><span>${CFG.name}</span><b>Token</b><span>${CFG.token}</span><b>Role</b><span>${CFG.role||'auditor'}</span>`}
+async function openSettings(){$('settings').hidden=false;push('settings');renderCfg();const n=(await dbKeys(PH)).length;$('storageInfo').textContent=`${n} full-size photo(s) kept on this phone (originals are removed ${KEEP_DAYS} days after upload; thumbnails stay). App ${VERSION}, phone id ${DEVICE}.`}
+$('gearBtn').addEventListener('click',()=>{if(!$('settings').hidden){if(history.state&&history.state.aegis==='settings')back();else $('settings').hidden=true;return}openSettings()});
+$('loginBtn').addEventListener('click',async()=>{const name=$('setName').value.trim(),token=$('setToken').value.trim().toUpperCase();const st=$('setStatus');st.className='status';
+  if(!name||!token){st.className='status bad';st.textContent='Type your name and the access token.';return}
+  if(!navigator.onLine){st.className='status bad';st.textContent='No signal. Signing in needs internet the first time.';return}
+  st.textContent='Checking…';$('loginBtn').disabled=true;
+  try{const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify({kind:'login',token,name,device:DEVICE,appVersion:VERSION})});const j=await r.json();
+    if(j.ok){CFG.token=token;CFG.name=j.name||name;CFG.role=j.role||'';save('aegis.cfg',CFG);renderCfg();toast('Signed in as '+CFG.name);checkClock();if(history.state&&history.state.aegis==='settings')back();else $('settings').hidden=true}
+    else{st.className='status bad';st.textContent=j.error==='bad token'?'That token is not on the list, or has been switched off. Check with the office.':'Could not sign in: '+(j.error||'unknown error')}}
+  catch(e){st.className='status bad';st.textContent='Could not reach the server. Try again with better signal.'}
+  finally{$('loginBtn').disabled=false}});
+$('logoutBtn').addEventListener('click',()=>{const b=$('logoutBtn');if(b.dataset.a!=='1'){b.dataset.a='1';b.textContent='Tap again to sign out';setTimeout(()=>{b.dataset.a='';b.textContent='Sign out'},3000);return}b.dataset.a='';b.textContent='Sign out';CFG.token='';CFG.name='';CFG.role='';save('aegis.cfg',CFG);renderCfg();toast('Signed out. Visits on this phone are kept.')});
+$('saveUrl').addEventListener('click',()=>{const u=$('setUrl').value.trim();const st=$('acctStatus');
+  if(/googleusercontent\.com/.test(u)||!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(u)){st.className='status bad';st.textContent='The upload link should start with https://script.google.com/macros/s/ and end in /exec.';return}
+  CFG.url=u;save('aegis.cfg',CFG);st.className='status';st.textContent='Link saved.'});
+$('testSet').addEventListener('click',async()=>{const st=$('acctStatus');st.className='status';st.textContent='Testing…';try{const r=await fetch(CFG.url,{cache:'no-store'});const j=await r.json();st.textContent=j.ok?`Server answers (script ${j.version||'?'}). Good.`:'Server answered but not as expected.'}catch(e){st.className='status bad';st.textContent='Could not reach the server.'}});
 
 /* ---------- main page ---------- */
-$('tabNew').addEventListener('click',()=>{$('tabNew').classList.add('on');$('tabHist').classList.remove('on');$('newCard').hidden=false;$('histCard').hidden=true});
-$('tabHist').addEventListener('click',()=>{$('tabHist').classList.add('on');$('tabNew').classList.remove('on');$('newCard').hidden=true;$('histCard').hidden=false;renderVisits()});
+function todayUnfinished(){const {date}=parts(nowMs());return VISITS.filter(v=>v.date===date&&!v.done).sort((a,b)=>b.started<a.started?-1:1)}
+function renderHome(){const first=(CFG.name||'').split(' ')[0];$('hiLine').textContent=signedIn()?`Hello, ${first}`:'Hello';const d=new Date(nowMs());$('dateLine').textContent=d.toLocaleDateString('en-PH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const w=load('aegis.wod',null);const has=w&&w.date===parts(nowMs()).date&&w.word;if(has&&!$('wod').value)$('wod').value=w.word;$('wodPill').hidden=!($('wod').value.trim());
+  const {date}=parts(nowMs());const today=VISITS.filter(v=>v.date===date);const waiting=VISITS.filter(v=>shots(v).some(s=>s.status!=='sent')).length;const un=todayUnfinished();
+  $('goCont').hidden=!un.length;if(un.length)$('goCont').textContent=`Continue ${un[0].store}${un[0].name?' · '+un[0].name:''}`;
+  $('histBadge').textContent=waiting?`(${waiting} to upload)`:'';
+  $('homeStrip').textContent=`${today.length} visit${today.length===1?'':'s'} today${waiting?' · '+waiting+' with photos waiting to upload':''}`;showClock()}
+$('goNew').addEventListener('click',()=>{if(!signedIn()){toast('Sign in first');openSettings();return}if(!$('wod').value.trim()){toast('Type the word of the day first');$('wod').focus();return}$('start').hidden=true;$('newPage').hidden=false;push('new');$('storeCode').focus()});
+$('goCont').addEventListener('click',()=>{const un=todayUnfinished();if(un.length)openVisit(un[0])});
+$('goHist').addEventListener('click',()=>{$('start').hidden=true;$('histPage').hidden=false;push('hist');renderVisits()});
+$('newBack').addEventListener('click',()=>back());$('histBack').addEventListener('click',()=>back());
 $('histQ').addEventListener('input',renderVisits);
+$('wod').addEventListener('input',()=>{$('wodPill').hidden=!$('wod').value.trim()});
 function renderVisits(){const el=$('visitsList');el.innerHTML='';const q=($('histQ').value||'').trim().toUpperCase();
   const list=[...VISITS].sort((a,b)=>b.started<a.started?-1:1).filter(v=>!q||v.store.includes(q)||(v.name||'').toUpperCase().includes(q));
-  $('visitsCount').textContent=VISITS.length?`${VISITS.length}`:'';
-  const waiting=VISITS.filter(v=>shots(v).some(s=>s.status!=='sent')).length;$('histBadge').textContent=waiting?`(${waiting})`:'';
+  $('visitsCount').textContent=VISITS.length?`${VISITS.length} visit${VISITS.length===1?'':'s'} on this phone`:'';
+  const waiting=VISITS.filter(v=>shots(v).some(s=>s.status!=='sent')).length;
   const hw=$('histWaiting');if(waiting){hw.hidden=false;hw.textContent=`${waiting} visit${waiting>1?'s':''} still ${waiting>1?'have':'has'} photos not uploaded.`}else hw.hidden=true;
   if(!list.length){el.innerHTML='<p class="muted">'+(q?'No visit matches.':'No visits yet.')+'</p>';return}
   list.forEach(v=>{const st=vStatus(v);const d=document.createElement('div');d.className='vrow';
@@ -439,17 +487,17 @@ $('mapSave').addEventListener('click',()=>{const p=marker.getLatLng();PLACE={nam
 $('wod').addEventListener('change',()=>{save('aegis.wod',{date:parts(nowMs()).date,word:$('wod').value.trim().toUpperCase()})});
 $('startBtn').addEventListener('click',async()=>{const code=$('storeCode').value.trim().toUpperCase();if(!code){toast('Enter the store code');return}
   const wod=$('wod').value.trim().toUpperCase();if(!wod){toast('Enter the word of the day');$('wod').focus();return}
-  if(!CFG.url){toast('Set the upload link in Settings first');$('settings').hidden=false;return}
+  if(!signedIn()){toast('Sign in first');openSettings();return}
   $('startBtn').disabled=true;$('startBtn').textContent='Getting location…';const [gps]=await Promise.all([getGPS(),checkClock()]);$('startBtn').disabled=false;$('startBtn').textContent='Start visit';
   const np=parts(nowMs());const seq=VISITS.filter(v=>v.store===code&&v.date===np.date).length+1;
-  save('aegis.wod',{date:np.date,word:wod});save('aegis.auditor',$('auditor').value);
-  V={id:`${code}_${np.date.replace(/-/g,'')}_${np.hhmm}_${DEVICE}`,store:code,name:$('storeName').value.trim(),auditor:$('auditor').value,wod,date:np.date,hhmm:np.hhmm,started:np.iso,seq,gps,place:PLACE,device:DEVICE,clockOffsetS:Math.round((CLOCK.raw||0)/1000),clockChecked:!!CLOCK.checked,groups:[],extras:[],done:false,manifestSent:false};
-  PLACE=null;showPlace();$('placeResults').innerHTML='';$('placeQ').value='';lastGPS=gps||lastGPS;VISITS.push(V);persist();if(!gps)toast('No GPS fix; photos will say "no GPS"');openVisit(V)});
+  save('aegis.wod',{date:np.date,word:wod});
+  V={id:`${code}_${np.date.replace(/-/g,'')}_${np.hhmm}_${DEVICE}`,store:code,name:$('storeName').value.trim(),auditor:CFG.name,wod,date:np.date,hhmm:np.hhmm,started:np.iso,seq,gps,place:PLACE,device:DEVICE,clockOffsetS:Math.round((CLOCK.raw||0)/1000),clockChecked:!!CLOCK.checked,groups:[],extras:[],done:false,manifestSent:false};
+  PLACE=null;showPlace();$('placeResults').innerHTML='';$('placeQ').value='';lastGPS=gps||lastGPS;VISITS.push(V);persist();if(!gps)toast('No GPS fix; photos will say "no GPS"');$('newPage').hidden=true;$('storeCode').value='';$('storeName').value='';$('sameDayNote').hidden=true;V=null;depth--;history.replaceState({aegis:'main',d:depth},'');openVisit(VISITS[VISITS.length-1])});
 
 /* ---------- visit page ---------- */
 function openVisit(v){V=v;$('start').hidden=true;$('visit').hidden=false;push('visit');renderVisit()}
-function renderVisit(){if(!V)return;$('vTitle').textContent=`${V.store}${V.seq>1?` · visit ${V.seq}`:''}`;
-  $('vMeta').innerHTML=`<b>Store</b><span>${V.name||'(no name typed)'}</span><b>Started</b><span>${fmtDT(V.started)}</span><b>Auditor</b><span>${V.auditor}</span><b>WOD</b><span>${V.wod||'—'}</span><b>Phone GPS</b><span>${gpsText(V.gps)}</span><b>Place</b><span>${placeText(V)}</span>`;
+function renderVisit(){if(!V)return;$('vTitle').textContent=`${V.store}${V.seq>1?` · visit ${V.seq}`:''}`;$('vSub').textContent=`${V.name||''}${V.name?' · ':''}${fmtDT(V.started)}`;
+  $('vMeta').innerHTML=`<b>Auditor</b><span>${V.auditor}</span><b>WOD</b><span>${V.wod||'—'}</span><b>Phone GPS</b><span>${gpsText(V.gps)}</span><b>Place</b><span>${placeText(V)}</span><b>Groups</b><span>${V.groups.length} · ${shelfShots(V).length} shelf photo${shelfShots(V).length===1?'':'s'} · ${(V.extras||[]).length} visit photo${(V.extras||[]).length===1?'':'s'}</span>`;
   const t=$('catTiles');t.innerHTML='';for(const [c,nm] of CATS){const gs=catGroups(V,c);const n=gs.reduce((a,g)=>a+g.shots.length,0);const b=document.createElement('button');b.className='tile'+(n?' has':'');b.innerHTML=`<b>${nm}</b><span>${n?`${gs.length} group${gs.length>1?'s':''}, ${n} photo${n>1?'s':''}`:'no photos yet'}</span>`;b.addEventListener('click',()=>openCat(c));t.appendChild(b)}
   const xs=V.extras||[];const xb=document.createElement('button');xb.className='tile x'+(xs.length?' has':'');xb.innerHTML=`<b>Visit photos</b><span>${xs.length?`${xs.length} photo${xs.length>1?'s':''} · ${xs.filter(s=>s.status==='sent').length} uploaded`:'storefront, stands, anything else'}</span>`;xb.addEventListener('click',()=>{$('visit').hidden=true;$('xPage').hidden=false;push('x');renderX()});t.appendChild(xb);
   const all=shots(V),total=all.length,sent=all.filter(s=>s.status==='sent').length;const st=vStatus(V);$('vPill').className='pill '+st.l;$('vPill').textContent=st.t;
@@ -459,7 +507,7 @@ function renderVisit(){if(!V)return;$('vTitle').textContent=`${V.store}${V.seq>1
   $('bar').style.width=total?Math.round(100*sent/total)+'%':'0%';
   if(!Q.running){if(V.done&&allSent)setStatus('Finished and uploaded. Anything you add now is sent with Upload visit.');else if(allSent)setStatus('Everything is in Drive. You can finish the visit.');else if(!total)setStatus('Not uploaded yet.');else if(total-sent&&!$('upStatus').classList.contains('bad'))setStatus(`${total-sent} photo${total-sent>1?'s':''} on this phone, not sent yet.`)}
   ctx()}
-$('backBtn').addEventListener('click',()=>back());
+$('backBtn').addEventListener('click',()=>back());$('vInfoBtn').addEventListener('click',()=>{$('vMeta').hidden=!$('vMeta').hidden});
 $('discardBtn').addEventListener('click',async()=>{const b=$('discardBtn');if(b.dataset.a!=='1'){b.dataset.a='1';b.textContent='Tap again to remove this visit from the phone';setTimeout(()=>{b.dataset.a='';b.textContent='Discard this visit'},3000);return}
   for(const s of shots(V)){await dbDel(PH,s.name);await dbDel(TH,s.name)}VISITS=VISITS.filter(v=>v!==V);persist();b.dataset.a='';b.textContent='Discard this visit';back()});
 $('finishBtn').addEventListener('click',()=>{V.done=true;V.finished=new Date(nowMs()).toISOString();persist();toast('Visit finished.');back()});
@@ -640,11 +688,11 @@ function manifestCSV(v){const lines=['visit_id,file,store_code,store_name,audito
 function visitFields(v){return {visitId:v.id,store:v.store,storeName:v.name||'',auditor:v.auditor,wod:v.wod||'',device:v.device,date:v.date,time:v.hhmm,seq:v.seq,folder:folderName(v),started:v.started,clockOffsetS:v.clockOffsetS||0,clockChecked:v.clockChecked?1:0,gpsLat:v.gps?v.gps.lat:'',gpsLng:v.gps?v.gps.lng:'',gpsAcc:v.gps?Math.round(v.gps.acc):'',placeName:v.place?v.place.name:'',placeLat:v.place?v.place.lat:'',placeLng:v.place?v.place.lng:'',placeSrc:v.place?v.place.src:'',placeDistM:v.place&&v.gps?distM(v.gps,v.place):'',categories:catsCovered(v).join(', '),groups:v.groups.length,photos:shelfShots(v).length,visitPhotos:(v.extras||[]).length,appVersion:VERSION}}
 async function post(body){const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify(body)});return await r.json()}
 function setStatus(t,bad){const st=$('upStatus');st.className='status'+(bad?' bad':'');st.textContent=t}
-function enqueue(v,quiet){if(!CFG.url){if(!quiet)toast('Set the upload link in Settings');return}
+function enqueue(v,quiet){if(!signedIn()){if(!quiet){toast('Sign in first');openSettings()}return}
   if(Q.running){Q.again=true;if(!quiet)Q.quiet=false;if(!quiet)toast('Upload already running; your shelf photos are queued behind it.');return}
   Q.running=true;Q.quiet=!!quiet;Q.v=v;if(V===v)renderVisit();runQueue().catch(e=>setStatus('Upload stopped: '+(e.message||e),true)).finally(()=>{Q.running=false;if(V===v)renderVisit();if(Q.again){const q=Q.quiet;Q.again=false;enqueue(v,q)}})}
 async function sendOne(v,g,s){const blob=await dbGet(PH,s.name);if(!blob){s.status='failed';return {ok:false,error:'file missing on phone'}}
-  try{const j=await post({token:CFG.token,kind:'photo',filename:s.name,mime:'image/jpeg',data:await b64(blob),...visitFields(v),category:g.cat||'VISIT',group:g.kind==='visit'?'visit':g.n,groupType:g.kind+'/'+g.type,lens:g.lens||'',shot:s.n,sharpness:s.sharp,tilt:s.tilt,overlap:s.ov==null?'':Math.round(s.ov*100),verdict:s.level,crop:s.crop?JSON.stringify(s.crop):'',dup:s.dup||''});
+  try{const j=await post({token:CFG.token,name:CFG.name,kind:'photo',filename:s.name,mime:'image/jpeg',data:await b64(blob),...visitFields(v),category:g.cat||'VISIT',group:g.kind==='visit'?'visit':g.n,groupType:g.kind+'/'+g.type,lens:g.lens||'',shot:s.n,sharpness:s.sharp,tilt:s.tilt,overlap:s.ov==null?'':Math.round(s.ov*100),verdict:s.level,crop:s.crop?JSON.stringify(s.crop):'',dup:s.dup||''});
     if(j.ok){s.status='sent';s.sentAt=new Date().toISOString()}else s.status='failed';return j}
   catch(e){s.status='failed';return {ok:false,net:true,error:String(e&&e.message||e)}}}
 async function runQueue(){const v=Q.v;const units=[[XG(v),true],...v.groups.map(g=>[g,false])];
@@ -654,11 +702,11 @@ async function runQueue(){const v=Q.v;const units=[[XG(v),true],...v.groups.map(
     if(!navigator.onLine){stop='No signal. Upload resumes when the phone is back online.';break}
     for(const [,s] of batch)s.status='uploading';if(V===v)renderVisit();setStatus(`Uploading photo ${sent+1}${batch.length>1?'–'+(sent+batch.length):''} of ${all.length}…`);
     const rs=await Promise.all(batch.map(([g,s])=>sendOne(v,g,s)));
-    for(const r of rs){if(r.ok)sent++;else if(r.error==='bad token')stop='Upload refused: the token phrase does not match the script. Check Settings.';else if(r.net)stop='Could not reach the upload link (weak signal, or the link changed). Will retry.';else stop='Upload refused: '+(r.error||'unknown error')}
+    for(const r of rs){if(r.ok)sent++;else if(r.error==='bad token')stop='Upload refused: your access token is not valid any more. Sign in again or check with the office.';else if(r.net)stop='Could not reach the upload link (weak signal, or the link changed). Will retry.';else stop='Upload refused: '+(r.error||'unknown error')}
     persist();if(V===v)renderVisit()}
   if(stop){setStatus(stop,true);return}
   if(all.every(s=>s.status==='sent')){setStatus('Sending the visit record…');
-    try{const j=await post({token:CFG.token,kind:'manifest',filename:`${base(v)}_manifest.csv`,text:manifestCSV(v),...visitFields(v)});if(j.ok){v.manifestSent=true;persist();setStatus(`All ${all.length} photos and the visit record are in Drive.`);toast('Upload complete')}else setStatus('Photos are in; the visit record was refused: '+(j.error||''),true)}
+    try{const j=await post({token:CFG.token,name:CFG.name,kind:'manifest',filename:`${base(v)}_manifest.csv`,text:manifestCSV(v),...visitFields(v)});if(j.ok){v.manifestSent=true;persist();setStatus(`All ${all.length} photos and the visit record are in Drive.`);toast('Upload complete')}else setStatus('Photos are in; the visit record was refused: '+(j.error||''),true)}
     catch(e){setStatus('Photos are in; the visit record could not be sent yet. Tap Upload again when there is signal.',true)}}
   else if(!Q.quiet){const left=all.filter(s=>s.status!=='sent').length;setStatus(`${left} photo${left>1?'s':''} still to send. Tap Upload to retry.`,true)}
   else{const left=all.filter(s=>s.status!=='sent').length;setStatus(`Visit photos sent. ${left} shelf photo${left>1?'s':''} waiting for Upload visit.`)}}
@@ -671,9 +719,9 @@ async function purgeOld(){const cutoff=Date.now()-KEEP_DAYS*864e5;for(const v of
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
 (function boot(){history.replaceState({aegis:'main',d:0},'');renderCfg();CLOCK=Object.assign(CLOCK,load('aegis.clock',{}));VISITS=load('aegis.visits',[]);
   for(const v of VISITS){v.extras=v.extras||[];for(const g of v.groups){if(!g.cat)g.cat=v.cat||'POWBEV'}for(const s of shots(v))if(s.status==='uploading')s.status='failed'}
-  const w=load('aegis.wod',null);if(w&&w.date===parts(nowMs()).date)$('wod').value=w.word;
-  renderVisits();if(!CFG.url){$('settings').hidden=false}ctx();showClock();checkClock();purgeOld()})();
+  renderHome();if(!signedIn()){$('settings').hidden=false}ctx();checkClock();purgeOld()})();
 })();
 </script>
 </body>
 </html>
+Displaying index.html.
