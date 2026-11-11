@@ -133,6 +133,15 @@ button[disabled]{opacity:.45;cursor:default}
 .mrow .choice button[data-a="0"].on{border-color:var(--bad);background:var(--bad-bg)}.mrow .choice button[data-a="1"].on{border-color:var(--good);background:var(--good-bg)}
 .mrow .mx{display:flex;flex-direction:column;gap:8px}.mrow .mph{display:flex;gap:10px;align-items:center}.mrow input,.mrow select{font-size:15px;padding:8px 10px}
 #gdImgs{display:flex;flex-direction:column;gap:12px}#gdImgs figure{margin:0;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}#gdImgs img{width:100%;display:block}#gdImgs figcaption{padding:6px 10px;font-size:13px;font-weight:600}
+.blist{display:flex;flex-direction:column;gap:10px}
+.btile{display:grid;grid-template-columns:52px 1fr 24px;gap:14px;align-items:center;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 1px 0 rgba(18,32,43,.04),0 6px 16px rgba(18,32,43,.07);width:100%}
+.btile:active{transform:scale(.985)}
+.bic{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--display);font-size:20px;font-weight:600;letter-spacing:.5px}
+.btx{display:flex;flex-direction:column;gap:3px;min-width:0}.btx b{font-family:var(--display);font-size:21px;font-weight:600;line-height:1.15}.btx>span{font-size:13px;color:var(--muted);font-weight:400}
+.bbar{display:block;height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:5px}.bbar i{display:block;height:100%;background:var(--good);border-radius:3px}
+.bgo{font-size:26px;color:var(--muted);font-weight:400;text-align:center}
+.btile.done{border-color:var(--good)}.btile.done .bgo{color:var(--good);font-size:20px;font-weight:700}
+.btile.lock{opacity:.55;box-shadow:none}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -166,7 +175,7 @@ button[disabled]{opacity:.45;cursor:default}
   <div class="card">
     <h2 id="projHi">Choose the project</h2>
     <p class="muted">Pick the project you are auditing for today. You can switch any time from the home page.</p>
-    <div class="vlist" id="projTiles"></div>
+    <div class="blist" id="projTiles"></div>
     <p class="status" id="projStatus"></p>
     <button class="ghost small" id="projRefresh">Refresh my projects and stores</button>
   </div>
@@ -233,6 +242,8 @@ button[disabled]{opacity:.45;cursor:default}
   </div>
   <div class="card" id="detCard" hidden>
     <h3>Visit details</h3>
+    <div id="detSum" hidden style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span id="detSumTxt" style="font-size:14px"></span><button class="ghost small" id="detEdit" style="flex:none">Change</button></div>
+    <div id="detBody" style="display:flex;flex-direction:column;gap:12px">
     <label>Visit status</label>
     <div class="choice two" id="vsPick"><button data-v="Allowed Audit"><b>Allowed Audit</b></button><button data-v="Refused Audit"><b>Refused Audit</b></button></div>
     <div id="refBox" hidden style="display:flex;flex-direction:column;gap:8px"><label>Reason for refusal<textarea id="refReason" placeholder="who refused and what they said"></textarea></label><p class="muted">Take at least one visit photo (storefront), then tap Submit visit.</p></div>
@@ -241,6 +252,7 @@ button[disabled]{opacity:.45;cursor:default}
       <div class="choice" id="ptPick"><button data-v="Allowed for all"><b>Allowed</b>for all</button><button data-v="Allowed for MNC only"><b>MNC only</b>allowed for MNC only</button><button data-v="Not allowed (MNC and competitor)"><b>Not allowed</b>MNC and competitor</button></div>
       <label>Measurement</label>
       <div class="choice" id="msPick"><button data-v="Allowed for all"><b>Allowed</b>for all</button><button data-v="Allowed for MNC only"><b>MNC only</b>allowed for MNC only</button><button data-v="Not allowed (MNC and competitor)"><b>Not allowed</b>MNC and competitor</button></div>
+    </div>
     </div>
   </div>
   <div class="card" id="tilesCard">
@@ -259,7 +271,7 @@ button[disabled]{opacity:.45;cursor:default}
 <!-- CATEGORY PAGE -->
 <section id="catPage" hidden style="display:flex;flex-direction:column;gap:16px">
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="catTitle">Category</h2><button class="ghost small" id="catBack">← Visit</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="catTitle">Category</h2><button class="ghost small" id="catBack">← Back</button></div>
     <p class="muted" id="catSub"></p>
     <button class="ghost small" id="guideBtn" hidden>Guide photos for this category</button>
   </div>
@@ -291,10 +303,19 @@ button[disabled]{opacity:.45;cursor:default}
   </div>
 </section>
 
+<!-- SOS PAGE (projects with an MCL) -->
+<section id="sosPage" hidden style="display:flex;flex-direction:column;gap:12px">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>SOS · Share of shelf</h2><button class="ghost small" id="sosBack">← Visit</button></div>
+    <p class="muted">Pick the category you are shooting. Whole bay each time: post to post, top shelf to floor.</p>
+  </div>
+  <div id="sosTiles" class="blist"></div>
+</section>
+
 <!-- PACK SHOTS / MCL PAGE -->
 <section id="packPage" hidden style="display:flex;flex-direction:column;gap:12px">
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="packTitle">Pack shots</h2><button class="ghost small" id="packBack">← Visit</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="packTitle">Pack shots</h2><button class="ghost small" id="packBack">← Back</button></div>
     <p class="muted" id="packSub"></p>
     <div class="progress" id="mclBarWrap" hidden><i id="mclBar"></i></div>
   </div>
@@ -398,6 +419,11 @@ function P(name){const n=name||curProject();const s=(SYNC.projects||[]).find(p=>
 const catName=c=>{if(c==='MCL')return 'MCL';const names=[...new Set([V&&V.project,...Object.keys(PDEF),...(SYNC.projects||[]).map(p=>p.name)].filter(Boolean))];for(const n of names){const h=P(n).cats.find(x=>x[0]===c);if(h)return h[1]}return c};
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
 const pad3=n=>String(n).padStart(3,'0');
+const PAL=['#F26B21','#1F7A4D','#2B6CB0','#B8860B','#8E44AD','#C0392B','#00838F','#5D4037'];
+const svg=d=>`<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const IC={shelf:svg('<path d="M4 3v18M20 3v18M4 9h16M4 15h16M4 21h16"/><path d="M8 9V6M12 9V5M16 9V6M9 15v-3M15 15v-3"/>'),list:svg('<path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5L7.5 11M3.5 18l1.5 1.5L7.5 17"/>'),cam:svg('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>')};
+function abbr(nm){const w=String(nm).replace(/[^A-Za-z0-9 ]/g,' ').trim().split(/\s+/);return (w[0].length<=3?w[0]:w.length>1?w[0][0]+w[1][0]:w[0].slice(0,2)).toUpperCase()}
+function bigTile(o){const b=document.createElement('button');b.className='btile'+(o.done?' done':'')+(o.lock?' lock':'');b.innerHTML=`<span class="bic" style="background:${o.color}">${o.icon}</span><span class="btx"><b>${esc(o.title)}</b><span>${esc(o.sub)}</span>${o.pct==null?'':`<span class="bbar"><i style="width:${o.pct}%"></i></span>`}</span><span class="bgo">${o.done?'✓':'›'}</span>`;b.addEventListener('click',o.go);return b}
 let VISITS=[],V=null,CAT=null,cur=null;
 let stream=null,track=null,imageCapture=null,lensList=[],lensId=null;
 let prevG=null,prevBmp=null,levelDeg=0,moving=false,motionOn=false,motionOK=null,motionSamples=[];let shutterBusy=false,camProfile=0;
@@ -463,7 +489,7 @@ function distM(a,b){if(!a||!b)return null;const R=6371000,toR=x=>x*Math.PI/180;c
 function placeText(v){if(!v.place)return 'not set';const d=distM(v.gps,v.place);return `${v.place.name}${v.place.src==='pin'?' (pinned)':''}${d==null?'':' · '+(d>=1000?(d/1000).toFixed(1)+' km':d+' m')+' from phone'}`}
 function shots(v){return v.groups.flatMap(g=>g.shots).concat(v.extras||[]).concat(v.msl||[])}
 function shelfShots(v){return v.groups.flatMap(g=>g.shots)}
-function vStatus(v){const ss=shots(v);if(!ss.length)return v.manifestSent?{t:v.done?'finished':'uploaded',l:'good'}:{t:'empty',l:'off'};const sent=ss.filter(s=>s.status==='sent').length;if(sent===ss.length&&v.manifestSent)return {t:v.done?'finished':'uploaded',l:'good'};if(v.done)return {t:`${ss.length-sent} to send`,l:'warn'};if(sent)return {t:`${ss.length-sent} waiting`,l:'warn'};return {t:'not uploaded',l:'bad'}}
+function vStatus(v){const ss=shots(v);if(!ss.length)return v.manifestSent?{t:v.done?'finished':'uploaded',l:'good'}:{t:'empty',l:'off'};const sent=ss.filter(s=>s.status==='sent').length;if(sent===ss.length&&v.manifestSent)return {t:v.done?'finished':'uploaded',l:'good'};if(sent===ss.length)return {t:'not submitted',l:'warn'};if(v.done)return {t:`${ss.length-sent} to send`,l:'warn'};if(sent)return {t:`${ss.length-sent} waiting`,l:'warn'};return {t:'not uploaded',l:'bad'}}
 function base(v){return `${v.store}_${v.date.replace(/-/g,'')}_${v.hhmm}`}
 function fname(v,g,n){return `${base(v)}_${g.cat}_g${pad2(g.n)}_${g.kind}_${g.type}_s${pad2(n)}.jpg`}
 function fnameX(v,n){return `${base(v)}_v${pad2(n)}.jpg`}
@@ -485,7 +511,7 @@ function ctx(){$('ctx').textContent=V?`${V.store} · ${V.groups.length} group${V
 let depth=0;
 function push(name){depth++;history.pushState({aegis:name,d:depth},'')}
 function back(n){if(depth>0)history.go(-Math.min(n||1,depth))}
-function topScreen(){if($('guideOv').style.display==='flex')return 'guide';if($('review').style.display==='flex')return 'review';if($('viewer').style.display==='flex')return 'viewer';if($('mapOv').style.display==='flex')return 'map';if(!$('cam').hidden)return 'cam';if(!$('settings').hidden)return 'settings';if(!$('catPage').hidden)return 'cat';if(!$('xPage').hidden)return 'x';if(!$('packPage').hidden)return 'pack';if(!$('visit').hidden)return 'visit';if(!$('newPage').hidden)return 'new';if(!$('histPage').hidden)return 'hist';if(!$('projPage').hidden)return 'proj';return 'main'}
+function topScreen(){if($('guideOv').style.display==='flex')return 'guide';if($('review').style.display==='flex')return 'review';if($('viewer').style.display==='flex')return 'viewer';if($('mapOv').style.display==='flex')return 'map';if(!$('cam').hidden)return 'cam';if(!$('settings').hidden)return 'settings';if(!$('catPage').hidden)return 'cat';if(!$('xPage').hidden)return 'x';if(!$('packPage').hidden)return mclOpen?'mclcat':'pack';if(!$('sosPage').hidden)return 'sos';if(!$('visit').hidden)return 'visit';if(!$('newPage').hidden)return 'new';if(!$('histPage').hidden)return 'hist';if(!$('projPage').hidden)return 'proj';return 'main'}
 function closeTop(){const t=topScreen();
   if(t==='review'){if(pending){push('review');toast('Choose Keep or Retake first');return}$('review').style.display='none';return}
   if(t==='guide'){$('guideOv').style.display='none';return}
@@ -494,7 +520,9 @@ function closeTop(){const t=topScreen();
   if(t==='map'){$('mapOv').style.display='none';return}
   if(t==='cam'){doCloseCamera();return}
   if(t==='settings'){$('settings').hidden=true;return}
-  if(t==='cat'){$('catPage').hidden=true;CAT=null;$('visit').hidden=false;renderVisit();return}
+  if(t==='cat'){$('catPage').hidden=true;CAT=null;if(V&&isHub(V)){$('sosPage').hidden=false;renderSos()}else{$('visit').hidden=false;renderVisit()}return}
+  if(t==='sos'){$('sosPage').hidden=true;$('visit').hidden=false;renderVisit();return}
+  if(t==='mclcat'){mclOpen='';renderPack();window.scrollTo(0,0);return}
   if(t==='x'){$('xPage').hidden=true;$('visit').hidden=false;renderVisit();return}
   if(t==='visit'){if(V&&!V.manifestSent&&(shots(V).length||Object.keys(V.mcl||{}).length||V.det))toast('This visit is not submitted yet. It is saved on this phone, but it is NOT in Drive until you tap Submit visit.',4500);V=null;$('visit').hidden=true;$('newPage').hidden=true;$('histPage').hidden=true;$('start').hidden=false;renderHome();ctx();return}
   if(t==='new'){$('newPage').hidden=true;$('start').hidden=false;renderHome();return}
@@ -529,12 +557,13 @@ function todayUnfinished(){const {date}=parts(nowMs());return mineV().filter(v=>
 async function doSync(quiet){if(!signedIn()||!navigator.onLine)return false;try{const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify({kind:'sync',token:CFG.token,name:CFG.name,device:DEVICE,appVersion:VERSION})});const j=await r.json();if(j.ok&&j.sync){SYNC=j.sync;save('aegis.sync',SYNC);if(j.role){CFG.role=j.role;save('aegis.cfg',CFG)}renderHome();if(!$('projPage').hidden)renderProj();const bad=(SYNC.projects||[]).find(p=>p.error);if(!quiet)toast(bad?`Store list problem for ${bad.name}: ask the office to check the reference file.`:`${myStores().length} store(s) tagged to you in ${curProject()||'your projects'}`,bad?5000:2800);return true}if(!quiet)toast('Could not refresh: '+(j.error||'unknown'));}catch(e){if(!quiet)toast('No signal; using the last list')}return false}
 $('syncBtn').addEventListener('click',()=>doSync(false));
 function projNames(){return (SYNC.projects||[]).map(p=>p.name)}
-function curProject(){const ns=projNames();return ns.length?(ns.includes(CFG.project)?CFG.project:''):(CFG.project||'')}
+function projOpen(n){const pj=(SYNC.projects||[]).find(p=>p.name===n);return !(pj&&pj.open===false)}
+function curProject(){const ns=projNames();return ns.length?(ns.includes(CFG.project)&&projOpen(CFG.project)?CFG.project:''):(CFG.project||'')}
 function showProj(){$('start').hidden=true;$('newPage').hidden=true;$('histPage').hidden=true;$('projPage').hidden=false;renderProj()}
 function renderProj(){const el=$('projTiles');el.innerHTML='';const ns=projNames();$('projHi').textContent=signedIn()?`Hello, ${(CFG.name||'').split(' ')[0]}. Choose the project`:'Choose the project';
   $('projStatus').textContent=ns.length?'':'No project is on this phone yet. Tap Refresh (needs signal).';
-  ns.forEach(n=>{const cnt=(SYNC.stores||[]).filter(s=>s.project===n).length;const open=VISITS.filter(v=>v.project===n&&shots(v).some(s=>s.status!=='sent')).length;const b=document.createElement('button');b.className='tile'+(n===CFG.project?' has':'');b.innerHTML=`<b>${esc(n)}</b><span>${cnt} store${cnt===1?'':'s'} tagged to you${open?' · '+open+' visit'+(open>1?'s':'')+' with photos to upload':''}${n===CFG.project?' · last used':''}</span>`;
-    b.addEventListener('click',()=>{CFG.project=n;save('aegis.cfg',CFG);$('projPage').hidden=true;$('start').hidden=false;renderHome()});el.appendChild(b)})}
+  ns.forEach((n,i)=>{const cnt=(SYNC.stores||[]).filter(s=>s.project===n).length,lock=!projOpen(n);const waiting=VISITS.filter(v=>v.project===n&&shots(v).some(s=>s.status!=='sent')).length;
+    el.appendChild(bigTile({title:n,sub:lock?'No store is tagged to you in this project. Ask the office if this is wrong.':`${cnt} store${cnt===1?'':'s'} tagged to you${waiting?' · '+waiting+' visit'+(waiting>1?'s':'')+' with photos to upload':''}${n===CFG.project?' · last used':''}`,icon:abbr(n),color:i%2?'#1F7A4D':'#F26B21',lock,go:()=>{if(lock){toast('No store is tagged to you in '+n+', so it cannot be opened.',3500);return}CFG.project=n;save('aegis.cfg',CFG);$('projPage').hidden=true;$('start').hidden=false;renderHome()}}))})}
 $('projSwitch').addEventListener('click',showProj);
 $('projRefresh').addEventListener('click',async()=>{$('projStatus').textContent='Refreshing…';const ok=await doSync(false);renderProj();if(!ok&&!projNames().length)$('projStatus').textContent='Could not refresh. Check your signal and try again.'});
 function myStores(){const pj=curProject();return (SYNC.stores||[]).filter(s=>s.project===pj)}
@@ -597,16 +626,17 @@ $('startBtn').addEventListener('click',async()=>{const code=$('storeCode').value
   PLACE=null;STORE=null;$('storePicked').hidden=true;showPlace();$('placeResults').innerHTML='';$('placeQ').value='';lastGPS=gps||lastGPS;VISITS.push(V);persist();if(!gps)toast('No GPS fix; photos will say "no GPS"');$('newPage').hidden=true;$('storeCode').value='';$('storeName').value='';$('sameDayNote').hidden=true;V=null;depth--;history.replaceState({aegis:'main',d:depth},'');openVisit(VISITS[VISITS.length-1])});
 
 /* ---------- visit page ---------- */
-function openVisit(v){V=v;$('start').hidden=true;$('visit').hidden=false;push('visit');renderVisit()}
+function openVisit(v){detOpen=false;V=v;$('start').hidden=true;$('visit').hidden=false;push('visit');renderVisit()}
 function renderVisit(){if(!V)return;$('vTitle').textContent=`${V.store}${V.seq>1?` · visit ${V.seq}`:''}`;$('vSub').textContent=`${V.name||''}${V.name?' · ':''}${fmtDT(V.started)}`;
   $('vMeta').innerHTML=`<b>Project</b><span>${V.project||'—'}</span><b>Client code</b><span>${V.client||'—'}${V.onList?'':' · not on assigned list'}</span><b>Auditor</b><span>${V.auditor}</span><b>WOD</b><span>${V.wod||'—'}</span><b>Phone GPS</b><span>${gpsText(V.gps)}</span><b>Place</b><span>${placeText(V)}</span><b>Groups</b><span>${V.groups.length} · ${shelfShots(V).length} shelf photo${shelfShots(V).length===1?'':'s'} · ${(V.extras||[]).length} visit photo${(V.extras||[]).length===1?'':'s'}</span>`;
   const p=P(V.project),det=V.det||{};$('detCard').hidden=!p.details;
   if(p.details){[['vsPick','status'],['ptPick','photo'],['msPick','measure']].forEach(([id,k])=>$(id).querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===det[k])));$('refBox').hidden=det.status!=='Refused Audit';$('ruleBox').hidden=det.status!=='Allowed Audit';if(document.activeElement!==$('refReason'))$('refReason').value=det.reason||''}
-  const refused=p.details&&det.status==='Refused Audit';$('tilesCard').hidden=p.details&&!det.status;
-  const t=$('catTiles');t.innerHTML='';
+  const refused=p.details&&det.status==='Refused Audit';const complete=!p.details||refused||!!(det.status&&det.photo&&det.measure);const showBody=!complete||refused||detOpen;$('detBody').hidden=!showBody;$('detSum').hidden=showBody;if(!showBody)$('detSumTxt').innerHTML=`<b>${esc(det.status)}</b> · Photo taking: ${esc(det.photo)} · Measurement: ${esc(det.measure)}`;$('tilesCard').hidden=!complete;
+  const t=$('catTiles');t.innerHTML='';const hub=isHub(V);t.className=hub?'blist':'tiles2';
+  if(hub)renderHub(t,p,refused);else{
   if(!refused)for(const [c,nm] of p.cats){const gs=catGroups(V,c);const n=gs.reduce((a,g)=>a+g.shots.length,0);const b=document.createElement('button');b.className='tile'+(n?' has':'');b.innerHTML=`<b>SOS: ${esc(nm)}</b><span>${n?`${gs.length} group${gs.length===1?'':'s'}, ${n} photo${n===1?'':'s'}`:'no photos yet'}</span>`;b.addEventListener('click',()=>openCat(c));t.appendChild(b)}
   const xs=V.extras||[];const xb=document.createElement('button');xb.className='tile x'+(xs.length?' has':'');xb.innerHTML=`<b>Visit photos</b><span>${xs.length?`${xs.length} photo${xs.length>1?'s':''} · ${xs.filter(s=>s.status==='sent').length} uploaded`:'storefront, secondary displays, COC, visicooler, others'}</span>`;xb.addEventListener('click',()=>{$('visit').hidden=true;$('xPage').hidden=false;push('x');renderX()});t.appendChild(xb);
-  if(!refused){const pb=document.createElement('button');if(p.mcl.length||p.mclRequired){const s=mclStats(V);pb.className='tile x'+(s.total&&!s.todo?' has':'');pb.innerHTML=`<b>MCL</b><span>${s.total?`${s.total-s.todo} of ${s.total} SKUs complete`:'Must Carry List'}</span>`}else{const pn=(V.msl||[]).length;pb.className='tile x'+(pn?' has':'');pb.innerHTML=`<b>Pack shots</b><span>${pn?`${pn} pack${pn>1?'s':''} · ${V.msl.filter(s=>s.status==='sent').length} uploaded`:'one photo per SKU that is in the store'}</span>`}pb.addEventListener('click',openPack);t.appendChild(pb)}
+  if(!refused){const pb=document.createElement('button');if(p.mcl.length||p.mclRequired){const s=mclStats(V);pb.className='tile x'+(s.total&&!s.todo?' has':'');pb.innerHTML=`<b>MCL</b><span>${s.total?`${s.total-s.todo} of ${s.total} SKUs complete`:'Must Carry List'}</span>`}else{const pn=(V.msl||[]).length;pb.className='tile x'+(pn?' has':'');pb.innerHTML=`<b>Pack shots</b><span>${pn?`${pn} pack${pn>1?'s':''} · ${V.msl.filter(s=>s.status==='sent').length} uploaded`:'one photo per SKU that is in the store'}</span>`}pb.addEventListener('click',openPack);t.appendChild(pb)}}
   const all=shots(V),total=all.length,sent=all.filter(s=>s.status==='sent').length;const st=vStatus(V);$('vPill').className='pill '+st.l;$('vPill').textContent=st.t;
   const hasData=total>0||Object.keys(V.mcl||{}).length>0||refused;const allSent=hasData&&sent===total&&V.manifestSent;const need=missing(V);
   $('uploadBtn').disabled=!hasData||allSent||Q.running;$('uploadBtn').textContent=Q.running?'Uploading…':allSent?'All uploaded':'Submit visit';
@@ -615,7 +645,18 @@ function renderVisit(){if(!V)return;$('vTitle').textContent=`${V.store}${V.seq>1
   $('bar').style.width=total?Math.round(100*sent/total)+'%':'0%';
   if(!Q.running){if(V.done&&allSent)setStatus('Finished and uploaded. Anything you add now is sent with Submit visit.');else if(allSent)setStatus('Everything is in Drive. You can finish the visit.');else if(!total)setStatus(hasData?'Not submitted yet.':'Not uploaded yet.');else if(total-sent&&!$('upStatus').classList.contains('bad'))setStatus(`${total-sent} photo${total-sent>1?'s':''} on this phone, not sent yet.`)}
   ctx()}
-function setDet(k,val){if(!V)return;V.det=V.det||{};V.det[k]=val;V.manifestSent=false;persist();renderVisit()}
+let detOpen=false;
+function setDet(k,val){if(!V)return;V.det=V.det||{};V.det[k]=val;V.manifestSent=false;detOpen=false;persist();renderVisit()}
+$('detEdit').addEventListener('click',()=>{detOpen=true;renderVisit()});
+function isHub(v){const p=P(v.project);return p.mcl.length>0||p.mclRequired}
+function renderHub(t,p,refused){const xs=V.extras||[];
+  if(!refused){const n=p.cats.filter(([c])=>catGroups(V,c).some(g=>g.shots.length)).length,ph=shelfShots(V).length;
+    t.appendChild(bigTile({title:'SOS',sub:n?`${n} of ${p.cats.length} categories · ${ph} photo${ph===1?'':'s'}`:'Share of shelf photos, per category',icon:IC.shelf,color:'#F26B21',pct:p.cats.length?Math.round(100*n/p.cats.length):0,done:p.cats.length>0&&n===p.cats.length,go:openSos}));
+    const s=mclStats(V);t.appendChild(bigTile({title:'MCL',sub:s.total?`${s.total-s.todo} of ${s.total} SKUs complete`:'Must Carry List, per category',icon:IC.list,color:'#1F7A4D',pct:s.total?Math.round(100*(s.total-s.todo)/s.total):0,done:s.total>0&&!s.todo,go:openPack}))}
+  t.appendChild(bigTile({title:'Visit photos',sub:xs.length?`${xs.length} photo${xs.length>1?'s':''} · ${xs.filter(s=>s.status==='sent').length} uploaded`:'Storefront, secondary displays, COC, visicooler, others',icon:IC.cam,color:'#12202B',done:false,go:()=>{$('visit').hidden=true;$('xPage').hidden=false;push('x');renderX()}}))}
+function openSos(){$('visit').hidden=true;$('sosPage').hidden=false;push('sos');renderSos();window.scrollTo(0,0)}
+function renderSos(){if(!V)return;const p=P(V.project),el=$('sosTiles');el.innerHTML='';p.cats.forEach(([c,nm],i)=>{const gs=catGroups(V,c),n=gs.reduce((a,g)=>a+g.shots.length,0);el.appendChild(bigTile({title:nm,sub:n?`${gs.length} group${gs.length===1?'':'s'} · ${n} photo${n===1?'':'s'}`:'No photos yet',icon:abbr(nm),color:PAL[i%PAL.length],done:n>0,go:()=>openCat(c)}))})}
+$('sosBack').addEventListener('click',()=>back());
 $('vsPick').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setDet('status',b.dataset.v)});
 $('ptPick').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setDet('photo',b.dataset.v)});
 $('msPick').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setDet('measure',b.dataset.v)});
@@ -632,7 +673,7 @@ $('discardBtn').addEventListener('click',async()=>{const b=$('discardBtn');if(b.
 $('finishBtn').addEventListener('click',()=>{V.done=true;V.finished=new Date(nowMs()).toISOString();persist();toast('Visit finished.');back()});
 
 /* ---------- category page ---------- */
-function openCat(c){CAT=c;$('visit').hidden=true;$('catPage').hidden=false;push('cat');renderCat()}
+function openCat(c){CAT=c;$('visit').hidden=true;$('sosPage').hidden=true;$('catPage').hidden=false;push('cat');renderCat()}
 $('catBack').addEventListener('click',()=>back());
 function renderCat(){if(!V||!CAT)return;$('catTitle').textContent=catName(CAT);const gs=catGroups(V,CAT);$('catSub').textContent=`${V.store}${V.name?' · '+V.name:''}`;
   const el=$('groups');el.innerHTML='';let total=0;
@@ -664,7 +705,7 @@ function mclState(v,m){const a=mclAns(v,m[0]);if(!a||a.a==null)return 'todo';if(
 function mclStats(v){const list=P(v.project).mcl;let yes=0,no=0,todo=0;for(const m of list){const a=mclAns(v,m[0]);if(mclState(v,m)!=='ok')todo++;if(a&&a.a===1)yes++;else if(a&&a.a===0)no++}return {total:list.length,yes,no,todo,unanswered:list.length-yes-no}}
 function setMcl(no,o){V.mcl=V.mcl||{};V.mcl[no]=o;V.manifestSent=false;persist()}
 function thumbEl(s,label,onTap){const th=document.createElement('div');th.className='th';const im=document.createElement('img');im.className=s.status;th.appendChild(im);const sp=document.createElement('span');sp.textContent=label;th.appendChild(sp);dbGet(TH,s.name).then(b=>{if(b)im.src=URL.createObjectURL(b)});th.addEventListener('click',onTap);return th}
-function openPack(){$('visit').hidden=true;$('packPage').hidden=false;push('pack');mclOpen=null;renderPack();window.scrollTo(0,0)}
+function openPack(){$('visit').hidden=true;$('packPage').hidden=false;push('pack');mclOpen='';renderPack();window.scrollTo(0,0)}
 function leavePack(){if(V){const p=P(V.project);if(p.mcl.length){const s=mclStats(V);if(s.todo)toast(`MCL is not complete: ${s.todo} SKU${s.todo>1?'s':''} still to finish. The visit cannot be submitted, so the data will not be uploaded, until MCL is complete.`,5000)}}$('packPage').hidden=true;$('visit').hidden=false;renderVisit()}
 $('packBack').addEventListener('click',()=>back());
 function mclTop(){const st=mclStats(V);$('packSub').textContent=`Answer every SKU. Available: take a pack shot (if a photo is not possible, write a remark instead). Not available: choose the reason. ${st.total-st.todo} of ${st.total} complete.`;$('mclBar').style.width=st.total?Math.round(100*(st.total-st.todo)/st.total)+'%':'0%'}
@@ -672,11 +713,10 @@ function renderPack(){if(!V||$('packPage').hidden)return;const p=P(V.project),el
   if(p.mcl.length||p.mclRequired){$('packTitle').textContent='MCL · Must Carry List';$('mclBarWrap').hidden=false;mclTop();
     if(!p.mcl.length){el.innerHTML='<div class="card"><p class="muted">The MCL list is not on this phone yet. Go back to the home page and tap Refresh my stores (needs signal).</p></div>';return}
     const groups=[];for(const m of p.mcl){let g=groups.find(x=>x.name===m[3]);if(!g){g={name:m[3],items:[]};groups.push(g)}g.items.push(m)}
-    if(mclOpen===null){const f=groups.find(g=>g.items.some(m=>mclState(V,m)!=='ok'));mclOpen=f?f.name:''}
-    for(const g of groups){const done=g.items.filter(m=>mclState(V,m)==='ok').length,open=mclOpen===g.name;const d=document.createElement('div');d.className='card mgrp'+(open?' open':'');
-      d.innerHTML=`<button class="mhead"><b>${esc(g.name)}</b><span class="pill ${done===g.items.length?'':'warn'}">${done}/${g.items.length} ${open?'▲':'▼'}</span></button>`;
-      d.querySelector('.mhead').addEventListener('click',()=>{mclOpen=open?'':g.name;renderPack();if(!open){const tEl=document.querySelector('.mgrp.open');if(tEl)tEl.scrollIntoView({block:'start'})}});
-      if(open)for(const m of g.items)d.appendChild(mclRow(p,m));el.appendChild(d)}
+    const cg=groups.find(g=>g.name===mclOpen);
+    if(!cg){mclOpen='';groups.forEach((g,i)=>{const done=g.items.filter(m=>mclState(V,m)==='ok').length,mm=g.name.match(/^(.*?)\s*\((.*)\)\s*$/);const title=mm?mm[1]:g.name;
+        el.appendChild(bigTile({title,sub:`${mm?mm[2]+' · ':''}${done} of ${g.items.length} complete`,icon:abbr(title),color:PAL[i%PAL.length],pct:Math.round(100*done/g.items.length),done:done===g.items.length,go:()=>{mclOpen=g.name;push('mclcat');renderPack();window.scrollTo(0,0)}}))})}
+    else{$('packTitle').textContent=cg.name;const d=document.createElement('div');d.className='card mgrp';for(const m of cg.items)d.appendChild(mclRow(p,m));el.appendChild(d);const nb=document.createElement('button');nb.className='primary';nb.textContent='Done with this category';nb.addEventListener('click',()=>back());el.appendChild(nb)}
   }else{$('packTitle').textContent='Pack shots';$('mclBarWrap').hidden=true;$('packSub').textContent='One pack per photo, front face, fill the frame. Only the SKUs that are actually in the store, wherever they are. Choose the category, then shoot.';
     for(const [c,nm] of p.cats){const list=(V.msl||[]).filter(s=>s.cat===c);const d=document.createElement('div');d.className='card';d.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:baseline"><h3>${esc(nm)}</h3><span class="muted">${list.length} pack${list.length===1?'':'s'} · ${list.filter(s=>s.status==='sent').length} uploaded</span></div><div class="thumbrow"></div><button class="ghost">Shoot ${esc(nm)} packs</button>`;
       const tr=d.querySelector('.thumbrow');for(const s of list)tr.appendChild(thumbEl(s,'p'+pad2(s.n),()=>openViewer(MG(V,c),s)));
