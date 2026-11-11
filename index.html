@@ -124,6 +124,15 @@ button[disabled]{opacity:.45;cursor:default}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}.kv b{color:var(--muted);font-weight:600}
 .pres{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);font-size:14px;cursor:pointer}.pres b{display:block}.pres.on{border-color:var(--accent);background:#FFF1E8}
 #map{height:58vh;min-height:300px;border-radius:10px;border:1px solid var(--line)}
+.mgrp{gap:8px;padding:10px 12px}
+.mhead{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;background:transparent;padding:6px 0;text-align:left}
+.mhead b{font-family:var(--display);font-size:17px;font-weight:600}
+.mrow{border-top:1px solid var(--line);padding:10px 0 4px;display:flex;flex-direction:column;gap:8px;border-left:4px solid var(--line);padding-left:10px}
+.mrow.ok{border-left-color:var(--good)}.mrow.need{border-left-color:var(--bad)}
+.mrow .mt b{display:block;font-size:15px}.mrow .choice button{padding:9px 6px}.mrow .choice button b{font-size:15px}
+.mrow .choice button[data-a="0"].on{border-color:var(--bad);background:var(--bad-bg)}.mrow .choice button[data-a="1"].on{border-color:var(--good);background:var(--good-bg)}
+.mrow .mx{display:flex;flex-direction:column;gap:8px}.mrow .mph{display:flex;gap:10px;align-items:center}.mrow input,.mrow select{font-size:15px;padding:8px 10px}
+#gdImgs{display:flex;flex-direction:column;gap:12px}#gdImgs figure{margin:0;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}#gdImgs img{width:100%;display:block}#gdImgs figcaption{padding:6px 10px;font-size:13px;font-weight:600}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -152,12 +161,25 @@ button[disabled]{opacity:.45;cursor:default}
   <p class="muted" id="storageInfo"></p>
 </section>
 
+<!-- PROJECT -->
+<section id="projPage" hidden style="display:flex;flex-direction:column;gap:16px">
+  <div class="card">
+    <h2 id="projHi">Choose the project</h2>
+    <p class="muted">Pick the project you are auditing for today. You can switch any time from the home page.</p>
+    <div class="vlist" id="projTiles"></div>
+    <p class="status" id="projStatus"></p>
+    <button class="ghost small" id="projRefresh">Refresh my projects and stores</button>
+  </div>
+</section>
+
 <!-- HOME -->
 <section id="start" style="display:flex;flex-direction:column;gap:16px">
   <div class="card">
     <h2 id="hiLine">Hello</h2>
     <p class="muted" id="dateLine"></p>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>Project: <b id="projName">—</b></span><button class="ghost small" id="projSwitch">Switch project</button></div>
     <label>Word of the day<div style="display:flex;gap:8px;align-items:center"><input type="text" id="wod" placeholder="type today's word" autocapitalize="characters" autocomplete="off"><span class="pill" id="wodPill" hidden>set</span></div></label>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="muted" id="syncLine"></span><button class="ghost small" id="syncBtn">Refresh my stores</button></div>
     <p class="muted" id="clockNote" hidden></p>
   </div>
   <button class="primary" id="goNew" style="padding:20px">Start a store visit</button>
@@ -171,10 +193,15 @@ button[disabled]{opacity:.45;cursor:default}
 <section id="newPage" hidden style="display:flex;flex-direction:column;gap:16px">
   <div class="card" id="newCard">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>Start a store visit</h2><button class="ghost small" id="newBack">← Home</button></div>
+    <p class="muted" id="newProj"></p>
+    <label>My stores (search by BW code or name)<input type="search" id="storeQ" placeholder="type to search your assigned stores" autocomplete="off"></label>
+    <div class="vlist" id="storeResults"></div>
+    <p class="muted" id="storePicked" hidden></p>
     <div class="row">
-      <label>Store code<input type="text" id="storeCode" placeholder="e.g. CT0243660" autocapitalize="characters" autocomplete="off"></label>
-      <label>Store name<input type="text" id="storeName" placeholder="e.g. Prince Sibonga" autocomplete="off"></label>
+      <label>BW code<input type="text" id="storeCode" placeholder="e.g. BW0123" autocapitalize="characters" autocomplete="off"></label>
+      <label>Store name<input type="text" id="storeName" placeholder="store name" autocomplete="off"></label>
     </div>
+    <p class="muted" id="notOnList" hidden>This BW code is not on your assigned list for this month. You can still continue; QC will see it flagged.</p>
     <input type="hidden" id="auditor">
     <p class="muted" id="sameDayNote" hidden></p>
     <label>Find the store on the map (optional)<div style="display:flex;gap:8px"><input type="search" id="placeQ" placeholder="e.g. Puregold Taytay" autocomplete="off"><button class="small" id="placeSearch" style="flex:none">Search</button></div></label>
@@ -204,14 +231,27 @@ button[disabled]{opacity:.45;cursor:default}
     <div style="display:flex;justify-content:space-between;align-items:center"><span class="pill" id="vPill"></span><button class="ghost small" id="vInfoBtn">details ⓘ</button></div>
     <div class="kv" id="vMeta" hidden></div>
   </div>
-  <div class="card">
-    <h3>What are you shooting?</h3>
+  <div class="card" id="detCard" hidden>
+    <h3>Visit details</h3>
+    <label>Visit status</label>
+    <div class="choice two" id="vsPick"><button data-v="Allowed Audit"><b>Allowed Audit</b></button><button data-v="Refused Audit"><b>Refused Audit</b></button></div>
+    <div id="refBox" hidden style="display:flex;flex-direction:column;gap:8px"><label>Reason for refusal<textarea id="refReason" placeholder="who refused and what they said"></textarea></label><p class="muted">Take at least one visit photo (storefront), then tap Submit visit.</p></div>
+    <div id="ruleBox" hidden style="display:flex;flex-direction:column;gap:12px">
+      <label>Photo taking</label>
+      <div class="choice" id="ptPick"><button data-v="Allowed for all"><b>Allowed</b>for all</button><button data-v="Allowed for MNC only"><b>MNC only</b>allowed for MNC only</button><button data-v="Not allowed (MNC and competitor)"><b>Not allowed</b>MNC and competitor</button></div>
+      <label>Measurement</label>
+      <div class="choice" id="msPick"><button data-v="Allowed for all"><b>Allowed</b>for all</button><button data-v="Allowed for MNC only"><b>MNC only</b>allowed for MNC only</button><button data-v="Not allowed (MNC and competitor)"><b>Not allowed</b>MNC and competitor</button></div>
+    </div>
+  </div>
+  <div class="card" id="tilesCard">
+    <h3>What are you doing?</h3>
     <div class="tiles2" id="catTiles"></div>
   </div>
   <div class="card" style="gap:10px">
     <div class="progress"><i id="bar"></i></div>
     <p class="status" id="upStatus">Not uploaded yet.</p>
-    <div class="row"><button class="primary" id="uploadBtn">Upload visit</button><button class="primary" id="finishBtn" disabled>Finish visit</button></div>
+    <p class="notice" id="needLine" hidden></p>
+    <div class="row"><button class="primary" id="uploadBtn">Submit visit</button><button class="primary" id="finishBtn" disabled>Finish visit</button></div>
     <button class="ghost small" id="discardBtn">Discard this visit</button>
   </div>
 </section>
@@ -221,6 +261,7 @@ button[disabled]{opacity:.45;cursor:default}
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="catTitle">Category</h2><button class="ghost small" id="catBack">← Visit</button></div>
     <p class="muted" id="catSub"></p>
+    <button class="ghost small" id="guideBtn" hidden>Guide photos for this category</button>
   </div>
   <div class="card" id="newGroup">
     <h3 id="grpTitle">Add group 1</h3>
@@ -229,6 +270,11 @@ button[disabled]{opacity:.45;cursor:default}
       <button data-v="single" class="on"><b>Single</b>one photo</button>
       <button data-v="row"><b>Row</b>left to right</button>
       <button data-v="column"><b>Column</b>top to bottom</button>
+    </div>
+    <label>Orientation</label>
+    <div class="choice two" id="orientPick">
+      <button data-v="portrait" class="on"><b>Portrait</b>tall or narrow bays, columns</button>
+      <button data-v="landscape"><b>Landscape</b>wide bays, rows (more detail per shot)</button>
     </div>
     <label>What is it</label>
     <div class="choice two" id="typePick">
@@ -245,11 +291,21 @@ button[disabled]{opacity:.45;cursor:default}
   </div>
 </section>
 
+<!-- PACK SHOTS / MCL PAGE -->
+<section id="packPage" hidden style="display:flex;flex-direction:column;gap:12px">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="packTitle">Pack shots</h2><button class="ghost small" id="packBack">← Visit</button></div>
+    <p class="muted" id="packSub"></p>
+    <div class="progress" id="mclBarWrap" hidden><i id="mclBar"></i></div>
+  </div>
+  <div id="packBody" style="display:flex;flex-direction:column;gap:12px"></div>
+</section>
+
 <!-- VISIT PHOTOS PAGE -->
 <section id="xPage" hidden style="display:flex;flex-direction:column;gap:16px">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>Visit photos</h2><button class="ghost small" id="xBack">← Visit</button></div>
-    <p class="muted">Storefront, signage, stands, endcaps, checkout, price tags. Not read by the engine; uploads on its own.</p>
+    <p class="muted">Storefront, secondary displays, COC, visicooler, signage, anything else. Uploads on its own.</p>
     <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="muted" id="xCount">0 photos</span></div>
     <div class="thumbrow" id="xThumbs"></div>
     <button class="primary" id="openXCam">Take visit photos</button>
@@ -272,6 +328,7 @@ button[disabled]{opacity:.45;cursor:default}
     </div>
   </div>
   <div class="bottom">
+    <div class="lensRow" id="placeRow" hidden><span>Placement:</span></div>
     <div class="lensRow" id="lensRow"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;color:#D9D2C3;font-size:12px"><span id="camDiag">camera…</span><button class="small" id="fileCamBtn" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4)">Use phone camera</button></div>
     <input type="file" id="fileCam" accept="image/*" capture="environment" hidden>
@@ -305,6 +362,15 @@ button[disabled]{opacity:.45;cursor:default}
   </div>
 </div>
 
+<!-- GUIDE -->
+<div id="guideOv" class="overlay">
+  <div class="body">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="gdTitle">Guide</h2><button class="ghost small" id="gdClose">Close</button></div>
+    <p class="muted" id="gdNote" style="white-space:pre-line"></p>
+    <div id="gdImgs"></div>
+  </div>
+</div>
+
 <!-- MAP PIN -->
 <div id="mapOv" class="overlay">
   <div class="body">
@@ -321,18 +387,24 @@ button[disabled]{opacity:.45;cursor:default}
 <script>
 (function(){
 'use strict';
-const APP='BW Aegis App', VERSION='v3.4';
+const APP='BW Aegis App', VERSION='v4.0';
 const $=id=>document.getElementById(id);
 const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxHPqdY8X5CckGOREXFPZdkji-MJijE0HEiV2hr5TR7lSmRJpFJWZySSNU5MjJ9UY2Z/exec';
 const CFG={url:DEFAULT_URL,token:'',name:'',role:''};
-const CATS=[['POWBEV','Powdered Beverage'],['BISCUITS','Biscuits'],['CHOCO','Chocolates'],['BREADFILL','Breadfill'],['CHILLER','Chiller']];
-const catName=c=>(CATS.find(x=>x[0]===c)||[c,c])[1];
+const PDEF={'PS 2026':{cats:[['POWBEV','Powdered Beverage'],['BISCUITS','Biscuits'],['CHOCO','Chocolates'],['BREADFILL','Breadfill'],['CHILLER','Chiller']]},
+  'MNC':{cats:[['NOODLES','Noodles'],['BISCUITS','Biscuits'],['OYSTER','Oyster Sauce'],['BBQ','BBQ Marinade'],['MEALMIX','Meal Mixes'],['GATA','Gata'],['BEV','Beverage'],['PCAKES','Packaged Cakes']],details:true,mclRequired:true}};
+const REASONS=['OOS','Not Carried','Others (specify in Remarks)'];
+function P(name){const n=name||curProject();const s=(SYNC.projects||[]).find(p=>p.name===n)||{};const d=PDEF[n]||{cats:[]};return {name:n,cats:(s.cats&&s.cats.length?s.cats:d.cats),mcl:s.mcl||[],details:s.details!=null?!!s.details:!!d.details,mclRequired:s.mclRequired!=null?!!s.mclRequired:!!d.mclRequired,reasons:(s.reasons&&s.reasons.length?s.reasons:REASONS),guide:!!s.guide}}
+const catName=c=>{if(c==='MCL')return 'MCL';const names=[...new Set([V&&V.project,...Object.keys(PDEF),...(SYNC.projects||[]).map(p=>p.name)].filter(Boolean))];for(const n of names){const h=P(n).cats.find(x=>x[0]===c);if(h)return h[1]}return c};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+const pad3=n=>String(n).padStart(3,'0');
 let VISITS=[],V=null,CAT=null,cur=null;
 let stream=null,track=null,imageCapture=null,lensList=[],lensId=null;
 let prevG=null,prevBmp=null,levelDeg=0,moving=false,motionOn=false,motionOK=null,motionSamples=[];let shutterBusy=false,camProfile=0;
 let pending=null,crop=null,cropDrag=null,cropCtx=null,vw=null,vwUrl=null,vwCropped=false;
 let PLACE=null,lastGPS=null,map=null,marker=null;
-let CLOCK={offset:0,checked:null,raw:0};   // ms to add to the phone clock to get Google's time
+let CLOCK={offset:0,checked:null,raw:0};
+let SYNC=load('aegis.sync',{projects:[],stores:[],month:'',at:null});let STORE=null;let PLACEMENT=load('aegis.placement','Shelf');const PLACEMENTS=['Shelf','Endcap','MDU','COC','Other'];   // ms to add to the phone clock to get Google's time
 const DBN='aegis-capture-v2',PH='photos',TH='thumbs',KEEP_DAYS=7;
 const DEVICE=(function(){try{let d=localStorage.getItem('aegis.device');if(!d){d=Math.random().toString(36).slice(2,8).toUpperCase();localStorage.setItem('aegis.device',d)}return d}catch(e){return 'XXXXXX'}})();
 
@@ -389,33 +461,42 @@ function gpsText(g){if(!g)return 'no GPS';const la=Math.abs(g.lat).toFixed(4)+(g
 function getGPS(){return new Promise(res=>{if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy}),()=>res(null),{enableHighAccuracy:true,timeout:12000,maximumAge:120000})})}
 function distM(a,b){if(!a||!b)return null;const R=6371000,toR=x=>x*Math.PI/180;const dLa=toR(b.lat-a.lat),dLo=toR(b.lng-a.lng);const s=Math.sin(dLa/2)**2+Math.cos(toR(a.lat))*Math.cos(toR(b.lat))*Math.sin(dLo/2)**2;return Math.round(2*R*Math.asin(Math.sqrt(s)))}
 function placeText(v){if(!v.place)return 'not set';const d=distM(v.gps,v.place);return `${v.place.name}${v.place.src==='pin'?' (pinned)':''}${d==null?'':' · '+(d>=1000?(d/1000).toFixed(1)+' km':d+' m')+' from phone'}`}
-function shots(v){return v.groups.flatMap(g=>g.shots).concat(v.extras||[])}
+function shots(v){return v.groups.flatMap(g=>g.shots).concat(v.extras||[]).concat(v.msl||[])}
 function shelfShots(v){return v.groups.flatMap(g=>g.shots)}
-function vStatus(v){const ss=shots(v);if(!ss.length)return {t:'empty',l:'off'};const sent=ss.filter(s=>s.status==='sent').length;if(sent===ss.length&&v.manifestSent)return {t:v.done?'finished':'uploaded',l:'good'};if(v.done)return {t:`${ss.length-sent} to send`,l:'warn'};if(sent)return {t:`${ss.length-sent} waiting`,l:'warn'};return {t:'not uploaded',l:'bad'}}
+function vStatus(v){const ss=shots(v);if(!ss.length)return v.manifestSent?{t:v.done?'finished':'uploaded',l:'good'}:{t:'empty',l:'off'};const sent=ss.filter(s=>s.status==='sent').length;if(sent===ss.length&&v.manifestSent)return {t:v.done?'finished':'uploaded',l:'good'};if(v.done)return {t:`${ss.length-sent} to send`,l:'warn'};if(sent)return {t:`${ss.length-sent} waiting`,l:'warn'};return {t:'not uploaded',l:'bad'}}
 function base(v){return `${v.store}_${v.date.replace(/-/g,'')}_${v.hhmm}`}
 function fname(v,g,n){return `${base(v)}_${g.cat}_g${pad2(g.n)}_${g.kind}_${g.type}_s${pad2(n)}.jpg`}
 function fnameX(v,n){return `${base(v)}_v${pad2(n)}.jpg`}
 function XG(v){return {n:0,cat:'',kind:'visit',type:'visit',shots:v.extras||(v.extras=[])}}
-function folderName(v){return `${v.name?v.name+' ':''}${v.store}${v.seq>1?' ('+v.seq+')':''}`}
+const MONU=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+function monthTag(date){return MONU[Number(date.slice(5,7))-1]+date.slice(0,4)}
+function folderName(v){return `${monthTag(v.date)} - ${v.name||'Store'} - ${v.store}`}
+function fnameM(v,cat,n){return `${base(v)}_${cat}_p${pad2(n)}.jpg`}
+function fnameK(v,no){return `${base(v)}_MCL_${pad3(no)}.jpg`}
+function KG(v,m){v.msl=v.msl||[];return {n:0,cat:'MCL',kind:'msl',type:'msl',sku:m,shots:v.msl.filter(s=>s.cat==='MCL')}}
+function MG(v,cat){v.msl=v.msl||[];return {n:0,cat,kind:'msl',type:'msl',shots:v.msl.filter(s=>s.cat===cat)}}
+function mslAll(v){return v.msl||[]}
 function catGroups(v,c){return v.groups.filter(g=>g.cat===c)}
-function catsCovered(v){return [...new Set(v.groups.filter(g=>g.shots.length).map(g=>g.cat))]}
-const typeName={shelf:'Shelf',rack:'Frame/Rack',visit:'Visit photos'};
+function catsCovered(v){return [...new Set(v.groups.filter(g=>g.shots.length).map(g=>g.cat).concat((v.msl||[]).filter(s=>s.cat!=='MCL').map(s=>s.cat)))]}
+const typeName={shelf:'Shelf',rack:'Frame/Rack',visit:'Visit photos',msl:'Pack shots'};
 function ctx(){$('ctx').textContent=V?`${V.store} · ${V.groups.length} group${V.groups.length===1?'':'s'}, ${shots(V).length} photo${shots(V).length===1?'':'s'}`:'no visit open'}
 
 /* ---------- navigation: every screen is a step the phone's Back button can undo ---------- */
 let depth=0;
 function push(name){depth++;history.pushState({aegis:name,d:depth},'')}
 function back(n){if(depth>0)history.go(-Math.min(n||1,depth))}
-function topScreen(){if($('review').style.display==='flex')return 'review';if($('viewer').style.display==='flex')return 'viewer';if($('mapOv').style.display==='flex')return 'map';if(!$('cam').hidden)return 'cam';if(!$('settings').hidden)return 'settings';if(!$('catPage').hidden)return 'cat';if(!$('xPage').hidden)return 'x';if(!$('visit').hidden)return 'visit';if(!$('newPage').hidden)return 'new';if(!$('histPage').hidden)return 'hist';return 'main'}
+function topScreen(){if($('guideOv').style.display==='flex')return 'guide';if($('review').style.display==='flex')return 'review';if($('viewer').style.display==='flex')return 'viewer';if($('mapOv').style.display==='flex')return 'map';if(!$('cam').hidden)return 'cam';if(!$('settings').hidden)return 'settings';if(!$('catPage').hidden)return 'cat';if(!$('xPage').hidden)return 'x';if(!$('packPage').hidden)return 'pack';if(!$('visit').hidden)return 'visit';if(!$('newPage').hidden)return 'new';if(!$('histPage').hidden)return 'hist';if(!$('projPage').hidden)return 'proj';return 'main'}
 function closeTop(){const t=topScreen();
   if(t==='review'){if(pending){push('review');toast('Choose Keep or Retake first');return}$('review').style.display='none';return}
+  if(t==='guide'){$('guideOv').style.display='none';return}
+  if(t==='pack'){leavePack();return}
   if(t==='viewer'){doCloseViewer();return}
   if(t==='map'){$('mapOv').style.display='none';return}
   if(t==='cam'){doCloseCamera();return}
   if(t==='settings'){$('settings').hidden=true;return}
   if(t==='cat'){$('catPage').hidden=true;CAT=null;$('visit').hidden=false;renderVisit();return}
   if(t==='x'){$('xPage').hidden=true;$('visit').hidden=false;renderVisit();return}
-  if(t==='visit'){V=null;$('visit').hidden=true;$('newPage').hidden=true;$('histPage').hidden=true;$('start').hidden=false;renderHome();ctx();return}
+  if(t==='visit'){if(V&&!V.manifestSent&&(shots(V).length||Object.keys(V.mcl||{}).length||V.det))toast('This visit is not submitted yet. It is saved on this phone, but it is NOT in Drive until you tap Submit visit.',4500);V=null;$('visit').hidden=true;$('newPage').hidden=true;$('histPage').hidden=true;$('start').hidden=false;renderHome();ctx();return}
   if(t==='new'){$('newPage').hidden=true;$('start').hidden=false;renderHome();return}
   if(t==='hist'){$('histPage').hidden=true;$('start').hidden=false;renderHome();return}}
 window.addEventListener('popstate',e=>{const d=(e.state&&typeof e.state.d==='number')?e.state.d:0;if(d>=depth){depth=d;return}const steps=depth-d;depth=d;for(let i=0;i<steps;i++){try{closeTop()}catch(err){}}});
@@ -423,7 +504,7 @@ window.addEventListener('popstate',e=>{const d=(e.state&&typeof e.state.d==='num
 /* ---------- sign in / account ---------- */
 Object.assign(CFG,load('aegis.cfg',{}));if(!CFG.url)CFG.url=DEFAULT_URL;
 function signedIn(){return !!(CFG.token&&CFG.name)}
-function renderCfg(){$('auditor').value=CFG.name||'';if(typeof renderHome==='function')try{renderHome()}catch(e){}$('loginBox').hidden=signedIn();$('acctBox').hidden=!signedIn();$('setUrl').value=CFG.url||'';
+function renderCfg(){$('auditor').value=CFG.name||'';if(typeof renderHome==='function')try{renderHome()}catch(e){}$('loginBox').hidden=signedIn();$('acctBox').hidden=!signedIn();document.querySelector('#acctBox details').hidden=CFG.role!=='admin';$('setUrl').value=CFG.url||'';
   if(signedIn())$('acctMeta').innerHTML=`<b>Name</b><span>${CFG.name}</span><b>Token</b><span>${CFG.token}</span><b>Role</b><span>${CFG.role||'auditor'}</span>`}
 async function openSettings(){$('settings').hidden=false;push('settings');renderCfg();const n=(await dbKeys(PH)).length;$('storageInfo').textContent=`${n} full-size photo(s) kept on this phone (originals are removed ${KEEP_DAYS} days after upload; thumbnails stay). App ${VERSION}, phone id ${DEVICE}.`}
 $('gearBtn').addEventListener('click',()=>{if(!$('settings').hidden){if(history.state&&history.state.aegis==='settings')back();else $('settings').hidden=true;return}openSettings()});
@@ -432,7 +513,7 @@ $('loginBtn').addEventListener('click',async()=>{const name=$('setName').value.t
   if(!navigator.onLine){st.className='status bad';st.textContent='No signal. Signing in needs internet the first time.';return}
   st.textContent='Checking…';$('loginBtn').disabled=true;
   try{const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify({kind:'login',token,name,device:DEVICE,appVersion:VERSION})});const j=await r.json();
-    if(j.ok){CFG.token=token;CFG.name=j.name||name;CFG.role=j.role||'';save('aegis.cfg',CFG);renderCfg();toast('Signed in as '+CFG.name);checkClock();if(history.state&&history.state.aegis==='settings')back();else $('settings').hidden=true}
+    if(j.ok){CFG.token=token;CFG.name=j.name||name;CFG.role=j.role||'';save('aegis.cfg',CFG);if(j.sync){SYNC=j.sync;save('aegis.sync',SYNC)}renderCfg();toast('Signed in as '+CFG.name);checkClock();if(history.state&&history.state.aegis==='settings')back();else $('settings').hidden=true;showProj()}
     else{st.className='status bad';st.textContent=j.error==='bad token'?'That token is not on the list, or has been switched off. Check with the office.':'Could not sign in: '+(j.error||'unknown error')}}
   catch(e){st.className='status bad';st.textContent='Could not reach the server. Try again with better signal.'}
   finally{$('loginBtn').disabled=false}});
@@ -443,29 +524,47 @@ $('saveUrl').addEventListener('click',()=>{const u=$('setUrl').value.trim();cons
 $('testSet').addEventListener('click',async()=>{const st=$('acctStatus');st.className='status';st.textContent='Testing…';try{const r=await fetch(CFG.url,{cache:'no-store'});const j=await r.json();if(j.version){CFG.scriptVer=j.version;save('aegis.cfg',CFG);showVer()}st.textContent=j.ok?`Server answers (script ${j.version||'?'}). Good.`:'Server answered but not as expected.'}catch(e){st.className='status bad';st.textContent='Could not reach the server.'}});
 
 /* ---------- main page ---------- */
-function todayUnfinished(){const {date}=parts(nowMs());return VISITS.filter(v=>v.date===date&&!v.done).sort((a,b)=>b.started<a.started?-1:1)}
-function renderHome(){const first=(CFG.name||'').split(' ')[0];$('hiLine').textContent=signedIn()?`Hello, ${first}`:'Hello';const d=new Date(nowMs());$('dateLine').textContent=d.toLocaleDateString('en-PH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+const mineV=()=>VISITS.filter(v=>v.project===curProject());
+function todayUnfinished(){const {date}=parts(nowMs());return mineV().filter(v=>v.date===date&&!v.done).sort((a,b)=>b.started<a.started?-1:1)}
+async function doSync(quiet){if(!signedIn()||!navigator.onLine)return false;try{const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify({kind:'sync',token:CFG.token,name:CFG.name,device:DEVICE,appVersion:VERSION})});const j=await r.json();if(j.ok&&j.sync){SYNC=j.sync;save('aegis.sync',SYNC);if(j.role){CFG.role=j.role;save('aegis.cfg',CFG)}renderHome();if(!$('projPage').hidden)renderProj();const bad=(SYNC.projects||[]).find(p=>p.error);if(!quiet)toast(bad?`Store list problem for ${bad.name}: ask the office to check the reference file.`:`${myStores().length} store(s) tagged to you in ${curProject()||'your projects'}`,bad?5000:2800);return true}if(!quiet)toast('Could not refresh: '+(j.error||'unknown'));}catch(e){if(!quiet)toast('No signal; using the last list')}return false}
+$('syncBtn').addEventListener('click',()=>doSync(false));
+function projNames(){return (SYNC.projects||[]).map(p=>p.name)}
+function curProject(){const ns=projNames();return ns.length?(ns.includes(CFG.project)?CFG.project:''):(CFG.project||'')}
+function showProj(){$('start').hidden=true;$('newPage').hidden=true;$('histPage').hidden=true;$('projPage').hidden=false;renderProj()}
+function renderProj(){const el=$('projTiles');el.innerHTML='';const ns=projNames();$('projHi').textContent=signedIn()?`Hello, ${(CFG.name||'').split(' ')[0]}. Choose the project`:'Choose the project';
+  $('projStatus').textContent=ns.length?'':'No project is on this phone yet. Tap Refresh (needs signal).';
+  ns.forEach(n=>{const cnt=(SYNC.stores||[]).filter(s=>s.project===n).length;const open=VISITS.filter(v=>v.project===n&&shots(v).some(s=>s.status!=='sent')).length;const b=document.createElement('button');b.className='tile'+(n===CFG.project?' has':'');b.innerHTML=`<b>${esc(n)}</b><span>${cnt} store${cnt===1?'':'s'} tagged to you${open?' · '+open+' visit'+(open>1?'s':'')+' with photos to upload':''}${n===CFG.project?' · last used':''}</span>`;
+    b.addEventListener('click',()=>{CFG.project=n;save('aegis.cfg',CFG);$('projPage').hidden=true;$('start').hidden=false;renderHome()});el.appendChild(b)})}
+$('projSwitch').addEventListener('click',showProj);
+$('projRefresh').addEventListener('click',async()=>{$('projStatus').textContent='Refreshing…';const ok=await doSync(false);renderProj();if(!ok&&!projNames().length)$('projStatus').textContent='Could not refresh. Check your signal and try again.'});
+function myStores(){const pj=curProject();return (SYNC.stores||[]).filter(s=>s.project===pj)}
+function renderHome(){$('projName').textContent=curProject()||'—';const ms=myStores();$('syncLine').textContent=SYNC.at?`${ms.length} store${ms.length===1?'':'s'} tagged to you · list from ${fmtDT(SYNC.at)}`:'Store list not loaded yet';const first=(CFG.name||'').split(' ')[0];$('hiLine').textContent=signedIn()?`Hello, ${first}`:'Hello';const d=new Date(nowMs());$('dateLine').textContent=d.toLocaleDateString('en-PH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const w=load('aegis.wod',null);const has=w&&w.date===parts(nowMs()).date&&w.word;if(has&&!$('wod').value)$('wod').value=w.word;$('wodPill').hidden=!($('wod').value.trim());
-  const {date}=parts(nowMs());const today=VISITS.filter(v=>v.date===date);const waiting=VISITS.filter(v=>shots(v).some(s=>s.status!=='sent')).length;const un=todayUnfinished();
+  const {date}=parts(nowMs());const today=mineV().filter(v=>v.date===date);const waiting=mineV().filter(v=>shots(v).some(s=>s.status!=='sent')).length;const un=todayUnfinished();
   $('goCont').hidden=!un.length;if(un.length)$('goCont').textContent=`Continue ${un[0].store}${un[0].name?' · '+un[0].name:''}`;
   $('histBadge').textContent=waiting?`(${waiting} to upload)`:'';
   $('homeStrip').textContent=`${today.length} visit${today.length===1?'':'s'} today${waiting?' · '+waiting+' with photos waiting to upload':''}`;showClock()}
-$('goNew').addEventListener('click',()=>{if(!signedIn()){toast('Sign in first');openSettings();return}if(!$('wod').value.trim()){toast('Type the word of the day first');$('wod').focus();return}$('start').hidden=true;$('newPage').hidden=false;push('new');$('storeCode').focus()});
+$('goNew').addEventListener('click',()=>{if(!signedIn()){toast('Sign in first');openSettings();return}if(!curProject()){showProj();return}if(!$('wod').value.trim()){toast('Type the word of the day first');$('wod').focus();return}
+  $('start').hidden=true;$('newPage').hidden=false;push('new');$('newProj').textContent=`Project: ${curProject()} · ${myStores().length} store(s) tagged to you`;STORE=null;$('storePicked').hidden=true;$('storeResults').innerHTML='';$('storeQ').value='';$('notOnList').hidden=true;$('storeQ').focus()});
+function pickStore(s){STORE=s;$('storeCode').value=s.bw;$('storeName').value=s.name;$('storeResults').innerHTML='';$('storeQ').value='';const p=$('storePicked');p.hidden=false;p.innerHTML=`Store: <b>${s.name}</b> · ${s.bw}${s.client?' · client code '+s.client:''}${s.city?' · '+s.city:''}${s.team&&s.team.length>1?' · tagged to '+s.team.join(' and '):''}`;$('notOnList').hidden=true;$('storeCode').dispatchEvent(new Event('input'))}
+$('storeQ').addEventListener('input',()=>{const q=$('storeQ').value.trim().toUpperCase();const res=$('storeResults');res.innerHTML='';if(!q)return;const hits=myStores().filter(s=>s.bw.includes(q)||s.name.toUpperCase().includes(q)||(s.city||'').toUpperCase().includes(q)).slice(0,8);
+  if(!hits.length){res.innerHTML='<p class="muted">No assigned store matches. Type the BW code and name below to continue anyway.</p>';return}
+  hits.forEach(s=>{const d=document.createElement('div');d.className='pres';d.innerHTML=`<b>${s.name}</b><span class="muted">${s.bw}${s.city?' · '+s.city:''}</span>`;d.addEventListener('click',()=>pickStore(s));res.appendChild(d)})});
 $('goCont').addEventListener('click',()=>{const un=todayUnfinished();if(un.length)openVisit(un[0])});
 $('goHist').addEventListener('click',()=>{$('start').hidden=true;$('histPage').hidden=false;push('hist');renderVisits()});
 $('newBack').addEventListener('click',()=>back());$('histBack').addEventListener('click',()=>back());
 $('histQ').addEventListener('input',renderVisits);
 $('wod').addEventListener('input',()=>{$('wodPill').hidden=!$('wod').value.trim()});
 function renderVisits(){const el=$('visitsList');el.innerHTML='';const q=($('histQ').value||'').trim().toUpperCase();
-  const list=[...VISITS].sort((a,b)=>b.started<a.started?-1:1).filter(v=>!q||v.store.includes(q)||(v.name||'').toUpperCase().includes(q));
-  $('visitsCount').textContent=VISITS.length?`${VISITS.length} visit${VISITS.length===1?'':'s'} on this phone`:'';
-  const waiting=VISITS.filter(v=>shots(v).some(s=>s.status!=='sent')).length;
+  const list=[...mineV()].sort((a,b)=>b.started<a.started?-1:1).filter(v=>!q||v.store.includes(q)||(v.name||'').toUpperCase().includes(q));
+  $('visitsCount').textContent=mineV().length?`${mineV().length} ${curProject()} visit${mineV().length===1?'':'s'} on this phone`:'';
+  const waiting=mineV().filter(v=>shots(v).some(s=>s.status!=='sent')).length;
   const hw=$('histWaiting');if(waiting){hw.hidden=false;hw.textContent=`${waiting} visit${waiting>1?'s':''} still ${waiting>1?'have':'has'} photos not uploaded.`}else hw.hidden=true;
   if(!list.length){el.innerHTML='<p class="muted">'+(q?'No visit matches.':'No visits yet.')+'</p>';return}
   list.forEach(v=>{const st=vStatus(v);const d=document.createElement('div');d.className='vrow';
-    d.innerHTML=`<div><b>${v.store}${v.seq>1?` · visit ${v.seq} that day`:''}</b><div class="sub">${v.name||''} · ${fmtDT(v.started)} · ${catsCovered(v).map(catName).join(', ')||'no shelf photos'}${(v.extras||[]).length?' · '+v.extras.length+' visit photo'+(v.extras.length>1?'s':''):''} · ${v.auditor}</div></div><span class="pill ${st.l}">${st.t}</span>`;
+    d.innerHTML=`<div><b>${v.name||v.store}${v.seq>1?` · visit ${v.seq} that day`:''}</b><div class="sub">${v.store}${v.project?' · '+v.project:''} · ${fmtDT(v.started)} · ${catsCovered(v).map(catName).join(', ')||'no shelf photos'}${(v.extras||[]).length?' · '+v.extras.length+' visit photo'+(v.extras.length>1?'s':''):''} · ${v.auditor}</div></div><span class="pill ${st.l}">${st.t}</span>`;
     d.addEventListener('click',()=>openVisit(v));el.appendChild(d)})}
-$('storeCode').addEventListener('input',()=>{const code=$('storeCode').value.trim().toUpperCase();const {date}=parts(nowMs());const same=VISITS.filter(v=>v.store===code&&v.date===date);const n=$('sameDayNote');
+$('storeCode').addEventListener('input',()=>{const code=$('storeCode').value.trim().toUpperCase();const hit=myStores().find(s=>s.bw===code);if(hit&&(!STORE||STORE.bw!==code)){STORE=hit;if(!$('storeName').value)$('storeName').value=hit.name}if(!hit)STORE=null;$('notOnList').hidden=!code||!!hit||!myStores().length;const {date}=parts(nowMs());const same=VISITS.filter(v=>v.store===code&&v.date===date);const n=$('sameDayNote');
   if(code&&same.length){n.hidden=false;n.innerHTML=`${same.length} visit${same.length>1?'s':''} for <b>${code}</b> already today on this phone. Starting again creates <b>visit ${same.length+1}</b> in its own folder; or <button class="ghost small" id="contBtn">continue the last one</button>.`;$('contBtn').addEventListener('click',()=>openVisit(same[same.length-1]));const last=same[same.length-1];if(!$('storeName').value)$('storeName').value=last.name||''}else n.hidden=true});
 function showPlace(){const p=$('placePicked');if(PLACE){p.hidden=false;p.innerHTML=`Place: <b>${PLACE.name}</b>${PLACE.src==='pin'?' (pinned on map)':''}`;$('placeClear').hidden=false;if(!$('storeName').value&&PLACE.src!=='pin')$('storeName').value=PLACE.name.split(',')[0]}else{p.hidden=true;$('placeClear').hidden=true}}
 $('placeClear').addEventListener('click',()=>{PLACE=null;$('placeResults').innerHTML='';showPlace()});
@@ -487,31 +586,49 @@ $('pinBtn').addEventListener('click',async()=>{if(typeof L==='undefined'){toast(
 $('mapCancel').addEventListener('click',()=>back());
 $('mapSave').addEventListener('click',()=>{const p=marker.getLatLng();PLACE={name:$('storeName').value.trim()||$('storeCode').value.trim().toUpperCase()||'pinned location',lat:+p.lat.toFixed(6),lng:+p.lng.toFixed(6),src:'pin'};showPlace();back()});
 $('wod').addEventListener('change',()=>{save('aegis.wod',{date:parts(nowMs()).date,word:$('wod').value.trim().toUpperCase()})});
-$('startBtn').addEventListener('click',async()=>{const code=$('storeCode').value.trim().toUpperCase();if(!code){toast('Enter the store code');return}
+$('startBtn').addEventListener('click',async()=>{const code=$('storeCode').value.trim().toUpperCase();if(!code){toast('Enter the BW code');return}if(!$('storeName').value.trim()){toast('Enter the store name');$('storeName').focus();return}
   const wod=$('wod').value.trim().toUpperCase();if(!wod){toast('Enter the word of the day');$('wod').focus();return}
   if(!signedIn()){toast('Sign in first');openSettings();return}
   $('startBtn').disabled=true;$('startBtn').textContent='Getting location…';const [gps]=await Promise.all([getGPS(),checkClock()]);$('startBtn').disabled=false;$('startBtn').textContent='Start visit';
   const np=parts(nowMs());const seq=VISITS.filter(v=>v.store===code&&v.date===np.date).length+1;
   save('aegis.wod',{date:np.date,word:wod});
-  V={id:`${code}_${np.date.replace(/-/g,'')}_${np.hhmm}_${DEVICE}`,store:code,name:$('storeName').value.trim(),auditor:CFG.name,wod,date:np.date,hhmm:np.hhmm,started:np.iso,seq,gps,place:PLACE,device:DEVICE,clockOffsetS:Math.round((CLOCK.raw||0)/1000),clockChecked:!!CLOCK.checked,groups:[],extras:[],done:false,manifestSent:false};
-  PLACE=null;showPlace();$('placeResults').innerHTML='';$('placeQ').value='';lastGPS=gps||lastGPS;VISITS.push(V);persist();if(!gps)toast('No GPS fix; photos will say "no GPS"');$('newPage').hidden=true;$('storeCode').value='';$('storeName').value='';$('sameDayNote').hidden=true;V=null;depth--;history.replaceState({aegis:'main',d:depth},'');openVisit(VISITS[VISITS.length-1])});
+  const st=(STORE&&STORE.bw===code)?STORE:null;
+  V={id:`${code}_${np.date.replace(/-/g,'')}_${np.hhmm}_${DEVICE}`,project:curProject(),store:code,name:$('storeName').value.trim(),client:st?st.client:'',onList:!!st,storeLat:st&&st.lat!=null?st.lat:null,storeLng:st&&st.lng!=null?st.lng:null,auditor:CFG.name,wod,date:np.date,hhmm:np.hhmm,started:np.iso,seq,gps,place:PLACE,device:DEVICE,clockOffsetS:Math.round((CLOCK.raw||0)/1000),clockChecked:!!CLOCK.checked,groups:[],extras:[],msl:[],mcl:{},det:null,done:false,manifestSent:false};
+  PLACE=null;STORE=null;$('storePicked').hidden=true;showPlace();$('placeResults').innerHTML='';$('placeQ').value='';lastGPS=gps||lastGPS;VISITS.push(V);persist();if(!gps)toast('No GPS fix; photos will say "no GPS"');$('newPage').hidden=true;$('storeCode').value='';$('storeName').value='';$('sameDayNote').hidden=true;V=null;depth--;history.replaceState({aegis:'main',d:depth},'');openVisit(VISITS[VISITS.length-1])});
 
 /* ---------- visit page ---------- */
 function openVisit(v){V=v;$('start').hidden=true;$('visit').hidden=false;push('visit');renderVisit()}
 function renderVisit(){if(!V)return;$('vTitle').textContent=`${V.store}${V.seq>1?` · visit ${V.seq}`:''}`;$('vSub').textContent=`${V.name||''}${V.name?' · ':''}${fmtDT(V.started)}`;
-  $('vMeta').innerHTML=`<b>Auditor</b><span>${V.auditor}</span><b>WOD</b><span>${V.wod||'—'}</span><b>Phone GPS</b><span>${gpsText(V.gps)}</span><b>Place</b><span>${placeText(V)}</span><b>Groups</b><span>${V.groups.length} · ${shelfShots(V).length} shelf photo${shelfShots(V).length===1?'':'s'} · ${(V.extras||[]).length} visit photo${(V.extras||[]).length===1?'':'s'}</span>`;
-  const t=$('catTiles');t.innerHTML='';for(const [c,nm] of CATS){const gs=catGroups(V,c);const n=gs.reduce((a,g)=>a+g.shots.length,0);const b=document.createElement('button');b.className='tile'+(n?' has':'');b.innerHTML=`<b>${nm}</b><span>${n?`${gs.length} group${gs.length>1?'s':''}, ${n} photo${n>1?'s':''}`:'no photos yet'}</span>`;b.addEventListener('click',()=>openCat(c));t.appendChild(b)}
-  const xs=V.extras||[];const xb=document.createElement('button');xb.className='tile x'+(xs.length?' has':'');xb.innerHTML=`<b>Visit photos</b><span>${xs.length?`${xs.length} photo${xs.length>1?'s':''} · ${xs.filter(s=>s.status==='sent').length} uploaded`:'storefront, stands, anything else'}</span>`;xb.addEventListener('click',()=>{$('visit').hidden=true;$('xPage').hidden=false;push('x');renderX()});t.appendChild(xb);
+  $('vMeta').innerHTML=`<b>Project</b><span>${V.project||'—'}</span><b>Client code</b><span>${V.client||'—'}${V.onList?'':' · not on assigned list'}</span><b>Auditor</b><span>${V.auditor}</span><b>WOD</b><span>${V.wod||'—'}</span><b>Phone GPS</b><span>${gpsText(V.gps)}</span><b>Place</b><span>${placeText(V)}</span><b>Groups</b><span>${V.groups.length} · ${shelfShots(V).length} shelf photo${shelfShots(V).length===1?'':'s'} · ${(V.extras||[]).length} visit photo${(V.extras||[]).length===1?'':'s'}</span>`;
+  const p=P(V.project),det=V.det||{};$('detCard').hidden=!p.details;
+  if(p.details){[['vsPick','status'],['ptPick','photo'],['msPick','measure']].forEach(([id,k])=>$(id).querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===det[k])));$('refBox').hidden=det.status!=='Refused Audit';$('ruleBox').hidden=det.status!=='Allowed Audit';if(document.activeElement!==$('refReason'))$('refReason').value=det.reason||''}
+  const refused=p.details&&det.status==='Refused Audit';$('tilesCard').hidden=p.details&&!det.status;
+  const t=$('catTiles');t.innerHTML='';
+  if(!refused)for(const [c,nm] of p.cats){const gs=catGroups(V,c);const n=gs.reduce((a,g)=>a+g.shots.length,0);const b=document.createElement('button');b.className='tile'+(n?' has':'');b.innerHTML=`<b>SOS: ${esc(nm)}</b><span>${n?`${gs.length} group${gs.length===1?'':'s'}, ${n} photo${n===1?'':'s'}`:'no photos yet'}</span>`;b.addEventListener('click',()=>openCat(c));t.appendChild(b)}
+  const xs=V.extras||[];const xb=document.createElement('button');xb.className='tile x'+(xs.length?' has':'');xb.innerHTML=`<b>Visit photos</b><span>${xs.length?`${xs.length} photo${xs.length>1?'s':''} · ${xs.filter(s=>s.status==='sent').length} uploaded`:'storefront, secondary displays, COC, visicooler, others'}</span>`;xb.addEventListener('click',()=>{$('visit').hidden=true;$('xPage').hidden=false;push('x');renderX()});t.appendChild(xb);
+  if(!refused){const pb=document.createElement('button');if(p.mcl.length||p.mclRequired){const s=mclStats(V);pb.className='tile x'+(s.total&&!s.todo?' has':'');pb.innerHTML=`<b>MCL</b><span>${s.total?`${s.total-s.todo} of ${s.total} SKUs complete`:'Must Carry List'}</span>`}else{const pn=(V.msl||[]).length;pb.className='tile x'+(pn?' has':'');pb.innerHTML=`<b>Pack shots</b><span>${pn?`${pn} pack${pn>1?'s':''} · ${V.msl.filter(s=>s.status==='sent').length} uploaded`:'one photo per SKU that is in the store'}</span>`}pb.addEventListener('click',openPack);t.appendChild(pb)}
   const all=shots(V),total=all.length,sent=all.filter(s=>s.status==='sent').length;const st=vStatus(V);$('vPill').className='pill '+st.l;$('vPill').textContent=st.t;
-  const allSent=total>0&&sent===total&&V.manifestSent;
-  $('uploadBtn').disabled=total===0||allSent||Q.running;$('uploadBtn').textContent=Q.running?'Uploading…':allSent?'All uploaded':'Upload visit';
+  const hasData=total>0||Object.keys(V.mcl||{}).length>0||refused;const allSent=hasData&&sent===total&&V.manifestSent;const need=missing(V);
+  $('uploadBtn').disabled=!hasData||allSent||Q.running;$('uploadBtn').textContent=Q.running?'Uploading…':allSent?'All uploaded':'Submit visit';
+  $('needLine').hidden=!need.length||allSent||!hasData;$('needLine').textContent='Before you can submit: '+need.join('; ')+'.';
   $('finishBtn').disabled=!allSent||V.done;$('finishBtn').textContent=V.done?'Finished':'Finish visit';
   $('bar').style.width=total?Math.round(100*sent/total)+'%':'0%';
-  if(!Q.running){if(V.done&&allSent)setStatus('Finished and uploaded. Anything you add now is sent with Upload visit.');else if(allSent)setStatus('Everything is in Drive. You can finish the visit.');else if(!total)setStatus('Not uploaded yet.');else if(total-sent&&!$('upStatus').classList.contains('bad'))setStatus(`${total-sent} photo${total-sent>1?'s':''} on this phone, not sent yet.`)}
+  if(!Q.running){if(V.done&&allSent)setStatus('Finished and uploaded. Anything you add now is sent with Submit visit.');else if(allSent)setStatus('Everything is in Drive. You can finish the visit.');else if(!total)setStatus(hasData?'Not submitted yet.':'Not uploaded yet.');else if(total-sent&&!$('upStatus').classList.contains('bad'))setStatus(`${total-sent} photo${total-sent>1?'s':''} on this phone, not sent yet.`)}
   ctx()}
+function setDet(k,val){if(!V)return;V.det=V.det||{};V.det[k]=val;V.manifestSent=false;persist();renderVisit()}
+$('vsPick').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setDet('status',b.dataset.v)});
+$('ptPick').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setDet('photo',b.dataset.v)});
+$('msPick').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setDet('measure',b.dataset.v)});
+$('refReason').addEventListener('input',()=>{if(!V)return;V.det=V.det||{};V.det.reason=$('refReason').value;V.manifestSent=false;persist();renderVisit()});
+function missing(v){const p=P(v.project),out=[];
+  if(p.details){const d=v.det||{};if(!d.status)return ['choose the visit status'];
+    if(d.status==='Refused Audit'){if(!(d.reason||'').trim())out.push('type the reason for refusal');if(!(v.extras||[]).length)out.push('take at least one visit photo');return out}
+    if(!d.photo)out.push('choose Photo taking');if(!d.measure)out.push('choose Measurement')}
+  if(p.mclRequired&&p.mcl.length){const s=mclStats(v);if(s.todo)out.push(`${s.todo} MCL SKU${s.todo>1?'s are':' is'} not complete`)}
+  return out}
 $('backBtn').addEventListener('click',()=>back());$('vInfoBtn').addEventListener('click',()=>{$('vMeta').hidden=!$('vMeta').hidden});
 $('discardBtn').addEventListener('click',async()=>{const b=$('discardBtn');if(b.dataset.a!=='1'){b.dataset.a='1';b.textContent='Tap again to remove this visit from the phone';setTimeout(()=>{b.dataset.a='';b.textContent='Discard this visit'},3000);return}
-  for(const s of shots(V)){await dbDel(PH,s.name);await dbDel(TH,s.name)}VISITS=VISITS.filter(v=>v!==V);persist();b.dataset.a='';b.textContent='Discard this visit';back()});
+  for(const s of shots(V)){await dbDel(PH,s.name);await dbDel(TH,s.name)}VISITS=VISITS.filter(v=>v!==V);persist();b.dataset.a='';b.textContent='Discard this visit';V.manifestSent=true;back()});
 $('finishBtn').addEventListener('click',()=>{V.done=true;V.finished=new Date(nowMs()).toISOString();persist();toast('Visit finished.');back()});
 
 /* ---------- category page ---------- */
@@ -526,10 +643,56 @@ function renderCat(){if(!V||!CAT)return;$('catTitle').textContent=catName(CAT);c
       dbGet(TH,s.name).then(b=>{if(b)im.src=URL.createObjectURL(b)});th.addEventListener('click',()=>openViewer(g,s))}
     if(!g.shots.length){const b=document.createElement('button');b.className='ghost small';b.textContent='Remove empty group';b.addEventListener('click',()=>{V.groups=V.groups.filter(x=>x!==g);persist();renderCat()});d.appendChild(b)}
     el.appendChild(d)}
-  $('catCount').textContent=total+(total===1?' photo':' photos');$('grpTitle').textContent=`Add group ${gs.length+1}`}
+  $('catCount').textContent=total+(total===1?' photo':' photos');$('grpTitle').textContent=`Add group ${gs.length+1}`;$('guideBtn').hidden=!P(V.project).guide}
 document.querySelectorAll('.choice').forEach(c=>c.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;c.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}));
 const picked=id=>$(id).querySelector('.on').dataset.v;
-$('openCam').addEventListener('click',async()=>{cur={n:catGroups(V,CAT).length+1,cat:CAT,kind:picked('kindPick'),type:picked('typePick'),shots:[],addedLater:!!V.done};V.groups.push(cur);persist();prevG=null;prevBmp=null;await openCamera()});
+document.querySelector('#kindPick').addEventListener('click',()=>{const k=picked('kindPick');const want=k==='row'?'landscape':'portrait';$('orientPick').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===want))});
+/* ---------- guide photos (loaded from Drive after sign-in, kept on the phone for offline) ---------- */
+function showGuide(g){$('gdNote').textContent=g.note||'';const el=$('gdImgs');el.innerHTML='';if(!g.images||!g.images.length){el.innerHTML='<p class="muted">No sample photos for this category yet.</p>';return}
+  for(const im of g.images){const f=document.createElement('figure');const i=document.createElement('img');i.src=`data:${im.mime};base64,${im.data}`;i.alt=im.name;const c=document.createElement('figcaption');c.textContent=im.name;f.appendChild(c);f.appendChild(i);el.appendChild(f)}}
+async function openGuide(){if(!V||!CAT)return;const key=`guide|${V.project}|${CAT}`;$('guideOv').style.display='flex';push('guide');$('gdTitle').textContent='Guide: '+catName(CAT);$('gdNote').textContent='Loading…';$('gdImgs').innerHTML='';
+  let g=await dbGet(TH,key);if(g)showGuide(g);
+  if(navigator.onLine&&(!g||Date.now()-g.at>3*864e5)){try{const j=await post({kind:'guide',token:CFG.token,project:V.project,category:CAT});if(j.ok){g={note:j.note,images:j.images,at:Date.now()};await dbPut(TH,key,g);if($('guideOv').style.display==='flex')showGuide(g)}else if(!g)$('gdNote').textContent='Could not load the guide: '+(j.error||'unknown error')}catch(e){if(!g)$('gdNote').textContent='The guide needs signal the first time you open it.'}}
+  else if(!g)$('gdNote').textContent='The guide needs signal the first time you open it.'}
+$('guideBtn').addEventListener('click',openGuide);$('gdClose').addEventListener('click',()=>back());
+
+/* ---------- pack shots page (PS) / MCL page (MNC) ---------- */
+let mclOpen=null;
+function mclAns(v,no){return (v.mcl||{})[no]||null}
+function mclPhoto(v,no){return (v.msl||[]).find(s=>s.cat==='MCL'&&s.sku===no)||null}
+function mclState(v,m){const a=mclAns(v,m[0]);if(!a||a.a==null)return 'todo';if(a.a===1)return (mclPhoto(v,m[0])||(a.remark||'').trim())?'ok':'need';return a.reason&&(!/^others/i.test(a.reason)||(a.remark||'').trim())?'ok':'need'}
+function mclStats(v){const list=P(v.project).mcl;let yes=0,no=0,todo=0;for(const m of list){const a=mclAns(v,m[0]);if(mclState(v,m)!=='ok')todo++;if(a&&a.a===1)yes++;else if(a&&a.a===0)no++}return {total:list.length,yes,no,todo,unanswered:list.length-yes-no}}
+function setMcl(no,o){V.mcl=V.mcl||{};V.mcl[no]=o;V.manifestSent=false;persist()}
+function thumbEl(s,label,onTap){const th=document.createElement('div');th.className='th';const im=document.createElement('img');im.className=s.status;th.appendChild(im);const sp=document.createElement('span');sp.textContent=label;th.appendChild(sp);dbGet(TH,s.name).then(b=>{if(b)im.src=URL.createObjectURL(b)});th.addEventListener('click',onTap);return th}
+function openPack(){$('visit').hidden=true;$('packPage').hidden=false;push('pack');mclOpen=null;renderPack();window.scrollTo(0,0)}
+function leavePack(){if(V){const p=P(V.project);if(p.mcl.length){const s=mclStats(V);if(s.todo)toast(`MCL is not complete: ${s.todo} SKU${s.todo>1?'s':''} still to finish. The visit cannot be submitted, so the data will not be uploaded, until MCL is complete.`,5000)}}$('packPage').hidden=true;$('visit').hidden=false;renderVisit()}
+$('packBack').addEventListener('click',()=>back());
+function mclTop(){const st=mclStats(V);$('packSub').textContent=`Answer every SKU. Available: take a pack shot (if a photo is not possible, write a remark instead). Not available: choose the reason. ${st.total-st.todo} of ${st.total} complete.`;$('mclBar').style.width=st.total?Math.round(100*(st.total-st.todo)/st.total)+'%':'0%'}
+function renderPack(){if(!V||$('packPage').hidden)return;const p=P(V.project),el=$('packBody'),y=window.scrollY;el.innerHTML='';
+  if(p.mcl.length||p.mclRequired){$('packTitle').textContent='MCL · Must Carry List';$('mclBarWrap').hidden=false;mclTop();
+    if(!p.mcl.length){el.innerHTML='<div class="card"><p class="muted">The MCL list is not on this phone yet. Go back to the home page and tap Refresh my stores (needs signal).</p></div>';return}
+    const groups=[];for(const m of p.mcl){let g=groups.find(x=>x.name===m[3]);if(!g){g={name:m[3],items:[]};groups.push(g)}g.items.push(m)}
+    if(mclOpen===null){const f=groups.find(g=>g.items.some(m=>mclState(V,m)!=='ok'));mclOpen=f?f.name:''}
+    for(const g of groups){const done=g.items.filter(m=>mclState(V,m)==='ok').length,open=mclOpen===g.name;const d=document.createElement('div');d.className='card mgrp'+(open?' open':'');
+      d.innerHTML=`<button class="mhead"><b>${esc(g.name)}</b><span class="pill ${done===g.items.length?'':'warn'}">${done}/${g.items.length} ${open?'▲':'▼'}</span></button>`;
+      d.querySelector('.mhead').addEventListener('click',()=>{mclOpen=open?'':g.name;renderPack();if(!open){const tEl=document.querySelector('.mgrp.open');if(tEl)tEl.scrollIntoView({block:'start'})}});
+      if(open)for(const m of g.items)d.appendChild(mclRow(p,m));el.appendChild(d)}
+  }else{$('packTitle').textContent='Pack shots';$('mclBarWrap').hidden=true;$('packSub').textContent='One pack per photo, front face, fill the frame. Only the SKUs that are actually in the store, wherever they are. Choose the category, then shoot.';
+    for(const [c,nm] of p.cats){const list=(V.msl||[]).filter(s=>s.cat===c);const d=document.createElement('div');d.className='card';d.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:baseline"><h3>${esc(nm)}</h3><span class="muted">${list.length} pack${list.length===1?'':'s'} · ${list.filter(s=>s.status==='sent').length} uploaded</span></div><div class="thumbrow"></div><button class="ghost">Shoot ${esc(nm)} packs</button>`;
+      const tr=d.querySelector('.thumbrow');for(const s of list)tr.appendChild(thumbEl(s,'p'+pad2(s.n),()=>openViewer(MG(V,c),s)));
+      d.querySelector('button').addEventListener('click',async()=>{cur=MG(V,c);prevG=null;prevBmp=null;await openCamera()});el.appendChild(d)}}
+  window.scrollTo(0,y)}
+function mclRow(p,m){const no=m[0],a=mclAns(V,no)||{},ph=mclPhoto(V,no);const d=document.createElement('div');d.className='mrow '+mclState(V,m);
+  d.innerHTML=`<div class="mt"><b>${esc(m[2])}</b><span class="muted">${no} · ${esc(m[1])}</span></div><div class="choice two"><button data-a="1" class="${a.a===1?'on':''}"><b>Available</b></button><button data-a="0" class="${a.a===0?'on':''}"><b>Not available</b></button></div><div class="mx"></div>`;
+  const mx=d.querySelector('.mx');const upd=()=>{d.className='mrow '+mclState(V,m);mclTop()};
+  const inp=(ph2,val,fn)=>{const i=document.createElement('input');i.type='text';i.placeholder=ph2;i.value=val||'';i.autocomplete='off';i.addEventListener('input',()=>{fn(i.value);upd()});return i};
+  d.querySelectorAll('.choice button').forEach(b=>b.addEventListener('click',async()=>{const v=Number(b.dataset.a);if(a.a===v)return;setMcl(no,{a:v,reason:'',remark:a.remark||''});if(v===0&&ph&&ph.status!=='sent')await deleteShot({kind:'msl'},ph);renderPack()}));
+  if(a.a===1){const row=document.createElement('div');row.className='mph thumbrow';if(ph)row.appendChild(thumbEl(ph,'✓',()=>openViewer(KG(V,m),ph)));const b=document.createElement('button');b.className=ph?'ghost small':'primary small';b.textContent=ph?'Retake pack shot':'Take pack shot';b.addEventListener('click',async()=>{cur=KG(V,m);prevG=null;prevBmp=null;await openCamera()});row.appendChild(b);mx.appendChild(row);
+    if(!ph||a.remark)mx.appendChild(inp('No photo? Write the reason here (e.g. photos not allowed)',a.remark,val=>setMcl(no,{...(mclAns(V,no)||{a:1}),remark:val})))}
+  if(a.a===0){const s=document.createElement('select');[['','Choose the reason']].concat(p.reasons.map(r=>[r,r])).forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;s.appendChild(o)});s.value=a.reason||'';s.addEventListener('change',()=>{setMcl(no,{...(mclAns(V,no)||{a:0}),reason:s.value});renderPack()});mx.appendChild(s);
+    if(/^others/i.test(a.reason||''))mx.appendChild(inp('Remarks (required for Others)',a.remark,val=>setMcl(no,{...(mclAns(V,no)||{a:0}),remark:val})))}
+  return d}
+$('openCam').addEventListener('click',async()=>{cur={n:catGroups(V,CAT).length+1,cat:CAT,kind:picked('kindPick'),type:picked('typePick'),orient:picked('orientPick'),shots:[],addedLater:!!V.done};V.groups.push(cur);persist();prevG=null;prevBmp=null;await openCamera()});
 
 /* ---------- visit photos page ---------- */
 function renderX(){if(!V)return;const xs=V.extras||[];const xt=$('xThumbs');xt.innerHTML='';for(const s of xs){const th=document.createElement('div');th.className='th';const im=document.createElement('img');im.className=s.status;th.appendChild(im);const sp=document.createElement('span');sp.textContent='v'+pad2(s.n);th.appendChild(sp);xt.appendChild(th);dbGet(TH,s.name).then(b=>{if(b)im.src=URL.createObjectURL(b)});th.addEventListener('click',()=>openViewer(XG(V),s))}
@@ -564,22 +727,24 @@ function fitFrame(){const v=$('video'),mid=$('camMid'),f=$('frame');const ar=(v.
 window.addEventListener('resize',()=>{if(!$('cam').hidden)fitFrame()});$('video').addEventListener('resize',()=>{if(!$('cam').hidden)fitFrame()});$('video').addEventListener('loadedmetadata',()=>{if(!$('cam').hidden)fitFrame()});
 function refit(){[0,100,400,1000].forEach(t=>setTimeout(()=>{if(!$('cam').hidden)fitFrame()},t))}
 async function openCamera(){
-  $('cam').hidden=false;push('cam');const isX=cur.kind==='visit';$('endGroup').textContent=isX?'Done':'End group';$('endGroup').dataset.a='';
-  $('camGroup').textContent=isX?'Visit photos':`${catName(cur.cat)} · Group ${cur.n} · ${cur.kind[0].toUpperCase()+cur.kind.slice(1)} · ${typeName[cur.type]}`;
-  $('camHint').textContent=isX?'Storefront, signage, displays, anything useful. Saved and uploaded as you go.':cur.kind==='single'?'Post to post, top shelf to floor':cur.kind==='row'?'Start with the left post in frame. Walk sideways, same distance.':'Start at the top. Keep the same distance.';
-  lensId=lensId||load('aegis.lens',null);
+  $('cam').hidden=false;push('cam');const isX=cur.kind==='visit',isM=cur.kind==='msl';$('endGroup').textContent=(isX||isM)?'Done':'End group';$('endGroup').dataset.a='';
+  try{if(screen.orientation&&screen.orientation.lock){await screen.orientation.lock(cur.orient==='landscape'?'landscape':'portrait')}}catch(e){}
+  $('placeRow').hidden=true;
+  $('camGroup').textContent=isX?'Visit photos':isM?(cur.sku?`MCL ${cur.sku[0]} · ${cur.sku[1]}`:`${catName(cur.cat)} · Pack shots`):`${catName(cur.cat)} · Group ${cur.n} · ${cur.kind[0].toUpperCase()+cur.kind.slice(1)} · ${typeName[cur.type]}${cur.orient==='landscape'?' · landscape':''}`;
+  $('camHint').textContent=isX?'Storefront, signage, displays, anything useful. Saved and uploaded as you go.':isM?(cur.sku?cur.sku[2]+'. One pack, front face, fill the frame.':'One pack per photo, front face, fill the frame.'):cur.kind==='single'?'Post to post, top shelf to floor':cur.kind==='row'?'Start with the left post in frame. Walk sideways, same distance.':'Start at the top. Keep the same distance.';
+  lensId=null;   // always start on the main lens; the auditor can still switch for this shot
   motionOK=null;motionSamples=[];$('camDiag').textContent='opening camera…';
   try{await startStream()}catch(e){if(lensId){lensId=null;try{await startStream()}catch(e2){camFail(e2)}}else camFail(e)}
   if(!motionOn){try{if(typeof DeviceMotionEvent!=='undefined'&&DeviceMotionEvent.requestPermission){await DeviceMotionEvent.requestPermission()}}catch(e){}window.addEventListener('devicemotion',onMotion);motionOn=true}
   refit();updateTiles();updateEdge()}
 function camFail(e){$('camDiag').textContent='no picture from the camera on this phone';toast('The in-app camera is not working on this phone. Tap "Use phone camera" to shoot with the phone\'s own camera.',5000)}
-function doCloseCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('cam').hidden=true;$('video').hidden=true;const g=cur;cur=null;
-  if(g&&g.kind!=='visit'&&!g.shots.length){V.groups=V.groups.filter(x=>x!==g)}persist();
-  if(g&&g.kind==='visit'){renderX();if(navigator.onLine)enqueue(V,true)}else renderCat()}
+function doCloseCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('cam').hidden=true;$('video').hidden=true;const g=cur;cur=null;try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock()}catch(e){}
+  if(g&&g.kind!=='visit'&&g.kind!=='msl'&&!g.shots.length){V.groups=V.groups.filter(x=>x!==g)}persist();
+  if(g&&g.kind==='visit'){renderX();if(navigator.onLine)enqueue(V,true)}else if(g&&g.kind==='msl'){renderPack();if(navigator.onLine)enqueue(V,true)}else renderCat()}
 $('camClose').addEventListener('click',()=>back());
-$('endGroup').addEventListener('click',()=>{if(!cur)return;if(shutterBusy){toast('Wait for the photo to finish');return}const n=cur.shots.length,x=cur.kind==='visit',gn=cur.n;
-  if(!x&&cur.kind==='row'&&n>0&&!cur.rightOk&&$('endGroup').dataset.a!=='1'){const last=cur.shots[n-1];if(last.gray&&!postEdge(last.gray,'r')){$('endGroup').dataset.a='1';$('endGroup').textContent='No right post seen · End anyway?';setTimeout(()=>{$('endGroup').dataset.a='';$('endGroup').textContent='End group'},4000);return}}
-  $('endGroup').dataset.a='';back();toast(x?`${n} visit photo(s) saved.`:n?`Group ${gn} done with ${n} photo(s).`:'Empty group removed')});
+$('endGroup').addEventListener('click',()=>{if(!cur)return;if(shutterBusy){toast('Wait for the photo to finish');return}const n=cur.kind==='msl'?(V.msl||[]).filter(s=>s.cat===cur.cat).length:cur.shots.length,x=cur.kind==='visit'||cur.kind==='msl',gn=cur.n,isPk=cur.kind==='msl';
+  if(false){const last=cur.shots[n-1];if(last.gray&&!postEdge(last.gray,'r')){$('endGroup').dataset.a='1';$('endGroup').textContent='No right post seen · End anyway?';setTimeout(()=>{$('endGroup').dataset.a='';$('endGroup').textContent='End group'},4000);return}}
+  $('endGroup').dataset.a='';back();toast(isPk?`${n} pack shot(s) saved.`:x?`${n} visit photo(s) saved.`:n?`Group ${gn} done with ${n} photo(s).`:'Empty group removed')});
 function onMotion(e){const g=e.accelerationIncludingGravity;if(!g||g.x==null)return;const ang=Math.atan2(g.x,g.y)*180/Math.PI;levelDeg=0.8*levelDeg+0.2*(-ang);
   const lv=$('level');lv.style.transform=`rotate(${levelDeg}deg)`;const a=Math.abs(levelDeg);lv.className=a<=2?'ok':a<=5?'near':'';$('levelTxt').textContent=`level ${levelDeg.toFixed(0)}°`;
   const acc=e.acceleration;if(acc&&acc.x!=null){const m=Math.hypot(acc.x,acc.y,acc.z);
@@ -587,9 +752,10 @@ function onMotion(e){const g=e.accelerationIncludingGravity;if(!g||g.x==null)ret
     if(!motionOK)return;moving=m>1.8;$('steady').style.display=moving?'block':'none'}}
 function updateTiles(){if(!cur)return;const t=$('tiles');t.className='tiles'+(cur.kind==='column'?' col':'');t.innerHTML='';
   if(cur.kind==='visit'){t.innerHTML=`<i>${cur.shots.length} visit photo${cur.shots.length===1?'':'s'} this visit · ${cur.shots.filter(s=>s.status==='sent').length} uploaded</i>`;return}
+  if(cur.kind==='msl'){const l=(V.msl||[]).filter(s=>s.cat===cur.cat);t.innerHTML=cur.sku?'<i>one photo of this SKU</i>':`<i>${l.length} pack${l.length===1?'':'s'} · ${l.filter(s=>s.status==='sent').length} uploaded</i>`;return}
   if(cur.kind==='single'){t.innerHTML=cur.shots.length?'<span>✓</span><i>one photo taken: End group, or shoot again to replace it</i>':'<span class="next">1</span><i>one photo for this bay</i>';return}
   cur.shots.forEach((s,i)=>{const e=document.createElement('span');e.textContent=i+1;t.appendChild(e)});const nx=document.createElement('span');nx.className='next';nx.textContent=cur.shots.length+1;t.appendChild(nx);const i=document.createElement('i');i.textContent=cur.shots.length?`shot ${cur.shots.length+1} · keep 2–3 packs of overlap`:(cur.kind==='row'?'shot 1 · the left post in frame':'shot 1 · the top shelf in frame');t.appendChild(i)}
-function updateEdge(){if(!cur)return;const ed=$('edge'),tip=$('edgeTip');if(cur.kind==='single'||cur.kind==='visit'||!prevBmp){ed.style.display='none';tip.style.display='none';return}
+function updateEdge(){if(!cur)return;const ed=$('edge'),tip=$('edgeTip');if(cur.kind==='single'||cur.kind==='visit'||cur.kind==='msl'||!prevBmp){ed.style.display='none';tip.style.display='none';return}
   ed.className=cur.kind==='column'?'col':'';ed.style.display='block';tip.style.display='block';const c=$('edgeCanvas');const x=c.getContext('2d');
   if(cur.kind==='row'){c.width=Math.round(prevBmp.width*0.18);c.height=prevBmp.height;x.drawImage(prevBmp,prevBmp.width-c.width,0,c.width,c.height,0,0,c.width,c.height);tip.textContent='Move right until the packs at the edge line up with these'}
   else{c.width=prevBmp.width;c.height=Math.round(prevBmp.height*0.18);x.drawImage(prevBmp,0,prevBmp.height-c.height,c.width,c.height,0,0,c.width,c.height);tip.textContent='Move down until the shelf at the top lines up with this'}}
@@ -601,20 +767,20 @@ async function grab(){ // returns a bitmap that shows exactly what the frame sho
   const ba=bmp.width/bmp.height;if(Math.abs(ba-pa)/pa>0.02){let w=bmp.width,h=bmp.height;if(ba>pa)w=Math.round(h*pa);else h=Math.round(w/pa);const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(bmp,(bmp.width-w)/2,(bmp.height-h)/2,w,h,0,0,w,h);return await createImageBitmap(c)}
   return bmp}
 $('shutter').addEventListener('click',async()=>{if(!cur||shutterBusy)return;shutterBusy=true;$('shutter').disabled=true;
-  try{const bmp=await grab();if(!cur)return;if(cur.kind==='visit')await keepX(bmp);else await review(bmp)}
+  try{const bmp=await grab();if(!cur)return;if(cur.kind==='visit')await keepX(bmp);else if(cur.kind==='msl')await keepM(bmp);else await review(bmp)}
   catch(e){const m=String(e&&e.message||e);toast(/no picture/i.test(m)?'The camera is not sending a picture on this phone. Tap "Use phone camera" instead.':'Could not take the photo: '+m,4000)}
   finally{shutterBusy=false;$('shutter').disabled=false}});
 function diag(){const v=$('video');const vw=v.videoWidth||0,vh=v.videoHeight||0;$('camDiag').textContent=`preview ${vw&&vh?vw+'×'+vh:'none'}${camProfile?' (reduced)':''} · photo ${photoW?photoW+'px':imageCapture?'camera':'from preview'} · ${curLens()} · motion ${motionOK===null?'…':motionOK?'ok':'ignored'}`}
 $('fileCamBtn').addEventListener('click',()=>{if(!cur||shutterBusy)return;$('fileCam').value='';$('fileCam').click()});
 $('fileCam').addEventListener('change',async()=>{const f=$('fileCam').files&&$('fileCam').files[0];if(!f||!cur)return;shutterBusy=true;$('shutter').disabled=true;
-  try{const bmp=await loadBitmap(f);if(!cur)return;if(cur.kind==='visit')await keepX(bmp);else await review(bmp)}catch(e){toast('Could not read that photo: '+(e.message||e))}finally{shutterBusy=false;$('shutter').disabled=false}});
+  try{const bmp=await loadBitmap(f);if(!cur)return;if(cur.kind==='visit')await keepX(bmp);else if(cur.kind==='msl')await keepM(bmp);else await review(bmp)}catch(e){toast('Could not read that photo: '+(e.message||e))}finally{shutterBusy=false;$('shutter').disabled=false}});
 
 /* ---------- review ---------- */
 function evaluate(m,g,nShot){const rows=[];let worst='good';const lvl=l=>{if(l==='bad')worst='bad';else if(l==='warn'&&worst!=='bad')worst='warn'};
   let l=m.sharp>=18?'good':m.sharp>=12?'warn':'bad';lvl(l);rows.push({l,name:'Sharpness',val:m.sharp.toFixed(1),note:l==='good'?'Fine detail is there.':l==='warn'?'A little soft. Usable; hold still if you retake.':'Blurred. Hold still, tap to focus, retake.'});
   const t=Math.abs(m.tilt);l=t<=3?'good':t<=7?'warn':'bad';lvl(l);rows.push({l,name:'Shelf lines level',val:m.tilt.toFixed(1)+'°',note:l==='good'?'Level.':'Shelves slope '+(m.tilt>0?'down to the right':'down to the left')+'. Face the bay squarely.'});
   l=m.w>=2000?'good':m.w>=1200?'warn':'bad';lvl(l);rows.push({l,name:'Resolution',val:m.w+'×'+m.h,note:l==='good'?'Full resolution.':'Lower than expected from this camera.'});
-  if((g.kind==='row'&&nShot===1)||g.kind==='single'){if(!m.postL){lvl('warn');rows.push({l:'warn',name:'Left end of the bay',val:'not seen',note:'No upright/post found at the left edge. If the bay continues to the left, retake with the post in frame.'})}
+  if(false){if(!m.postL){lvl('warn');rows.push({l:'warn',name:'Left end of the bay',val:'not seen',note:'No upright/post found at the left edge. If the bay continues to the left, retake with the post in frame.'})}
     if(g.kind==='single'&&!m.postR){lvl('warn');rows.push({l:'warn',name:'Right end of the bay',val:'not seen',note:'No upright/post found at the right edge. Step back, or shoot it as a Row.'})}}
   if(g.kind!=='single'&&nShot>1){const o=m.ov;if(o===null){lvl('warn');rows.push({l:'warn',name:'Overlap with previous',val:'not checked',note:'Matching library not loaded (no signal when the app opened). Keep 2–3 packs of overlap by eye.'})}
     else if(!o.f){lvl('bad');rows.push({l:'bad',name:'Overlap with previous',val:'none found',note:'No shared part with the last photo. Step back so 2–3 packs repeat.'})}
@@ -637,7 +803,7 @@ $('retakeBtn').addEventListener('click',()=>{pending=null;back()});
 function stamp(bmp,g,n){const c=document.createElement('canvas');c.width=bmp.width;c.height=bmp.height;const x=c.getContext('2d');x.drawImage(bmp,0,0);
   const fs=Math.round(c.width*0.022),pad=Math.round(fs*0.6);x.textBaseline='alphabetic';x.lineJoin='round';
   function line(t,px,py,bold,align){x.font=`${bold?'700':'400'} ${fs}px "Public Sans",Arial,sans-serif`;x.textAlign=align||'left';x.lineWidth=Math.max(3,fs*0.14);x.strokeStyle='rgba(0,0,0,.9)';x.strokeText(t,px,py);x.fillStyle='#fff';x.fillText(t,px,py)}
-  const code=g?`${g.cat} g${pad2(g.n)} · ${g.kind} · s${pad2(n)}`:`VISIT PHOTO v${pad2(n)}`;
+  const code=!g?`VISIT PHOTO v${pad2(n)}`:g.kind==='msl'?(g.sku?`MCL ${pad3(g.sku[0])} · ${g.sku[1]}`:`PACK SHOT ${g.cat} p${pad2(n)}`):`${g.cat} g${pad2(g.n)} · ${g.kind} · s${pad2(n)}`;
   line(`${APP}  ·  ${fmtDT(new Date(nowMs()).toISOString())}  ·  ${V.store} ${V.name||''}`.trim(),pad,c.height-pad-fs*1.45,true);
   line(`WOD ${V.wod||'—'}  ·  ${gpsText(V.gps)}  ·  ${code}  ·  ${V.auditor}`,pad,c.height-pad,false);
   line(code,c.width-pad,pad+fs,true,'right');return c}
@@ -654,6 +820,15 @@ $('keepBtn').addEventListener('click',async()=>{if(!pending||!pending.ev)return;
     cur.shots.push(rec);persist();prevG=G;prevBmp=bmp;pending=null;toast('Kept · s'+pad2(n));
     if(cur.kind==='single'){back(2)}else{back();updateTiles();updateEdge()}
   }finally{$('keepBtn').disabled=false}});
+async function keepM(bmp){const cat=cur.cat,sku=cur.sku||null;V.msl=V.msl||[];
+  if(sku){const old=mclPhoto(V,sku[0]);if(old){await dbDel(PH,old.name);await dbDel(TH,old.name);V.msl=V.msl.filter(x=>x!==old)}}
+  const n=sku?sku[0]:V.msl.filter(s=>s.cat===cat).length+1,name=sku?fnameK(V,sku[0]):fnameM(V,cat,n);
+  let b=bmp;const L=2400;if(Math.max(bmp.width,bmp.height)>L){const s=L/Math.max(bmp.width,bmp.height);const c=document.createElement('canvas');c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);b=c}
+  const G12=toGray(bmp,Math.min(1000,bmp.width));const sh=sharpness(G12);
+  const sc=stamp(b,{cat,kind:'msl',n:0,sku},n);const out=await new Promise(r=>sc.toBlob(r,'image/jpeg',0.85));const thumb=await thumbOf(sc,sc.width,sc.height);
+  await dbPut(PH,name,out);await dbPut(TH,name,thumb);const rec={name,n,cat,w:sc.width,h:sc.height,sharp:+sh.toFixed(1),tilt:'',ov:null,dup:null,level:sh<12?'warn':'',crop:null,time:new Date(nowMs()).toISOString(),status:'local'};
+  if(sku){rec.sku=sku[0];rec.skuCode=sku[1];const a=mclAns(V,sku[0])||{};V.mcl=V.mcl||{};V.mcl[sku[0]]={a:1,reason:'',remark:a.remark||''}}
+  V.msl.push(rec);V.manifestSent=false;persist();updateTiles();toast(sh<12?'Saved (a little soft: hold still next time)':sku?'Pack shot saved':'Saved · p'+pad2(n));if(sku)back()}
 async function keepX(bmp){const n=(V.extras||[]).length+1,name=fnameX(V,n);
   let b=bmp;const L=2400;if(Math.max(bmp.width,bmp.height)>L){const s=L/Math.max(bmp.width,bmp.height);const c=document.createElement('canvas');c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);b=c}
   const sc=stamp(b,null,n);const out=await new Promise(r=>sc.toBlob(r,'image/jpeg',0.8));const thumb=await thumbOf(sc,sc.width,sc.height);
@@ -678,19 +853,20 @@ function drawShade(s){const sh=$('vwShade');const c=s.crop;if(!c||vwCropped||cro
 async function showVwImage(s){const b=await dbGet(PH,s.name)||await dbGet(TH,s.name);if(vwUrl)URL.revokeObjectURL(vwUrl);vwUrl='';if(!b){$('vwImg').src='';return}
   if(vwCropped&&s.crop){const bmp=await loadBitmap(b);const c=s.crop;const w=Math.round((c.r-c.l)*bmp.width),h=Math.round((c.b-c.t)*bmp.height);const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(bmp,c.l*bmp.width,c.t*bmp.height,w,h,0,0,w,h);const nb=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.85));vwUrl=URL.createObjectURL(nb)}else vwUrl=URL.createObjectURL(b);
   const im=$('vwImg');await new Promise(r=>{im.onload=r;im.onerror=r;im.src=vwUrl});drawShade(s)}
-async function openViewer(g,s,noPush){vw={g,s};vwCropped=false;crop=null;cropCtx=null;$('viewer').style.display='flex';if(!noPush)push('viewer');const isX=g.kind==='visit';$('vwTitle').textContent=isX?`Visit photo v${pad2(s.n)}`:`${catName(g.cat)} · Group ${g.n} · s${pad2(s.n)}`;$('vwCrop').hidden=isX;$('vwRetake').hidden=isX;$('vwCropBox').style.display='none';$('vwCropHelp').hidden=true;$('vwActions').hidden=false;$('vwCropActions').hidden=true;
+async function openViewer(g,s,noPush){vw={g,s};vwCropped=false;crop=null;cropCtx=null;$('viewer').style.display='flex';if(!noPush)push('viewer');const isX=g.kind==='visit'||g.kind==='msl';$('vwTitle').textContent=g.kind==='msl'?(s.cat==='MCL'?`MCL ${s.sku} · ${s.skuCode||''}`:`${catName(s.cat)} · pack shot p${pad2(s.n)}`):isX?`Visit photo v${pad2(s.n)}`:`${catName(g.cat)} · Group ${g.n} · s${pad2(s.n)}`;$('vwCrop').hidden=isX;$('vwRetake').hidden=isX;$('vwCropBox').style.display='none';$('vwCropHelp').hidden=true;$('vwActions').hidden=false;$('vwCropActions').hidden=true;
   $('vwToggle').hidden=!s.crop;$('vwToggle').textContent='Show cropped result';await showVwImage(s);
   const c=s.crop;$('vwMeta').innerHTML=isX?`<b>File</b><span style="word-break:break-all">${s.name}</span><b>Upload</b><span>${s.status==='sent'?'in Drive':s.status==='failed'?'failed, will retry':'waiting for signal'}</span>`:`<b>File</b><span style="word-break:break-all">${s.name}</span><b>Checks</b><span>sharpness ${s.sharp} · level ${s.tilt}° · ${s.ov==null?'first in group':'overlap '+Math.round(s.ov*100)+'%'}${s.dup?' · duplicate of '+s.dup:''} · <span class="pill ${s.level}">${s.level==='good'?'good':s.level==='warn'?'usable':'weak'}</span></span><b>Crop</b><span>${c?`left ${Math.round(c.l*100)}% · top ${Math.round(c.t*100)}% · right ${Math.round((1-c.r)*100)}% · bottom ${Math.round((1-c.b)*100)}% removed. The grey part is not read by the engine; the full photo is kept.`:'none'}</span><b>Upload</b><span>${s.status==='sent'?'in Drive':s.status==='failed'?'failed, will retry':'on this phone, not sent yet'}</span>`;
   const locked=s.status==='sent';$('vwCrop').disabled=locked;$('vwDelete').disabled=locked;$('vwRetake').disabled=locked;
   if(locked)$('vwMeta').innerHTML+='<b>Note</b><span>Already uploaded: cannot be changed from the phone. Ask QC to adjust it in the register.</span>'}
 $('vwToggle').addEventListener('click',async()=>{if(!vw)return;vwCropped=!vwCropped;$('vwToggle').textContent=vwCropped?'Show full photo':'Show cropped result';await showVwImage(vw.s)});
-function doCloseViewer(){$('viewer').style.display='none';crop=null;cropCtx=null;const g=vw&&vw.g;vw=null;if(vwUrl){URL.revokeObjectURL(vwUrl);vwUrl=null}if(g&&g.kind==='visit')renderX();else renderCat()}
+function doCloseViewer(){$('viewer').style.display='none';crop=null;cropCtx=null;const g=vw&&vw.g;vw=null;if(vwUrl){URL.revokeObjectURL(vwUrl);vwUrl=null}if(g&&g.kind==='visit')renderX();else if(g&&g.kind==='msl')renderPack();else renderCat()}
 $('vwClose').addEventListener('click',()=>back());
 $('vwCrop').addEventListener('click',async()=>{if(!vw)return;vwCropped=false;await showVwImage(vw.s);$('vwActions').hidden=true;$('vwCropActions').hidden=false;startCrop('vwWrap','vwCropBox','vwCropHelp',vw.g,vw.s.n,vw.s.crop);$('vwShade').style.display='none'});
 $('vwCropCancel').addEventListener('click',()=>{$('vwCropBox').style.display='none';$('vwCropHelp').hidden=true;$('vwActions').hidden=false;$('vwCropActions').hidden=true;crop=null;cropCtx=null;if(vw)drawShade(vw.s)});
 $('vwCropClear').addEventListener('click',()=>{if(!vw)return;vw.s.crop=null;persist();$('vwCropCancel').click();openViewer(vw.g,vw.s,true);toast('Crop removed')});
 $('vwCropSave').addEventListener('click',()=>{if(!vw||!crop)return;const c=crop;const isFull=c.l<0.005&&c.t<0.005&&c.r>0.995&&c.b>0.995;vw.s.crop=isFull?null:{l:+c.l.toFixed(3),t:+c.t.toFixed(3),r:+c.r.toFixed(3),b:+c.b.toFixed(3)};persist();$('vwCropCancel').click();openViewer(vw.g,vw.s,true);toast(isFull?'No crop':'Crop saved: the grey part will not be read')});
 async function deleteShot(g,s){await dbDel(PH,s.name);await dbDel(TH,s.name);
+  if(g.kind==='msl'){V.msl=V.msl.filter(x=>x!==s);V.manifestSent=false;const same=s.cat==='MCL'?[]:V.msl.filter(x=>x.cat===s.cat);for(const x of same){const want=same.indexOf(x)+1;if(x.n!==want){const nn=fnameM(V,x.cat,want);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,nn,b);if(t)await dbPut(TH,nn,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=nn;x.n=want}}persist();return}
   if(g.kind==='visit'){V.extras=V.extras.filter(x=>x!==s);for(const x of V.extras){const want=V.extras.indexOf(x)+1;if(x.n!==want){const nn=fnameX(V,want);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,nn,b);if(t)await dbPut(TH,nn,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=nn;x.n=want}}persist();return}
   g.shots=g.shots.filter(x=>x!==s);
   for(const x of g.shots){const want=g.shots.indexOf(x)+1;if(x.n!==want){const nn=fname(V,g,want);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,nn,b);if(t)await dbPut(TH,nn,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=nn;x.n=want}}
@@ -704,45 +880,48 @@ $('vwRetake').addEventListener('click',async()=>{if(!vw)return;const {g,s}=vw;aw
 /* ---------- upload queue (one at a time; a tap while running joins the queue) ---------- */
 const Q={running:false,again:false,quiet:true,v:null};
 function b64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(blob)})}
-function manifestCSV(v){const lines=['visit_id,file,store_code,store_name,auditor,wod,phone,date,time,visit_seq,clock_offset_s,gps_lat,gps_lng,gps_acc_m,place_name,place_lat,place_lng,place_src,place_dist_m,category,group,kind,type,lens,added_later,shot,width,height,sharpness,tilt_deg,overlap_pct,post_left,post_right,duplicate_of,verdict,crop_l,crop_t,crop_r,crop_b,time_taken'];
-  const vp=[v.store,JSON.stringify(v.name||''),JSON.stringify(v.auditor),v.wod||'',v.device,v.date,v.hhmm,v.seq,v.clockOffsetS||0,v.gps?v.gps.lat.toFixed(6):'',v.gps?v.gps.lng.toFixed(6):'',v.gps?Math.round(v.gps.acc):'',JSON.stringify(v.place?v.place.name:''),v.place?v.place.lat:'',v.place?v.place.lng:'',v.place?v.place.src:'',v.place&&v.gps?distM(v.gps,v.place):''];
-  for(const g of v.groups)for(const s of g.shots){const c=s.crop||{};lines.push([v.id,s.name,...vp,g.cat,g.n,g.kind,g.type,g.lens||'',g.addedLater?1:0,s.n,s.w,s.h,s.sharp,s.tilt,s.ov==null?'':Math.round(s.ov*100),s.postL?1:0,s.postR?1:0,JSON.stringify(s.dup||''),s.level,c.l??'',c.t??'',c.r??'',c.b??'',s.time].join(','))}
-  for(const s of (v.extras||[]))lines.push([v.id,s.name,...vp,'VISIT','','visit','visit','',0,s.n,s.w,s.h,'','','','','','','','','','','',s.time].join(','));return lines.join('\n')}
-function visitFields(v){return {visitId:v.id,store:v.store,storeName:v.name||'',auditor:v.auditor,wod:v.wod||'',device:v.device,date:v.date,time:v.hhmm,seq:v.seq,folder:folderName(v),started:v.started,clockOffsetS:v.clockOffsetS||0,clockChecked:v.clockChecked?1:0,gpsLat:v.gps?v.gps.lat:'',gpsLng:v.gps?v.gps.lng:'',gpsAcc:v.gps?Math.round(v.gps.acc):'',placeName:v.place?v.place.name:'',placeLat:v.place?v.place.lat:'',placeLng:v.place?v.place.lng:'',placeSrc:v.place?v.place.src:'',placeDistM:v.place&&v.gps?distM(v.gps,v.place):'',categories:catsCovered(v).join(', '),groups:v.groups.length,photos:shelfShots(v).length,visitPhotos:(v.extras||[]).length,appVersion:VERSION}}
+function manifestCSV(v){const lines=['visit_id,file,project,bw_code,client_code,store_name,on_assigned_list,auditor,wod,phone,date,time,visit_seq,clock_offset_s,gps_lat,gps_lng,gps_acc_m,place_name,place_lat,place_lng,place_src,place_dist_m,category,group,kind,type,orientation,placement,lens,added_later,shot,width,height,sharpness,tilt_deg,overlap_pct,post_left,post_right,duplicate_of,verdict,crop_l,crop_t,crop_r,crop_b,time_taken'];
+  const vp=[JSON.stringify(v.project||''),v.store,JSON.stringify(v.client||''),JSON.stringify(v.name||''),v.onList?1:0,JSON.stringify(v.auditor),v.wod||'',v.device,v.date,v.hhmm,v.seq,v.clockOffsetS||0,v.gps?v.gps.lat.toFixed(6):'',v.gps?v.gps.lng.toFixed(6):'',v.gps?Math.round(v.gps.acc):'',JSON.stringify(v.place?v.place.name:''),v.place?v.place.lat:'',v.place?v.place.lng:'',v.place?v.place.src:'',v.place&&v.gps?distM(v.gps,v.place):''];
+  for(const g of v.groups)for(const s of g.shots){const c=s.crop||{};lines.push([v.id,s.name,...vp,g.cat,g.n,g.kind,g.type,g.orient||'',''  ,g.lens||'',g.addedLater?1:0,s.n,s.w,s.h,s.sharp,s.tilt,s.ov==null?'':Math.round(s.ov*100),s.postL?1:0,s.postR?1:0,JSON.stringify(s.dup||''),s.level,c.l??'',c.t??'',c.r??'',c.b??'',s.time].join(','))}
+  for(const s of (v.extras||[]))lines.push([v.id,s.name,...vp,'VISIT','','visit','visit','','','',0,s.n,s.w,s.h,'','','','','','','','','','','',s.time].join(','));
+  for(const s of (v.msl||[]))lines.push([v.id,s.name,...vp,s.cat,'pack','pack','pack','',JSON.stringify(s.skuCode||''),'',0,s.n,s.w,s.h,s.sharp,'','','','','',s.level||'','','','','',s.time].join(','));return lines.join('\n')}
+function visitFields(v){const sd=(v.storeLat!=null&&v.gps)?distM(v.gps,{lat:v.storeLat,lng:v.storeLng}):'';return {visitId:v.id,project:v.project||'',store:v.store,storeName:v.name||'',clientCode:v.client||'',onList:v.onList?1:0,storeLat:v.storeLat==null?'':v.storeLat,storeLng:v.storeLng==null?'':v.storeLng,storeDistM:sd,auditor:v.auditor,wod:v.wod||'',device:v.device,date:v.date,time:v.hhmm,seq:v.seq,folder:folderName(v),started:v.started,clockOffsetS:v.clockOffsetS||0,clockChecked:v.clockChecked?1:0,gpsLat:v.gps?v.gps.lat:'',gpsLng:v.gps?v.gps.lng:'',gpsAcc:v.gps?Math.round(v.gps.acc):'',placeName:v.place?v.place.name:'',placeLat:v.place?v.place.lat:'',placeLng:v.place?v.place.lng:'',placeSrc:v.place?v.place.src:'',placeDistM:v.place&&v.gps?distM(v.gps,v.place):'',categories:catsCovered(v).join(', '),groups:v.groups.length,photos:shelfShots(v).length,visitPhotos:(v.extras||[]).length,mslPacks:(v.msl||[]).length,appVersion:VERSION,visitStatus:(v.det||{}).status||'',refuseReason:(v.det||{}).status==='Refused Audit'?(v.det.reason||''):'',photoRule:(v.det||{}).status==='Allowed Audit'?(v.det.photo||''):'',measureRule:(v.det||{}).status==='Allowed Audit'?(v.det.measure||''):''}}
+function mclPayload(v){const p=P(v.project);if(!p.mcl.length||(v.det||{}).status==='Refused Audit')return {};const s=mclStats(v);return {mclYes:s.yes,mclNo:s.no,mclTodo:s.unanswered,mcl:JSON.stringify(p.mcl.map(m=>{const a=mclAns(v,m[0])||{};const ph=mclPhoto(v,m[0]);return [m[0],m[1],m[2],m[3],a.a==null?'':a.a,a.a===0?(a.reason||''):'',a.remark||'',a.a===1&&ph?ph.name:'']}))}}
 async function post(body){const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify(body)});return await r.json()}
 function setStatus(t,bad){const st=$('upStatus');st.className='status'+(bad?' bad':'');st.textContent=t}
 function enqueue(v,quiet){if(!signedIn()){if(!quiet){toast('Sign in first');openSettings()}return}
-  if(Q.running){Q.again=true;if(!quiet)Q.quiet=false;if(!quiet)toast('Upload already running; your shelf photos are queued behind it.');return}
+  if(Q.running){Q.again=true;if(!quiet)Q.quiet=false;if(!quiet)toast('Upload already running; the rest is queued behind it.');return}
   Q.running=true;Q.quiet=!!quiet;Q.v=v;if(V===v)renderVisit();runQueue().catch(e=>setStatus('Upload stopped: '+(e.message||e),true)).finally(()=>{Q.running=false;if(V===v)renderVisit();if(Q.again){const q=Q.quiet;Q.again=false;enqueue(v,q)}})}
 async function sendOne(v,g,s){const blob=await dbGet(PH,s.name);if(!blob){s.status='failed';return {ok:false,error:'file missing on phone'}}
-  try{const j=await post({token:CFG.token,name:CFG.name,kind:'photo',filename:s.name,mime:'image/jpeg',data:await b64(blob),...visitFields(v),category:g.cat||'VISIT',categoryName:g.kind==='visit'?'Visit photos':catName(g.cat),group:g.kind==='visit'?'visit':g.n,groupType:g.kind+'/'+g.type,lens:g.lens||'',shot:s.n,sharpness:s.sharp,tilt:s.tilt,overlap:s.ov==null?'':Math.round(s.ov*100),verdict:s.level,crop:s.crop?JSON.stringify(s.crop):'',dup:s.dup||''});
-    if(j.ok){s.status='sent';s.sentAt=new Date().toISOString()}else s.status='failed';return j}
+  try{const j=await post({token:CFG.token,name:CFG.name,kind:'photo',filename:s.name,mime:'image/jpeg',data:await b64(blob),...visitFields(v),category:(g.kind==='msl'?s.cat:g.cat)||'VISIT',categoryName:g.kind==='visit'?'Visit photos':catName(g.kind==='msl'?s.cat:g.cat),sku:s.skuCode?(s.sku+' · '+s.skuCode):'',group:g.kind==='visit'?'visit':g.kind==='msl'?'msl':g.n,groupType:g.kind+'/'+g.type,orientation:g.orient||'',placement:s.placement||'',lens:g.lens||'',shot:s.n,sharpness:s.sharp,tilt:s.tilt,overlap:s.ov==null?'':Math.round(s.ov*100),verdict:s.level,crop:s.crop?JSON.stringify(s.crop):'',dup:s.dup||''});
+    if(j.ok){s.status='sent';s.sentAt=new Date().toISOString()}else s.status='failed';return j||{ok:false}}
   catch(e){s.status='failed';return {ok:false,net:true,error:String(e&&e.message||e)}}}
-async function runQueue(){const v=Q.v;const units=[[XG(v),true],...v.groups.map(g=>[g,false])];
+async function runQueue(){const v=Q.v;const units=[[XG(v),true],[{n:0,cat:'',kind:'msl',type:'msl',shots:v.msl||[]},true],...v.groups.map(g=>[g,false])];
   const todo=[];for(const [g,isX] of units)for(const s of g.shots)if(s.status!=='sent'&&(!Q.quiet||isX))todo.push([g,s]);
   const all=shots(v);let sent=all.filter(s=>s.status==='sent').length;let stop=null;
   for(let i=0;i<todo.length&&!stop;i+=2){const batch=todo.slice(i,i+2);
     if(!navigator.onLine){stop='No signal. Upload resumes when the phone is back online.';break}
-    for(const [,s] of batch)s.status='uploading';if(V===v)renderVisit();setStatus(`Uploading photo ${sent+1}${batch.length>1?'–'+(sent+batch.length):''} of ${all.length}…`);
+    for(const [,s] of batch)s.status='uploading';if(V===v)renderVisit();setStatus(`Uploading photo ${sent+1}${batch.length>1?'–'+(sent+batch.length):''} of ${all.length}… keep Aegis open.`);
     const rs=await Promise.all(batch.map(([g,s])=>sendOne(v,g,s)));
-    for(const r of rs){if(r.ok)sent++;else if(r.error==='bad token')stop='Upload refused: your access token is not valid any more. Sign in again or check with the office.';else if(r.net)stop='Could not reach the upload link (weak signal, or the link changed). Will retry.';else stop='Upload refused: '+(r.error||'unknown error')}
+    for(const r of rs){if(r.ok)sent++;else if(r.busy)stop='The server is busy right now. Aegis will try again by itself in a minute: keep the app open.';else if(r.error==='bad token')stop='Upload refused: your access token is not valid any more. Sign in again or check with the office.';else if(r.net)stop='Could not reach the upload link (weak signal, or the link changed). Will retry.';else stop='Upload refused: '+(r.error||'unknown error')}
     persist();if(V===v)renderVisit()}
   if(stop){setStatus(stop,true);return}
-  if(all.every(s=>s.status==='sent')){setStatus('Sending the visit record…');
-    try{const j=await post({token:CFG.token,name:CFG.name,kind:'manifest',filename:`${base(v)}_manifest.csv`,text:manifestCSV(v),...visitFields(v)});if(j.ok){v.manifestSent=true;persist();setStatus(`All ${all.length} photos and the visit record are in Drive.`);toast('Upload complete')}else setStatus('Photos are in; the visit record was refused: '+(j.error||''),true)}
-    catch(e){setStatus('Photos are in; the visit record could not be sent yet. Tap Upload again when there is signal.',true)}}
-  else if(!Q.quiet){const left=all.filter(s=>s.status!=='sent').length;setStatus(`${left} photo${left>1?'s':''} still to send. Tap Upload to retry.`,true)}
-  else{const left=all.filter(s=>s.status!=='sent').length;setStatus(`Visit photos sent. ${left} shelf photo${left>1?'s':''} waiting for Upload visit.`)}}
-$('uploadBtn').addEventListener('click',()=>{if(!V)return;V.manifestSent=false;enqueue(V,false)});
-function resumeIfNeeded(){if(!V||!navigator.onLine||Q.running)return;if((V.extras||[]).some(s=>s.status!=='sent'))enqueue(V,true);else if(shots(V).some(s=>s.status==='failed'||s.status==='uploading'))enqueue(V,false)}
+  if(all.every(s=>s.status==='sent')&&(!Q.quiet||v.submitted)&&!missing(v).length){setStatus('Sending the visit record…');
+    try{const j=await post({token:CFG.token,name:CFG.name,kind:'manifest',filename:`${base(v)}_manifest.csv`,text:manifestCSV(v),...visitFields(v),...mclPayload(v)});if(j.ok){v.manifestSent=true;v.submitted=false;persist();setStatus(all.length?`All ${all.length} photos and the visit record are in Drive.`:'The visit record is in Drive.');toast('Submitted')}else if(j.busy)setStatus('Photos are in; the server is busy saving the visit record. Aegis will try again in a minute: keep the app open.',true);else setStatus('Photos are in; the visit record was refused: '+(j.error||''),true)}
+    catch(e){setStatus('Photos are in; the visit record could not be sent yet. Aegis will retry when there is signal.',true)}}
+  else if(!Q.quiet){const left=all.filter(s=>s.status!=='sent').length;setStatus(`${left} photo${left>1?'s':''} still to send. Tap Submit visit to retry.`,true)}
+  else{const left=all.filter(s=>s.status!=='sent').length;if(left)setStatus(`Visit photos and pack shots sent. ${left} shelf photo${left>1?'s':''} waiting for Submit visit.`);else setStatus('Photos sent. Tap Submit visit when the visit is complete.')}}
+$('uploadBtn').addEventListener('click',()=>{if(!V)return;const need=missing(V);if(need.length){toast('Cannot submit yet: '+need.join('; ')+'.',5000);return}V.submitted=true;V.manifestSent=false;persist();enqueue(V,false)});
+function resumeIfNeeded(){if(!V||!navigator.onLine||Q.running||!signedIn())return;if(V.submitted&&!V.manifestSent&&!missing(V).length)enqueue(V,false);else if((V.extras||[]).concat(V.msl||[]).some(s=>s.status!=='sent'))enqueue(V,true)}
+setInterval(resumeIfNeeded,60000);
 window.addEventListener('online',resumeIfNeeded);document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeIfNeeded()});
 
 /* ---------- housekeeping ---------- */
 async function purgeOld(){const cutoff=Date.now()-KEEP_DAYS*864e5;for(const v of VISITS)for(const s of shots(v)){if(s.status==='sent'&&s.sentAt&&new Date(s.sentAt).getTime()<cutoff&&!s.purged){await dbDel(PH,s.name);s.purged=true}}persist()}
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
 (function boot(){history.replaceState({aegis:'main',d:0},'');renderCfg();CLOCK=Object.assign(CLOCK,load('aegis.clock',{}));VISITS=load('aegis.visits',[]);
-  for(const v of VISITS){v.extras=v.extras||[];for(const g of v.groups){if(!g.cat)g.cat=v.cat||'POWBEV'}for(const s of shots(v))if(s.status==='uploading')s.status='failed'}
-  renderHome();showVer();if(!signedIn()){$('settings').hidden=false}ctx();checkClock();purgeOld()})();
+  for(const v of VISITS){v.extras=v.extras||[];v.msl=v.msl||[];v.mcl=v.mcl||{};if(!v.project||/perfect store/i.test(v.project))v.project='PS 2026';for(const g of v.groups){if(!g.cat)g.cat=v.cat||'POWBEV'}for(const s of shots(v))if(s.status==='uploading')s.status='failed'}
+  renderHome();showVer();if(!signedIn()){$('settings').hidden=false}else showProj();ctx();checkClock();purgeOld();if(signedIn()&&(!SYNC.at||!(SYNC.projects||[]).length||!(SYNC.projects||[]).every(p=>Array.isArray(p.cats)&&Array.isArray(p.cats[0]||[]))||Date.now()-new Date(SYNC.at).getTime()>3*3600e3))doSync(true)})();
 })();
 </script>
 </body>
