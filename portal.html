@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Aegis Portal</title>
+<style>
+/* layout: coloured top bar with project switch, tab row, then one working view at a time on a white ground; summary first, detail on tap */
+:root{color-scheme:light;--bg:#FFFFFF;--card:#FFFFFF;--soft:#F6F6F7;--ink:#1B1B1F;--muted:#5F6368;--line:#E3E4E8;--track:#EEEFF2;
+  /* MNC: Monde Nissin red, Lucky Me! golden yellow, SkyFlakes blue */
+  --bar:#C8102E;--bar-fg:#FFFFFF;--bar-mut:#F7CCD3;--seg:rgba(255,255,255,.18);--accent:#FFC72C;--accent-fg:#3A1200;--fill:#1F3C88;--kpi:#FFC72C;
+  --good:#1F7A4D;--warn:#8A6100;--bad:#B3261E;--good-bg:#E6F3EB;--warn-bg:#FFF3D1;--bad-bg:#FBE4E1;
+  --display:Calibri,Carlito,'Segoe UI',Arial,sans-serif;--body:Calibri,Carlito,'Segoe UI',Arial,sans-serif}
+/* PS 2026: Mondelez purple, Tang orange, Tang leaf green, Toblerone gold */
+:root[data-pal="ps"]{--bar:#4F2170;--bar-mut:#DACBE8;--accent:#F47B20;--accent-fg:#FFFFFF;--fill:#2E9E4F;--kpi:#C99A2E}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{background:var(--bar);color:var(--bar-fg);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding-block:14px}
+h1{font-family:var(--display);font-weight:600;font-size:22px;margin:0;letter-spacing:.4px}
+h1 small{font-family:var(--body);font-weight:400;font-size:13px;color:var(--bar-mut);margin-left:8px}
+h2{font-family:var(--display);font-weight:600;font-size:19px;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-weight:600;font-size:16px;margin:0}
+.seg{display:flex;background:var(--seg);border-radius:9px;padding:3px;gap:3px}
+.seg button{background:transparent;color:var(--bar-mut);border:0;border-radius:7px;padding:7px 14px;font:inherit;font-weight:700;cursor:pointer}
+.seg button.on{background:var(--accent);color:var(--accent-fg)}
+.who{font-size:13px;color:var(--bar-mut)}
+.draft{background:var(--warn-bg);color:var(--warn);font-weight:600;font-size:13px}
+.draft .wrap{padding-block:8px}
+nav{border-bottom:1px solid var(--line);background:var(--card)}
+nav .wrap{display:flex;gap:4px;overflow-x:auto}
+nav button{background:transparent;border:0;border-bottom:3px solid transparent;padding:13px 14px;font:inherit;font-weight:700;color:var(--muted);cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--ink);border-bottom-color:var(--accent)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:18px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.toolbar .grow{flex:1 1 auto}
+select,input[type=search]{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--kpi);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.kpi span{font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+.kpi b{font-family:var(--display);font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.15}
+.kpi em{font-style:normal;font-size:13px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card p{margin:0}.muted{color:var(--muted);font-size:13px}
+.bars{display:flex;flex-direction:column;gap:9px}
+.bar{display:grid;grid-template-columns:118px 1fr 50px;gap:10px;align-items:center;font-size:13.5px}
+.bar i{display:block;height:12px;border-radius:6px;background:var(--track);overflow:hidden}
+.bar i u{display:block;height:100%;border-radius:6px;background:var(--fill)}
+.bar b{text-align:right;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--good-bg);color:var(--good);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.bad{background:var(--bad-bg);color:var(--bad)}.pill.off{background:var(--track);color:var(--muted)}
+.list{display:flex;flex-direction:column}
+.list>div{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+.list>div:first-child{border-top:0}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:860px;font-size:13.5px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);background:var(--soft);position:sticky;top:0}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr{cursor:pointer}tbody tr:hover{background:var(--soft)}tbody tr.sel{background:var(--warn-bg)}
+.btn{font:inherit;font-weight:700;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:8px 12px;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:14px}.kv b{color:var(--muted);font-weight:600}
+.tabs2{display:flex;gap:6px;flex-wrap:wrap}.tabs2 button{font:inherit;font-weight:700;border:1px solid var(--line);background:var(--soft);color:var(--muted);border-radius:999px;padding:6px 12px;cursor:pointer}.tabs2 button.on{background:var(--bar);color:var(--bar-fg);border-color:var(--bar)}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.ph{aspect-ratio:3/4;border-radius:8px;background:linear-gradient(160deg,var(--track),var(--line));display:flex;flex-direction:column;justify-content:flex-end;padding:6px;font-size:11px;font-weight:700;color:var(--muted);border:1px solid var(--line)}
+.note{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--muted)}
+footer.wrap{padding-block:0 32px;color:var(--muted);font-size:12.5px}
+.pal{background:var(--soft);border-bottom:1px solid var(--line)}.pal .wrap{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-block:10px;font-size:13px}
+.pal span.sw{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px 4px 5px;font-weight:600}.pal span.sw i{display:block;width:20px;height:20px;border-radius:50%;border:1px solid var(--line)}
+
+h1,h2,h3{font-weight:700}
+#login{max-width:420px;margin:12vh auto 0;display:flex;flex-direction:column;gap:12px}
+#login input{font:inherit;font-size:18px;padding:12px;border:1px solid var(--line);border-radius:8px;width:100%}
+.err{color:var(--bad);font-weight:700}
+tr.ex td{color:var(--muted);text-decoration:line-through}
+a{color:inherit}.lnk{color:var(--fill);font-weight:700;text-decoration:underline;cursor:pointer}
+.plist{display:flex;flex-direction:column;gap:10px}.plist h4{margin:6px 0 2px;font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.plist a{display:inline-block;margin:0 10px 4px 0;font-size:14px}
+table.sm{min-width:0}table.sm td,table.sm th{white-space:normal}
+.ph{position:relative;cursor:pointer;font:inherit;overflow:hidden;padding:0;text-align:left;color:var(--muted)}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ph span{position:relative;margin-top:auto;width:100%;padding:4px 6px;background:rgba(255,255,255,.88);color:var(--ink);font-size:11px;font-weight:700;word-break:break-all}
+#ov{position:fixed;inset:0;z-index:50;background:rgba(15,18,24,.92);display:flex;flex-direction:column}
+#ov .ovh{display:flex;gap:10px;align-items:center;padding:10px 16px;background:#fff;font-size:14px;word-break:break-all}
+#ovB{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:12px;position:relative}#ovB img{max-width:100%;height:auto;border-radius:6px}#ovB p{position:absolute;top:16px;color:#fff;background:rgba(0,0,0,.5);padding:6px 12px;border-radius:8px}
+[hidden]{display:none!important}
+</style></head><body>
+<header><div class="wrap">
+  <h1>Aegis Portal <small id="ver"></small></h1>
+  <div class="seg" id="proj"></div>
+  <div class="who" id="who"></div>
+</div></header>
+<nav hidden id="navbar"><div class="wrap" id="nav"></div></nav>
+<main class="wrap" id="main"></main>
+<div id="ov" hidden><div class="ovh"><b id="ovT"></b><span style="flex:1"></span><a class="btn" id="ovL" target="_blank" rel="noopener">Open in Drive</a><button class="btn pri" id="ovX">Close</button></div><div id="ovB"></div></div>
+<script>
+(function(){
+'use strict';
+const API='https://script.google.com/macros/s/AKfycbxHPqdY8X5CckGOREXFPZdkji-MJijE0HEiV2hr5TR7lSmRJpFJWZySSNU5MjJ9UY2Z/exec', PV='Portal 1.0';
+const $=s=>document.querySelector(s), esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ls={get(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set(k,v){try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}}};
+let tok=ls.get('aegis.portal.token'),S=null,proj=ls.get('aegis.portal.project'),view='overview',sel=null,det=null,dtab='photos',period='month',fFa='',fSt='',busy=false,msg='';
+async function api(body){const r=await fetch(API,{method:'POST',body:JSON.stringify(Object.assign({kind:'portal',token:tok,project:proj},body||{}))});return await r.json()}
+const pad=n=>String(n).padStart(2,'0'), today=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], nice=d=>d&&d.length>=10?`${Number(d.slice(8,10))} ${MON[Number(d.slice(5,7))-1]}`:d;
+function inPeriod(v){const t=today();if(period==='all')return true;if(period==='today')return v.date===t;if(period==='month')return v.date.slice(0,7)===t.slice(0,7);const a=new Date(t),b=new Date(v.date);return (a-b)/864e5<7&&(a-b)>=0}
+const bar=(l,v,max,txt)=>`<div class="bar"><span>${esc(l)}</span><i><u style="width:${max?Math.max(2,Math.min(100,Math.round(100*v/max))):0}%"></u></i><b>${txt}</b></div>`;
+const pill=(t,c)=>`<span class="pill ${c||''}">${esc(t)}</span>`, pct=x=>x==null||isNaN(x)?'—':Math.round(x*100)+'%';
+const refused=v=>/refus|not audit/i.test(v.vs), submitted=v=>v.status==='uploaded';
+const mclPct=v=>{const y=Number(v.mclY),n=Number(v.mclN);return (v.mclY===''||v.mclY==null||y+n===0)?null:y/(y+n+(Number(v.mclT)||0))};
+function vis(){return S.data.visits.filter(v=>inPeriod(v)&&(!fFa||v.fa===fFa)&&(!fSt||(fSt==='Refused'?refused(v):!refused(v))))}
+function paint(){document.documentElement[proj==='PS 2026'?'setAttribute':'removeAttribute']('data-pal','ps')}
+async function load(first){busy=true;msg='';render();try{const j=await api();if(!j.ok){if(j.error==='bad token'){tok='';ls.set('aegis.portal.token','');msg=first?'':'That token is not on the access list, or has been switched off. Check with the project owner.'}else msg='Could not load: '+(j.error||'unknown error');S=null}else{S=j;proj=j.project;ls.set('aegis.portal.project',proj)}}catch(e){msg='Could not reach the server. Check your connection and try again.';S=null}busy=false;render()}
+function loginView(){return `<div class="card" id="login"><h2>Sign in to the Aegis Portal</h2><p class="muted">Use the portal token given to you by the project owner. This page is view-only.</p><input type="text" id="tk" placeholder="token" autocapitalize="characters" autocomplete="off"><button class="btn pri" id="go">${busy?'Checking…':'Sign in'}</button>${msg?`<p class="err">${esc(msg)}</p>`:''}</div>`}
+function overview(){const D=S.data,all=vis(),d=all.filter(v=>!v.excl),aud=d.filter(v=>!refused(v)),ref=d.length-aud.length,t=today(),td=d.filter(v=>v.date===t);
+  const doors=new Set(d.map(v=>v.bw)).size,mp=aud.map(mclPct).filter(x=>x!=null),avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  const sos=D.sosDef.filter(c=>c.unit==='cm').map(c=>[c.name==='Fresh Gata'?'Gata':c.name,avg(aud.map(v=>v.sos&&v.sos[c.name]).filter(x=>x!=null&&x!==''))]);
+  const mc=D.mclCats.map((c,i)=>{let y=0,n=0;aud.forEach(v=>{if(v.mc&&v.mc[i]){y+=v.mc[i][0];n+=v.mc[i][1]}});return [c,y+n?y/(y+n):null]});
+  const att=d.filter(v=>refused(v)||!submitted(v)||!v.onList||v.corrected).slice(-8).reverse();
+  return `<div class="toolbar"><h2>${esc(proj)} · overview</h2><span class="grow"></span>${periodSel()}<button class="btn" id="rf">Refresh</button></div>
+  <div class="kpis"><div class="kpi"><span>Doors visited</span><b>${doors}</b><em>${D.stores.total?`of ${D.stores.total} in the store list`:'store list not uploaded yet'} · ${d.length} visit${d.length===1?'':'s'}</em></div>
+  <div class="kpi"><span>Audited / refused</span><b>${aud.length} / ${ref}</b><em>${ref?ref+' refused':'no refusals'}</em></div>
+  ${D.hasMcl?`<div class="kpi"><span>MCL compliance</span><b>${pct(avg(mp))}</b><em>average of ${mp.length} audited visit${mp.length===1?'':'s'}</em></div>`:`<div class="kpi"><span>Pack shots</span><b>${d.reduce((a,v)=>a+v.packs,0)}</b><em>for MSL checking</em></div>`}
+  <div class="kpi"><span>FAs active today</span><b>${new Set(td.map(v=>v.fa)).size}</b><em>${td.length} visit${td.length===1?'':'s'} today</em></div>
+  <div class="kpi"><span>Not yet submitted</span><b>${d.filter(v=>!submitted(v)).length}</b><em>photos received, visit record pending</em></div></div>
+  <div class="grid2">
+  ${D.sosDef.length?`<div class="card"><h3>MNC share of shelf by category</h3><p class="muted">Average MNC % SOS from the FA measurements (cm categories).</p><div class="bars">${sos.map(x=>bar(x[0],x[1]||0,0.6,pct(x[1]))).join('')}</div></div>`:`<div class="card"><h3>Photos received</h3><div class="bars">${bar('Shelf photos',d.reduce((a,v)=>a+v.shelf,0),Math.max(1,d.reduce((a,v)=>a+v.shelf+v.packs+v.vph,0)),d.reduce((a,v)=>a+v.shelf,0))}${bar('Pack shots',d.reduce((a,v)=>a+v.packs,0),Math.max(1,d.reduce((a,v)=>a+v.shelf+v.packs+v.vph,0)),d.reduce((a,v)=>a+v.packs,0))}${bar('Visit photos',d.reduce((a,v)=>a+v.vph,0),Math.max(1,d.reduce((a,v)=>a+v.shelf+v.packs+v.vph,0)),d.reduce((a,v)=>a+v.vph,0))}</div></div>`}
+  ${D.hasMcl?`<div class="card"><h3>MCL compliance by category</h3><p class="muted">Share of Must Carry List SKUs found available.</p><div class="bars">${mc.map(x=>bar(x[0],x[1]||0,1,pct(x[1]))).join('')}</div></div>`:''}
+  <div class="card"><h3>Coverage by region</h3><p class="muted">Doors visited against doors in the store list.</p><div class="bars">${Object.keys(D.stores.regions).length?Object.entries(D.stores.regions).map(([r,tt])=>{const n=new Set(d.filter(v=>v.region===r).map(v=>v.bw)).size;return bar(r,n,tt,`${n}/${tt}`)}).join(''):'<p class="muted">Appears once the store list is uploaded.</p>'}</div></div>
+  <div class="card"><h3>Needs attention</h3><div class="list">${att.map(v=>`<div><span><b>${esc(v.store)}</b> · ${esc(v.fa)} · ${nice(v.date)}</span>${refused(v)?pill('Refused','bad'):!submitted(v)?pill('Not submitted','warn'):v.corrected?pill('Corrected store','warn'):pill('Not on list','warn')}</div>`).join('')||'<p class="muted">Nothing to follow up.</p>'}</div></div>
+  </div>`}
+function periodSel(){return `<select id="per" aria-label="Period">${[['month','This month'],['week','Last 7 days'],['today','Today'],['all','All dates']].map(o=>`<option value="${o[0]}" ${period===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>`}
+function visits(){const D=S.data,d=vis().slice().reverse(),fas=[...new Set(S.data.visits.map(v=>v.fa))].sort();
+  const row=v=>`<tr data-id="${esc(v.id)}" class="${sel===v.id?'sel':''} ${v.excl?'ex':''}"><td>${nice(v.date)} ${esc(v.time)}</td><td>${esc(v.store)}</td><td>${esc(v.bw)}</td><td>${esc(v.fa)}</td><td>${esc(v.region)}</td><td>${refused(v)?pill('Refused','bad'):v.vs?pill('Audited'):pill('—','off')}</td>${D.hasMcl?`<td class="n">${pct(mclPct(v))}</td><td>${refused(v)?'—':/^not allowed/i.test(v.measRule)?'Not allowed':v.meas==null?'—':v.meas+' of '+D.sosDef.length}</td>`:''}<td class="n">${v.shelf+v.packs+v.vph}</td><td>${v.excl?pill('Excluded','off'):!submitted(v)?pill('Not submitted','warn'):v.corrected?pill('Corrected','warn'):!v.onList?pill('Not on list','warn'):''}</td></tr>`;
+  let h=`<div class="toolbar"><h2>Visits</h2><span class="grow"></span>${periodSel()}<select id="fFa" aria-label="Auditor"><option value="">All auditors</option>${fas.map(f=>`<option ${fFa===f?'selected':''}>${esc(f)}</option>`).join('')}</select><select id="fSt" aria-label="Status"><option value="">All statuses</option><option ${fSt==='Audited'?'selected':''}>Audited</option><option ${fSt==='Refused'?'selected':''}>Refused</option></select><input type="search" id="q" placeholder="Search store or BW code" aria-label="Search"></div>
+  <div class="tw"><table><thead><tr><th>Date</th><th>Store</th><th>BW code</th><th>Auditor</th><th>Region</th><th>Status</th>${D.hasMcl?'<th>MCL %</th><th>Measurement</th>':''}<th>Photos</th><th>Flag</th></tr></thead><tbody id="tb">${d.map(row).join('')||'<tr style="cursor:default"><td colspan="10" class="muted">No visits in this period.</td></tr>'}</tbody></table></div>`;
+  const v=S.data.visits.find(x=>x.id===sel);if(v)h+=detail(v);else h+=`<div class="note">Select a visit to see its details, photos${D.hasMcl?', MCL answers and measurements':''}.</div>`;return h}
+function detail(v){const D=S.data,f=det&&det.id===v.id?det.flat:null;
+  let h=`<div class="card" id="detail"><div class="toolbar"><h2>${esc(v.store)} · ${esc(v.bw)}</h2><span class="grow"></span>${v.folder&&S.role!=='viewer'?`<a class="btn" href="${esc(v.folder)}" target="_blank" rel="noopener">Open Drive folder</a>`:''}${v.checklist&&S.role!=='viewer'?`<a class="btn pri" href="${esc(v.checklist)}" target="_blank" rel="noopener">Open checklist (Excel)</a>`:''}</div>
+  <div class="kv"><b>Auditor</b><span>${esc(v.fa)}${v.region?' · '+esc(v.region):''}</span><b>Visit</b><span>${nice(v.date)} ${esc(v.date.slice(0,4))}, ${esc(v.time)}${f&&f['Word of the day']?' · word of the day '+esc(f['Word of the day']):''}${f&&f.GPS?' · GPS '+esc(f.GPS):''}</span><b>Status</b><span>${esc(v.vs||'—')}${refused(v)?(v.reason?' · reason: '+esc(v.reason):''):(v.photo?' · Photo taking: '+esc(v.photo):'')+(v.measRule?' · Measurement: '+esc(v.measRule):'')}</span>${f&&f['Audit Remarks']?`<b>Audit remarks</b><span>${esc(f['Audit Remarks'])}</span>`:''}${v.corrected?'<b>Note</b><span>Store corrected by QC; photo stamps keep the original code.</span>':''}</div>
+  <div class="tabs2" id="dt">${['photos',...(D.hasMcl?['mcl','measurement']:[])].map(t=>`<button data-t="${t}" class="${dtab===t?'on':''}">${t==='mcl'?'MCL':t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div>`;
+  if(!det||det.id!==v.id)return h+`<p class="muted">${det&&det.error?esc(det.error):'Loading the visit…'}</p></div>`;
+  if(dtab==='photos'){const g={};det.photos.forEach((p,ix)=>{const k=/^visit/.test(p[1])?'Visit photos':/^msl/.test(p[1])?(p[0]==='MCL'?'MCL pack shots':'Pack shots · '+p[0]):p[0];(g[k]=g[k]||[]).push([p,ix])});
+    const lab=p=>p[4]||p[2].replace(/^.*?_\d{8}_\d{4}_/,'').replace(/\.jpg$/,'');
+    h+=det.photos.length?`<p class="muted">${det.photos.length} photo${det.photos.length===1?'':'s'}. Tap a photo to see it full size with its stamp.</p><div class="plist">${Object.keys(g).map(k=>`<div><h4>${esc(k)} · ${g[k].length}</h4><div class="photos">${g[k].map(([p,ix])=>`<button class="ph" data-ix="${ix}" title="${esc(p[2])}">${det.thumbs[ix]?`<img src="${det.thumbs[ix]}" alt="">`:''}<span>${esc(lab(p))}</span></button>`).join('')}</div></div>`).join('')}</div>`:'<p class="muted">No photo rows found for this visit.</p>'}
+  else if(dtab==='mcl'){const rows=det.mcl.map(m=>{const a=f?f['MCL '+m[1]]:undefined;return [m,a,f?f[`MCL ${m[1]} – Reason`]||'':'',f?f[`MCL ${m[1]} – Remarks`]||'':'']});
+    h+=!f?'<p class="muted">No MCL answers recorded for this visit (submitted before the raw data sheet existed, or refused).</p>':`<div class="tw"><table class="sm"><thead><tr><th>SKU</th><th>Category</th><th>Answer</th><th>Reason / remark</th></tr></thead><tbody>${rows.map(r=>`<tr style="cursor:default"><td>${esc(r[0][2])}<br><span class="muted">${esc(r[0][1])}</span></td><td>${esc(r[0][3])}</td><td>${r[1]===1?pill('Available'):r[1]===0?pill('Not available','bad'):pill('No answer','off')}</td><td>${esc([r[2],r[3]].filter(Boolean).join(' · '))}</td></tr>`).join('')}</tbody></table></div>`}
+  else{h+=!f?'<p class="muted">No measurements recorded for this visit.</p>':D.sosDef.map(c=>{const k=`SOS ${c.name} – `,tot=f[`${k}Total (${c.unit})`];if(tot==null)return '';const nm=c.name==='Fresh Gata'?'Gata':c.name;
+      return `<div><h3>${esc(nm)} <span class="muted">· total ${esc(tot)} ${c.unit}${f[k+'Cluster']?' · cluster '+esc(f[k+'Cluster']):''}${f[k+'QC Flags']&&f[k+'QC Flags']!=='OK'?' · '+esc(f[k+'QC Flags']):''}${f[k+'Other brands measured']?' · others: '+esc(f[k+'Other brands measured']):''}</span></h3><div class="bars">${c.cols.map(col=>{const x=f[`${k}${col} (${c.unit})`];return x==null?'':bar(col,Number(x),Number(tot)||1,c.unit==='cm'&&Number(tot)?Math.round(100*Number(x)/Number(tot))+'%':x)}).join('')}</div></div>`}).join('')||'<p class="muted">No measurements recorded for this visit.</p>'}
+  return h+'</div>'}
+function coverage(){const D=S.data,d=vis().filter(v=>!v.excl),norm=s=>String(s).toUpperCase().replace(/[^A-Z0-9]/g,''),names=new Map();D.stores.fas.forEach(f=>names.set(norm(f.name),{name:f.name,region:f.region,tagged:f.tagged}));d.forEach(v=>{const k=norm(v.fa);if(!names.has(k))names.set(k,{name:v.fa,region:v.region,tagged:0})});
+  const rows=[...names.entries()].map(([k,f])=>{const mine=d.filter(v=>norm(v.fa)===k),n=new Set(mine.map(v=>v.bw)).size,last=mine.map(v=>v.date).sort().pop();return {f,n,ref:mine.filter(refused).length,last}}).sort((a,b)=>b.f.tagged-a.f.tagged);
+  return `<div class="toolbar"><h2>Coverage</h2><span class="grow"></span>${periodSel()}</div>
+  <div class="tw"><table style="min-width:640px"><thead><tr><th>Auditor</th><th>Region</th><th>Stores tagged</th><th>Doors visited</th><th>Coverage</th><th>Refused</th><th>Last visit</th></tr></thead><tbody>${rows.map(r=>{const pc=r.f.tagged?Math.min(100,Math.round(100*r.n/r.f.tagged)):0;return `<tr style="cursor:default"><td>${esc(r.f.name)}</td><td>${esc(r.f.region)}</td><td class="n">${r.f.tagged||'—'}</td><td class="n">${r.n}</td><td>${r.f.tagged?`<div class="bar" style="grid-template-columns:1fr 44px"><i><u style="width:${Math.max(2,pc)}%"></u></i><b>${pc}%</b></div>`:'—'}</td><td class="n">${r.ref}</td><td>${r.last?nice(r.last):'—'}</td></tr>`}).join('')||'<tr style="cursor:default"><td colspan="7" class="muted">No auditors yet.</td></tr>'}</tbody></table></div>
+  <div class="grid2"><div class="card"><h3>Stores with no FA tagged</h3><p>${D.stores.total?`<b>${D.stores.untagged}</b> of ${D.stores.total} stores have no auditor in the store list yet.`:'The store list for this project is not uploaded yet.'}</p></div></div>`}
+function files(){const F=S.data.files||{};const f=(t,s,u)=>u?`<div><span><b>${esc(t)}</b><br><span class="muted">${esc(s)}</span></span><a class="btn" href="${esc(u)}" target="_blank" rel="noopener">Open</a></div>`:'';
+  return `<div class="toolbar"><h2>Files</h2></div><p class="muted">These open in Google Drive. Your Google account must be on the access list with an email for the links to work.</p><div class="grid2">
+  <div class="card"><h3>Results</h3><div class="list">${f(proj+' - Aegis raw data','Google Sheet · one row per door, plus SOS and MCL sheets',F.raw)}${f('Upload log','Google Sheet · every visit and photo',F.log)}</div></div>
+  <div class="card"><h3>Photos and checklists</h3><div class="list">${f('Uploads folder','Auditor, then month - store - BW code; each visit folder holds its photos and checklist',F.uploads)}</div></div>
+  <div class="card"><h3>Reference</h3><div class="list">${f('Reference folder','Store list, FA tagging, categories, guide photos',F.reference)}${f('Aegis Access','People and HO Access (admin only)',F.access)}</div></div></div>`}
+function access(){const p=S.data.people||[];return `<div class="toolbar"><h2>Access</h2><span class="grow"></span>${S.data.files&&S.data.files.access?`<a class="btn" href="${esc(S.data.files.access)}" target="_blank" rel="noopener">Open the Aegis Access sheet</a>`:''}</div>
+  <div class="tw"><table style="min-width:560px"><thead><tr><th>Name</th><th>Role</th><th>Projects</th><th>Status</th></tr></thead><tbody>${p.map(r=>`<tr style="cursor:default"><td>${esc(r[0])}</td><td>${r[1]==='admin'?pill('admin','warn'):r[1]==='field'?pill('field'):pill(r[1],'off')}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td></tr>`).join('')}</tbody></table></div>
+  <div class="note">People are added and switched off in the Aegis Access sheet: field auditors in the People tab, QC and viewers in the HO Access tab. Tokens are never shown here.</div>`}
+async function loadThumbs(id){if(!det||det.id!==id||det.error)return;for(let from=0;from<det.photos.length;from+=6){if(!det||det.id!==id||sel!==id)return;
+    try{const j=await api({what:'thumbs',visitId:id,from});if(!det||det.id!==id)return;(j.thumbs||[]).forEach((t,i)=>{det.thumbs[from+i]=t;const b=document.querySelector(`#detail .ph[data-ix="${from+i}"]`);if(b&&t&&!b.querySelector('img')){const im=document.createElement('img');im.src=t;im.alt='';b.insertBefore(im,b.firstChild)}})}catch(e){return}}}
+async function openPhoto(ix){if(!det)return;const id=det.id,p=det.photos[ix],ov=$('#ov');ov.hidden=false;$('#ovT').textContent=p[2];$('#ovB').innerHTML=(det.thumbs[ix]?`<img src="${det.thumbs[ix]}" alt="" style="filter:blur(2px);opacity:.6">`:'')+'<p class="muted">Loading the full photo…</p>';$('#ovL').hidden=!(p[3]&&S.role!=='viewer');$('#ovL').href=p[3]||'#';
+  try{const j=await api({what:'photo',visitId:id,index:ix});if(ov.hidden||$('#ovT').textContent!==p[2])return;$('#ovB').innerHTML=j.ok?`<img src="${j.data}" alt="${esc(p[2])}">`:`<p class="err">${esc(j.error||'Could not load the photo.')}</p>`}catch(e){$('#ovB').innerHTML='<p class="err">Could not reach the server.</p>'}}
+const TABS=()=>[['overview','Overview'],['visits','Visits'],['coverage','Coverage'],...(S.role!=='viewer'?[['files','Files']]:[]),...(S.role==='admin'?[['access','Access']]:[])];
+function render(){paint();const main=$('#main');
+  if(!S){$('#navbar').hidden=true;$('#proj').innerHTML='';$('#who').textContent='';$('#ver').textContent=PV;main.innerHTML=busy&&tok?'<p class="muted" style="margin-top:10vh;text-align:center">Loading…</p>':loginView();const g=$('#go');if(g){const go=()=>{const t=$('#tk').value.trim().toUpperCase();if(!t)return;tok=t;ls.set('aegis.portal.token',t);load(false)};g.addEventListener('click',go);$('#tk').addEventListener('keydown',e=>{if(e.key==='Enter')go()})}return}
+  $('#ver').textContent=`${PV} · script ${S.version}`;$('#who').innerHTML=`${esc(S.name)} · ${esc(S.role==='qc'?'QC':S.role)} · <span class="lnk" id="out" style="color:inherit">Sign out</span>`;
+  $('#proj').innerHTML=S.projects.map(p=>`<button data-p="${esc(p)}" class="${p===proj?'on':''}">${esc(p)}</button>`).join('');
+  const tabs=TABS();if(!tabs.some(t=>t[0]===view))view='overview';$('#navbar').hidden=false;$('#nav').innerHTML=tabs.map(t=>`<button data-v="${t[0]}" class="${t[0]===view?'on':''}">${t[1]}</button>`).join('');
+  main.innerHTML=busy?'<p class="muted">Loading…</p>':({overview,visits,coverage,files,access})[view]();
+  $('#out').addEventListener('click',()=>{tok='';ls.set('aegis.portal.token','');S=null;msg='';render()});
+  const per=$('#per');if(per)per.addEventListener('change',()=>{period=per.value;render()});const rf=$('#rf');if(rf)rf.addEventListener('click',()=>load(false));
+  const tb=$('#tb');if(tb)tb.addEventListener('click',async e=>{const tr=e.target.closest('tr');if(!tr||!tr.dataset.id)return;sel=tr.dataset.id;dtab='photos';det=null;render();const d=$('#detail');if(d)d.scrollIntoView({block:'nearest',behavior:'smooth'});
+    try{const j=await api({what:'visit',visitId:sel});det=j.ok&&j.id===sel?{id:j.id,flat:Object.keys(j.flat||{}).length?j.flat:null,mcl:j.mcl||[],photos:j.photos||[],thumbs:[]}:{id:sel,error:'Could not load this visit: '+(j.error||'')}}catch(x){det={id:sel,flat:null,mcl:[],photos:[],thumbs:[],error:'Could not reach the server.'}}render();loadThumbs(sel)});
+  const a=$('#fFa');if(a)a.addEventListener('change',()=>{fFa=a.value;render()});const s=$('#fSt');if(s)s.addEventListener('change',()=>{fSt=s.value;render()});
+  const q=$('#q');if(q)q.addEventListener('input',()=>{const t=q.value.trim().toUpperCase();document.querySelectorAll('#tb tr').forEach(r=>{r.hidden=!!t&&!r.textContent.toUpperCase().includes(t)})});
+  const dt=$('#dt');if(dt)dt.addEventListener('click',e=>{const b=e.target.closest('button');if(b){dtab=b.dataset.t;render()}});
+  document.querySelectorAll('#detail .ph').forEach(b=>b.addEventListener('click',()=>openPhoto(Number(b.dataset.ix))))}
+$('#nav').addEventListener('click',e=>{const b=e.target.closest('button');if(b){view=b.dataset.v;render()}});
+$('#proj').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&b.dataset.p!==proj){proj=b.dataset.p;sel=null;det=null;fFa='';fSt='';load(false)}});
+$('#ovX').addEventListener('click',()=>{$('#ov').hidden=true;$('#ovB').innerHTML=''});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#ov').hidden)$('#ovX').click()});
+if(tok)load(true);else render();
+})();
+</script></body></html>
