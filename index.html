@@ -48,7 +48,7 @@ button[disabled]{opacity:.45;cursor:default}
 .tiles2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .tile{background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:14px 12px;text-align:left;display:flex;flex-direction:column;gap:4px}
 .tile b{font-family:var(--display);font-size:19px;font-weight:600}
-.tile span{font-size:13px;color:var(--muted);font-weight:400}
+.tile span{font-size:13px;color:var(--muted);font-weight:400;overflow-wrap:anywhere}.tile{min-width:0}
 .tile.has{border-color:var(--good);background:var(--good-bg)}
 .tile.x{border-style:dashed}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#F6F3EC;padding:10px 16px;border-radius:999px;font-size:14px;z-index:40;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.25);text-align:center}
@@ -246,6 +246,7 @@ button[disabled]{opacity:.45;cursor:default}
     <div style="display:flex;justify-content:space-between;align-items:center"><span class="pill" id="vPill"></span><button class="ghost small" id="vInfoBtn">details ⓘ</button></div>
     <div class="kv" id="vMeta" hidden></div>
   </div>
+  <p class="notice" id="lockLine" hidden></p>
   <div class="card" id="detCard" hidden>
     <h3>Visit details</h3>
     <div id="detSum" hidden style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span id="detSumTxt" style="font-size:14px"></span><button class="ghost small" id="detEdit" style="flex:none">Change</button></div>
@@ -270,6 +271,8 @@ button[disabled]{opacity:.45;cursor:default}
     <div class="progress"><i id="bar"></i></div>
     <p class="status" id="upStatus">Not uploaded yet.</p>
     <p class="notice" id="needLine" hidden></p>
+    <div id="subFor" style="font-size:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between"></div>
+    <input type="file" id="chkFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
     <div class="row"><button class="primary" id="uploadBtn">Submit visit</button><button class="primary" id="finishBtn" disabled>Finish visit</button></div>
     <button class="ghost small" id="discardBtn">Discard this visit</button>
   </div>
@@ -302,6 +305,12 @@ button[disabled]{opacity:.45;cursor:default}
     </div>
     <p class="muted">Whole bay: post to post, top shelf to floor. One group = one piece of shelf the engine joins.</p>
     <button class="primary" id="openCam">Open camera</button>
+  </div>
+  <div class="card" id="naCard" hidden>
+    <h3>Store does not carry this category?</h3>
+    <p class="muted">Use this only when there is no shelf for this category in the store. A remark is required.</p>
+    <button class="ghost" id="naBtn">Not available in this store</button>
+    <input type="text" id="naRemark" placeholder="Remark (required): what you saw, or who confirmed it" autocomplete="off" hidden>
   </div>
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:baseline"><h3>Groups in this category</h3><span class="muted" id="catCount">0 photos</span></div>
@@ -408,6 +417,28 @@ button[disabled]{opacity:.45;cursor:default}
   </div>
 </div>
 
+<!-- CONFIRM THE DOOR -->
+<div id="confirmOv" class="overlay">
+  <div class="body">
+    <h2>Is this the store you are in?</h2>
+    <div class="card" style="gap:6px"><b id="cfName" style="font-size:20px;line-height:1.25"></b><div class="kv" id="cfMeta"></div></div>
+    <p class="notice" id="cfWarn" hidden></p>
+    <p class="muted">The visit time starts when you confirm.</p>
+    <button class="primary" id="cfYes" style="padding:18px">Yes, this is the store</button>
+    <button class="ghost" id="cfNo" style="padding:16px">No, choose another</button>
+  </div>
+</div>
+
+<!-- WRONG STORE -->
+<div id="storeOv" class="overlay">
+  <div class="body">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>Choose the correct store</h2><button class="ghost small" id="soClose">Cancel</button></div>
+    <p class="muted">Your photos, answers and times stay exactly as they are. The visit is recorded under the store you choose, and QC sees that it was corrected.</p>
+    <input type="search" id="soQ" placeholder="search your assigned stores" autocomplete="off">
+    <div class="vlist" id="soList"></div>
+  </div>
+</div>
+
 <!-- MAP PIN -->
 <div id="mapOv" class="overlay">
   <div class="body">
@@ -424,14 +455,14 @@ button[disabled]{opacity:.45;cursor:default}
 <script>
 (function(){
 'use strict';
-const APP='BW Aegis App', VERSION='v4.1';
+const APP='BW Aegis App', VERSION='v4.2';
 const $=id=>document.getElementById(id);
 const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxHPqdY8X5CckGOREXFPZdkji-MJijE0HEiV2hr5TR7lSmRJpFJWZySSNU5MjJ9UY2Z/exec';
 const CFG={url:DEFAULT_URL,token:'',name:'',role:''};
 const PDEF={'PS 2026':{cats:[['POWBEV','Powdered Beverage'],['BISCUITS','Biscuits'],['CHOCO','Chocolates'],['BREADFILL','Breadfill'],['CHILLER','Chiller']]},
   'MNC':{cats:[['NOODLES','Noodles'],['BISCUITS','Biscuits'],['OYSTER','Oyster Sauce'],['BBQ','BBQ Marinade'],['MEALMIX','Meal Mixes'],['GATA','Gata'],['BEV','Beverage'],['PCAKES','Packaged Cakes']],details:true,mclRequired:true}};
 const REASONS=['OOS','Not Carried','Others (specify in Remarks)'];
-function P(name){const n=name||curProject();const s=(SYNC.projects||[]).find(p=>p.name===n)||{};const d=PDEF[n]||{cats:[]};return {name:n,cats:(s.cats&&s.cats.length?s.cats:d.cats),mcl:s.mcl||[],details:s.details!=null?!!s.details:!!d.details,mclRequired:s.mclRequired!=null?!!s.mclRequired:!!d.mclRequired,measRequired:s.measRequired!=null?!!s.measRequired:!!d.mclRequired,reasons:(s.reasons&&s.reasons.length?s.reasons:REASONS),guide:!!s.guide}}
+function P(name){const n=name||curProject();const s=(SYNC.projects||[]).find(p=>p.name===n)||{};const d=PDEF[n]||{cats:[]},fl=s.flow||{};return {name:n,cats:(s.cats&&s.cats.length?s.cats:d.cats),mcl:s.mcl||[],details:fl.details!=null?!!fl.details:(s.details!=null?!!s.details:!!d.details),mclRequired:s.mclRequired!=null?!!s.mclRequired:!!d.mclRequired,measRequired:s.measRequired!=null?!!s.measRequired:!!d.mclRequired,reasons:(s.reasons&&s.reasons.length?s.reasons:REASONS),guide:!!s.guide,client:fl.client||(n==='MNC'?'MNC':'client'),shelfReq:!!fl.shelfReq,packReq:!!fl.packReq,visitReq:!!fl.visitReq,checklist:!!fl.checklist}}
 const catName=c=>{if(c==='MCL')return 'MCL';const names=[...new Set([V&&V.project,...Object.keys(PDEF),...(SYNC.projects||[]).map(p=>p.name)].filter(Boolean))];for(const n of names){const h=P(n).cats.find(x=>x[0]===c);if(h)return h[1]}return c};
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
 const pad3=n=>String(n).padStart(3,'0');
@@ -527,16 +558,18 @@ function ctx(){$('ctx').textContent=V?`${V.store} · ${V.groups.length} group${V
 let depth=0;
 function push(name){depth++;history.pushState({aegis:name,d:depth},'')}
 function back(n){if(depth>0)history.go(-Math.min(n||1,depth))}
-function topScreen(){if($('guideOv').style.display==='flex')return 'guide';if($('review').style.display==='flex')return 'review';if($('viewer').style.display==='flex')return 'viewer';if($('mapOv').style.display==='flex')return 'map';if(!$('cam').hidden)return 'cam';if(!$('settings').hidden)return 'settings';if(!$('catPage').hidden)return 'cat';if(!$('xPage').hidden)return 'x';if(!$('packPage').hidden)return mclOpen?'mclcat':'pack';if(!$('sosPage').hidden)return 'sos';if(!$('measPage').hidden)return measCat?'meascat':'meas';if(!$('visit').hidden)return 'visit';if(!$('newPage').hidden)return 'new';if(!$('histPage').hidden)return 'hist';if(!$('projPage').hidden)return 'proj';return 'main'}
+function topScreen(){if($('confirmOv').style.display==='flex')return 'confirm';if($('storeOv').style.display==='flex')return 'store';if($('guideOv').style.display==='flex')return 'guide';if($('review').style.display==='flex')return 'review';if($('viewer').style.display==='flex')return 'viewer';if($('mapOv').style.display==='flex')return 'map';if(!$('cam').hidden)return 'cam';if(!$('settings').hidden)return 'settings';if(!$('catPage').hidden)return 'cat';if(!$('xPage').hidden)return 'x';if(!$('packPage').hidden)return mclOpen?'mclcat':'pack';if(!$('sosPage').hidden)return 'sos';if(!$('measPage').hidden)return measCat?'meascat':'meas';if(!$('visit').hidden)return 'visit';if(!$('newPage').hidden)return 'new';if(!$('histPage').hidden)return 'hist';if(!$('projPage').hidden)return 'proj';return 'main'}
 function closeTop(){const t=topScreen();
   if(t==='review'){if(pending){push('review');toast('Choose Keep or Retake first');return}$('review').style.display='none';return}
   if(t==='guide'){$('guideOv').style.display='none';return}
+  if(t==='confirm'){$('confirmOv').style.display='none';const ps=pendStart;pendStart=null;if(cfOK&&ps){cfOK=false;setTimeout(()=>createVisit(ps),0)}cfOK=false;return}
+  if(t==='store'){$('storeOv').style.display='none';if(V)renderVisit();return}
   if(t==='pack'){leavePack();return}
   if(t==='viewer'){doCloseViewer();return}
   if(t==='map'){$('mapOv').style.display='none';return}
   if(t==='cam'){doCloseCamera();return}
   if(t==='settings'){$('settings').hidden=true;return}
-  if(t==='cat'){$('catPage').hidden=true;CAT=null;if(V&&isHub(V)){$('sosPage').hidden=false;renderSos()}else{$('visit').hidden=false;renderVisit()}return}
+  if(t==='cat'){$('catPage').hidden=true;CAT=null;if(V&&bigUI(V)){$('sosPage').hidden=false;renderSos()}else{$('visit').hidden=false;renderVisit()}return}
   if(t==='meascat'){measCat='';renderMeas();window.scrollTo(0,0);return}
   if(t==='meas'){$('measPage').hidden=true;$('visit').hidden=false;renderVisit();return}
   if(t==='sos'){$('sosPage').hidden=true;$('visit').hidden=false;renderVisit();return}
@@ -559,8 +592,8 @@ $('loginBtn').addEventListener('click',async()=>{const name=$('setName').value.t
   if(!navigator.onLine){st.className='status bad';st.textContent='No signal. Signing in needs internet the first time.';return}
   st.textContent='Checking…';$('loginBtn').disabled=true;
   try{const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify({kind:'login',token,name,device:DEVICE,appVersion:VERSION})});const j=await r.json();
-    if(j.ok){CFG.token=token;CFG.name=j.name||name;CFG.role=j.role||'';save('aegis.cfg',CFG);if(j.sync){SYNC=j.sync;save('aegis.sync',SYNC)}renderCfg();toast('Signed in as '+CFG.name);checkClock();if(history.state&&history.state.aegis==='settings')back();else $('settings').hidden=true;showProj()}
-    else{st.className='status bad';st.textContent=j.error==='bad token'?'That token is not on the list, or has been switched off. Check with the office.':'Could not sign in: '+(j.error||'unknown error')}}
+    if(j.ok){CFG.token=token;CFG.name=j.name||name;CFG.role=j.role||'';save('aegis.cfg',CFG);if(j.sync){SYNC=j.sync;save('aegis.sync',SYNC)}renderCfg();toast('Signed in as '+CFG.name);checkClock();if(history.state&&history.state.aegis==='settings')back();else $('settings').hidden=true;if(V&&!$('visit').hidden){renderVisit();setTimeout(resumeIfNeeded,600)}else showProj()}
+    else{st.className='status bad';st.textContent=j.error==='bad token'?'That token is not on the list, or has been switched off. Check with the office.':/another phone/i.test(j.error||'')?j.error:'Could not sign in: '+(j.error||'unknown error')}}
   catch(e){st.className='status bad';st.textContent='Could not reach the server. Try again with better signal.'}
   finally{$('loginBtn').disabled=false}});
 $('logoutBtn').addEventListener('click',()=>{const b=$('logoutBtn');if(b.dataset.a!=='1'){b.dataset.a='1';b.textContent='Tap again to sign out';setTimeout(()=>{b.dataset.a='';b.textContent='Sign out'},3000);return}b.dataset.a='';b.textContent='Sign out';CFG.token='';CFG.name='';CFG.role='';save('aegis.cfg',CFG);renderCfg();toast('Signed out. Visits on this phone are kept.')});
@@ -572,7 +605,7 @@ $('testSet').addEventListener('click',async()=>{const st=$('acctStatus');st.clas
 /* ---------- main page ---------- */
 const mineV=()=>VISITS.filter(v=>v.project===curProject());
 function todayUnfinished(){const {date}=parts(nowMs());return mineV().filter(v=>v.date===date&&!v.done).sort((a,b)=>b.started<a.started?-1:1)}
-async function doSync(quiet){if(!signedIn()||!navigator.onLine)return false;try{const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify({kind:'sync',token:CFG.token,name:CFG.name,device:DEVICE,appVersion:VERSION})});const j=await r.json();if(j.ok&&j.sync){SYNC=j.sync;save('aegis.sync',SYNC);if(j.role){CFG.role=j.role;save('aegis.cfg',CFG)}renderHome();if(!$('projPage').hidden)renderProj();const bad=(SYNC.projects||[]).find(p=>p.error);if(!quiet)toast(bad?`Store list problem for ${bad.name}: ask the office to check the reference file.`:`${myStores().length} store(s) tagged to you in ${curProject()||'your projects'}`,bad?5000:2800);return true}if(!quiet)toast('Could not refresh: '+(j.error||'unknown'));}catch(e){if(!quiet)toast('No signal; using the last list')}return false}
+async function doSync(quiet){if(!signedIn()||!navigator.onLine)return false;try{const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify({kind:'sync',token:CFG.token,name:CFG.name,device:DEVICE,appVersion:VERSION})});const j=await r.json();if(j.ok&&j.sync){SYNC=j.sync;save('aegis.sync',SYNC);if(j.role){CFG.role=j.role;save('aegis.cfg',CFG)}renderHome();if(!$('projPage').hidden)renderProj();const bad=(SYNC.projects||[]).find(p=>p.error);if(!quiet)toast(bad?`Store list problem for ${bad.name}: ask the office to check the reference file.`:`${myStores().length} store(s) tagged to you in ${curProject()||'your projects'}`,bad?5000:2800);return true}if(j.error==='bad token'){needLogin();return false}if(!quiet)toast(/another phone/i.test(j.error||'')?j.error:'Could not refresh: '+(j.error||'unknown'),5000);}catch(e){if(!quiet)toast('No signal; using the last list')}return false}
 $('syncBtn').addEventListener('click',()=>doSync(false));
 function projNames(){return (SYNC.projects||[]).map(p=>p.name)}
 function projOpen(n){const pj=(SYNC.projects||[]).find(p=>p.name===n);return !(pj&&pj.open===false)}
@@ -637,47 +670,84 @@ $('startBtn').addEventListener('click',async()=>{const code=$('storeCode').value
   const wod=$('wod').value.trim().toUpperCase();if(!wod){toast('Enter the word of the day');$('wod').focus();return}
   if(!signedIn()){toast('Sign in first');openSettings();return}
   $('startBtn').disabled=true;$('startBtn').textContent='Getting location…';const [gps]=await Promise.all([getGPS(),checkClock()]);$('startBtn').disabled=false;$('startBtn').textContent='Start visit';
+  const st=(STORE&&STORE.bw===code)?STORE:myStores().find(x=>x.bw===code)||null;
+  pendStart={code,name:$('storeName').value.trim(),wod,gps,st};cfOK=false;
+  $('cfName').textContent=pendStart.name;$('cfMeta').innerHTML=`<b>BW code</b><span>${esc(code)}</span>`+(st&&st.client?`<b>Client code</b><span>${esc(st.client)}</span>`:'')+(st&&st.address?`<b>Address</b><span>${esc(st.address)}</span>`:'')+(st&&st.city?`<b>City / province</b><span>${esc(st.city)}</span>`:'')+(st&&st.region?`<b>Region</b><span>${esc(st.region)}</span>`:'')+`<b>Project</b><span>${esc(curProject())}</span>`;
+  const w=$('cfWarn');w.hidden=!!st||!myStores().length;w.textContent='This BW code is not on your assigned list. You can continue, and QC will see it flagged.';
+  $('confirmOv').style.display='flex';push('confirm');window.scrollTo(0,0)});
+let pendStart=null,cfOK=false;
+$('cfYes').addEventListener('click',()=>{cfOK=true;back()});$('cfNo').addEventListener('click',()=>{cfOK=false;back()});
+function createVisit(ps){const code=ps.code,st=ps.st,gps=ps.gps,wod=ps.wod;
   const np=parts(nowMs());const seq=VISITS.filter(v=>v.store===code&&v.date===np.date).length+1;
   save('aegis.wod',{date:np.date,word:wod});
-  const st=(STORE&&STORE.bw===code)?STORE:null;
-  V={id:`${code}_${np.date.replace(/-/g,'')}_${np.hhmm}_${DEVICE}`,project:curProject(),store:code,name:$('storeName').value.trim(),client:st?st.client:'',onList:!!st,storeLat:st&&st.lat!=null?st.lat:null,storeLng:st&&st.lng!=null?st.lng:null,auditor:CFG.name,wod,date:np.date,hhmm:np.hhmm,started:np.iso,seq,gps,place:PLACE,device:DEVICE,clockOffsetS:Math.round((CLOCK.raw||0)/1000),clockChecked:!!CLOCK.checked,groups:[],extras:[],msl:[],mcl:{},det:null,done:false,manifestSent:false};
-  PLACE=null;STORE=null;$('storePicked').hidden=true;showPlace();$('placeResults').innerHTML='';$('placeQ').value='';lastGPS=gps||lastGPS;VISITS.push(V);persist();if(!gps)toast('No GPS fix; photos will say "no GPS"');$('newPage').hidden=true;$('storeCode').value='';$('storeName').value='';$('sameDayNote').hidden=true;V=null;depth--;history.replaceState({aegis:'main',d:depth},'');openVisit(VISITS[VISITS.length-1])});
+  V={id:`${code}_${np.date.replace(/-/g,'')}_${np.hhmm}_${DEVICE}`,project:curProject(),store:code,name:ps.name,client:st?st.client:'',onList:!!st,storeLat:st&&st.lat!=null?st.lat:null,storeLng:st&&st.lng!=null?st.lng:null,auditor:CFG.name,wod,date:np.date,hhmm:np.hhmm,started:np.iso,seq,gps,place:PLACE,device:DEVICE,clockOffsetS:Math.round((CLOCK.raw||0)/1000),clockChecked:!!CLOCK.checked,groups:[],extras:[],msl:[],mcl:{},det:null,done:false,manifestSent:false};
+  PLACE=null;STORE=null;$('storePicked').hidden=true;showPlace();$('placeResults').innerHTML='';$('placeQ').value='';lastGPS=gps||lastGPS;VISITS.push(V);persist();if(!gps)toast('No GPS fix; photos will say "no GPS"');$('newPage').hidden=true;$('storeCode').value='';$('storeName').value='';$('sameDayNote').hidden=true;V=null;depth--;history.replaceState({aegis:'main',d:depth},'');openVisit(VISITS[VISITS.length-1])}
 
 /* ---------- visit page ---------- */
-function openVisit(v){detOpen=false;V=v;$('start').hidden=true;$('visit').hidden=false;push('visit');renderVisit()}
+function openVisit(v){detOpen=false;V=v;$('start').hidden=true;$('histPage').hidden=true;$('newPage').hidden=true;$('visit').hidden=false;push('visit');renderVisit();window.scrollTo(0,0)}
 function renderVisit(){if(!V)return;$('vTitle').textContent=`${V.store}${V.seq>1?` · visit ${V.seq}`:''}`;$('vSub').textContent=`${V.name||''}${V.name?' · ':''}${fmtDT(V.started)}`;
   $('vMeta').innerHTML=`<b>Project</b><span>${V.project||'—'}</span><b>Client code</b><span>${V.client||'—'}${V.onList?'':' · not on assigned list'}</span><b>Auditor</b><span>${V.auditor}</span><b>WOD</b><span>${V.wod||'—'}</span><b>Phone GPS</b><span>${gpsText(V.gps)}</span><b>Place</b><span>${placeText(V)}</span><b>Groups</b><span>${V.groups.length} · ${shelfShots(V).length} shelf photo${shelfShots(V).length===1?'':'s'} · ${(V.extras||[]).length} visit photo${(V.extras||[]).length===1?'':'s'}</span>`;
-  const p=P(V.project),det=V.det||{};$('detCard').hidden=!p.details;
+  const p=P(V.project),det=V.det||{};$('detCard').hidden=!p.details;const LK=locked(V);
+  if($('ptPick').dataset.c!==p.client){const C=esc(p.client),h=`<button data-v="Allowed for all"><b>Allowed</b>for all</button><button data-v="Allowed for ${C} only"><b>${C} only</b>allowed for ${C} only</button><button data-v="Not allowed (${C} and competitor)"><b>Not allowed</b>${C} and competitor</button>`;$('ptPick').innerHTML=h;$('msPick').innerHTML=h;$('ptPick').dataset.c=p.client;$('dDis').placeholder=`Name of ${p.client} diser / merchandiser`}
+  const ll=$('lockLine');ll.hidden=!LK;if(LK){const end=new Date(new Date(V.date+'T00:00:00').getTime()+EDIT_DAYS*864e5);ll.textContent=isHub(V)&&measOpen(V)?`Submitted. Photos, MCL and visit details are locked. Only the SOS measurement can still be corrected, until ${end.toLocaleDateString('en-PH',{day:'numeric',month:'short'})}.`:'Submitted. This visit can no longer be changed.'}
   if(p.details){[['vsPick','status'],['ptPick','photo'],['msPick','measure']].forEach(([id,k])=>$(id).querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===det[k])));$('refBox').hidden=det.status!=='Refused Audit';$('ruleBox').hidden=det.status!=='Allowed Audit';if(document.activeElement!==$('refReason'))$('refReason').value=det.reason||''}
   if(p.details){$('extraBox').hidden=!det.status;DX.forEach(([id,k])=>{if(document.activeElement!==$(id))$(id).value=det[k]||''})}
-  const refused=p.details&&det.status==='Refused Audit';const complete=!p.details||refused||!!(det.status&&det.photo&&det.measure);const showBody=!complete||refused||detOpen;$('detBody').hidden=!showBody;$('detSum').hidden=showBody;if(!showBody)$('detSumTxt').innerHTML=`<b>${esc(det.status)}</b> · Photo taking: ${esc(det.photo)} · Measurement: ${esc(det.measure)}`;$('tilesCard').hidden=!complete;
-  const t=$('catTiles');t.innerHTML='';const hub=isHub(V);t.className=hub?'blist':'tiles2';
-  if(hub)renderHub(t,p,refused);else{
-  if(!refused)for(const [c,nm] of p.cats){const gs=catGroups(V,c);const n=gs.reduce((a,g)=>a+g.shots.length,0);const b=document.createElement('button');b.className='tile'+(n?' has':'');b.innerHTML=`<b>SOS: ${esc(nm)}</b><span>${n?`${gs.length} group${gs.length===1?'':'s'}, ${n} photo${n===1?'':'s'}`:'no photos yet'}</span>`;b.addEventListener('click',()=>openCat(c));t.appendChild(b)}
+  const refused=p.details&&det.status==='Refused Audit';const complete=!p.details||refused||!!(det.status&&det.photo&&det.measure);const showBody=!complete||refused||detOpen;$('detBody').hidden=!showBody;$('detSum').hidden=showBody;if(!showBody)$('detSumTxt').innerHTML=`<b>${esc(det.status)}</b> · Photo taking: ${esc(det.photo)} · Measurement: ${esc(det.measure)}`;$('tilesCard').hidden=!complete;document.querySelectorAll('#detCard button,#detCard input,#detCard textarea').forEach(e=>{e.disabled=LK});
+  const t=$('catTiles');t.innerHTML='';const hub=isHub(V),big=bigUI(V);t.className=big?'blist':'tiles2';
+  if(hub)renderHub(t,p,refused);else if(big)renderFlowHub(t,p,refused);else{
+  if(!refused)for(const [c,nm] of p.cats){const gs=catGroups(V,c);const n=gs.reduce((a,g)=>a+g.shots.length,0);const b=document.createElement('button');const na=catNA(V,c);b.className='tile'+((n||na)?' has':'');b.innerHTML=`<b>SOS: ${esc(nm)}</b><span>${n?`${gs.length} group${gs.length===1?'':'s'}, ${n} photo${n===1?'':'s'}`:na?'Not available in this store':p.shelfReq?'required: no photos yet':'no photos yet'}</span>`;b.addEventListener('click',()=>openCat(c));t.appendChild(b)}
   const xs=V.extras||[];const xb=document.createElement('button');xb.className='tile x'+(xs.length?' has':'');xb.innerHTML=`<b>Visit photos</b><span>${xs.length?`${xs.length} photo${xs.length>1?'s':''} · ${xs.filter(s=>s.status==='sent').length} uploaded`:'storefront, secondary displays, COC, visicooler, others'}</span>`;xb.addEventListener('click',()=>{$('visit').hidden=true;$('xPage').hidden=false;push('x');renderX()});t.appendChild(xb);
-  if(!refused){const pb=document.createElement('button');if(p.mcl.length||p.mclRequired){const s=mclStats(V);pb.className='tile x'+(s.total&&!s.todo?' has':'');pb.innerHTML=`<b>MCL</b><span>${s.total?`${s.total-s.todo} of ${s.total} SKUs complete`:'Must Carry List'}</span>`}else{const pn=(V.msl||[]).length;pb.className='tile x'+(pn?' has':'');pb.innerHTML=`<b>Pack shots</b><span>${pn?`${pn} pack${pn>1?'s':''} · ${V.msl.filter(s=>s.status==='sent').length} uploaded`:'one photo per SKU that is in the store'}</span>`}pb.addEventListener('click',openPack);t.appendChild(pb)}}
+  if(!refused){const pb=document.createElement('button');if(p.mcl.length||p.mclRequired){const s=mclStats(V);pb.className='tile x'+(s.total&&!s.todo?' has':'');pb.innerHTML=`<b>MCL</b><span>${s.total?`${s.total-s.todo} of ${s.total} SKUs complete`:'Must Carry List'}</span>`}else{const pn=(V.msl||[]).length,pc=p.cats.filter(([c])=>!catNA(V,c)),pd=pc.filter(([c])=>(V.msl||[]).some(s=>s.cat===c)).length;pb.className='tile x'+((p.packReq?(pc.length>0&&pd===pc.length):pn)?' has':'');pb.innerHTML=`<b>Pack shots</b><span>${p.packReq?`${pd} of ${pc.length} categories · ${pn} pack${pn===1?'':'s'}`:pn?`${pn} pack${pn>1?'s':''} · ${V.msl.filter(s=>s.status==='sent').length} uploaded`:'one photo per SKU that is in the store'}</span>`}pb.addEventListener('click',openPack);t.appendChild(pb);
+    if(p.checklist){const cb=document.createElement('button'),k=V.chk,off=measMode(V)==='none';cb.className='tile x'+(k&&k.status!=='bad'?' has':'');cb.innerHTML=`<b>SOS checklist</b><span>${off?'not needed: measurement not allowed':k?esc(k.orig)+(k.status==='sent'?' · uploaded':k.status==='bad'?' · wrong file, attach again':' · attached'):'required: attach the Excel file'}</span>`;cb.addEventListener('click',()=>{if(guard('the checklist file'))return;if(off){toast('Measurement is marked Not allowed for this store, so no checklist is needed.',4000);return}$('chkFile').value='';$('chkFile').click()});t.appendChild(cb)}}}
   const all=shots(V),total=all.length,sent=all.filter(s=>s.status==='sent').length;const st=vStatus(V);$('vPill').className='pill '+st.l;$('vPill').textContent=st.t;
-  const hasData=total>0||Object.keys(V.mcl||{}).length>0||refused;const allSent=hasData&&sent===total&&V.manifestSent;const need=missing(V);
+  const hasData=total>0||Object.keys(V.mcl||{}).length>0||refused||!!V.chk||!!(V.na&&Object.keys(V.na).length)||(p.details&&!!det.status);const allSent=hasData&&sent===total&&V.manifestSent;const need=missing(V);
   $('uploadBtn').disabled=!hasData||allSent||Q.running;$('uploadBtn').textContent=Q.running?'Uploading…':allSent?'All uploaded':'Submit visit';
   $('needLine').hidden=!need.length||allSent||!hasData;$('needLine').textContent='Before you can submit: '+need.join('; ')+'.';
+  const sf=$('subFor');sf.innerHTML=V.corr?`<span>Will be recorded as <b>${esc(V.corr.name)}</b> · ${esc(V.corr.bw)} <span class="pill warn">corrected</span><br><span class="muted">started as ${esc(V.name||'')} · ${esc(V.store)}</span></span>`:`<span>Submitting for <b>${esc(V.name||'')}</b> · ${esc(V.store)}</span>`;if(!LK){const wb=document.createElement('button');wb.className='ghost small';wb.style.flex='none';wb.textContent=V.corr?'Undo correction':'Wrong store?';wb.addEventListener('click',()=>{if(V.corr){V.corr=null;V.manifestSent=false;persist();renderVisit()}else openStorePick()});sf.appendChild(wb)}$('discardBtn').hidden=LK;
   $('finishBtn').disabled=!allSent||V.done;$('finishBtn').textContent=V.done?'Finished':'Finish visit';
   $('bar').style.width=total?Math.round(100*sent/total)+'%':'0%';
-  if(!Q.running){if(V.done&&allSent)setStatus('Finished and uploaded. Anything you add now is sent with Submit visit.');else if(allSent)setStatus('Everything is in Drive. You can finish the visit.');else if(!total)setStatus(hasData?'Not submitted yet.':'Not uploaded yet.');else if(total-sent&&!$('upStatus').classList.contains('bad'))setStatus(`${total-sent} photo${total-sent>1?'s':''} on this phone, not sent yet.`)}
+  if(!Q.running){if(V.done&&allSent)setStatus('Finished and uploaded.');else if(allSent)setStatus('Everything is in Drive. You can finish the visit.');else if(!total)setStatus(hasData?'Not submitted yet.':'Not uploaded yet.');else if(total-sent&&!$('upStatus').classList.contains('bad'))setStatus(`${total-sent} photo${total-sent>1?'s':''} on this phone, not sent yet.`)}
   ctx()}
 let detOpen=false;
 const DX=[['dSec','sec'],['dMgr','mgr'],['dDis','diser'],['dRem','remarks']];
-DX.forEach(([id,k])=>$(id).addEventListener('input',()=>{if(!V)return;V.det=V.det||{};V.det[k]=$(id).value;V.manifestSent=false;persist()}));
-function setDet(k,val){if(!V)return;V.det=V.det||{};V.det[k]=val;V.manifestSent=false;detOpen=false;persist();renderVisit()}
+DX.forEach(([id,k])=>$(id).addEventListener('input',()=>{if(!V||locked(V))return;V.det=V.det||{};V.det[k]=$(id).value;V.manifestSent=false;persist()}));
+function setDet(k,val){if(!V)return;if(guard('the visit details'))return;V.det=V.det||{};V.det[k]=val;V.manifestSent=false;detOpen=false;persist();renderVisit()}
 $('detEdit').addEventListener('click',()=>{detOpen=true;renderVisit()});
 function isHub(v){const p=P(v.project);return p.mcl.length>0||p.mclRequired}
+/* ---------- after Submit the visit is locked; only the SOS measurement stays open, for EDIT_DAYS days after the visit date ---------- */
+const EDIT_DAYS=7;
+function locked(v){return !!(v&&v.firstSent)}
+function measOpen(v){if(!locked(v))return true;if(!isHub(v))return false;return nowMs()-new Date(v.date+'T00:00:00').getTime()<(EDIT_DAYS+1)*864e5}
+function guard(what){if(V&&locked(V)){toast(`This visit is already submitted, so ${what} can no longer be changed.`+(isHub(V)&&measOpen(V)?' Only the SOS measurement can still be corrected.':''),4500);return true}return false}
+function catNA(v,c){return !!(v.na&&v.na[c])}
+function needLogin(msg){CFG.token='';save('aegis.cfg',CFG);renderCfg();$('setName').value=CFG.name||'';$('settings').hidden=false;if(!(history.state&&history.state.aegis==='settings'))push('settings');const st=$('setStatus');st.className='status bad';st.textContent=msg||'Your access token was changed. Type the new token from the office to continue. Your visits and photos on this phone are safe.';window.scrollTo(0,0)}
+/* ---------- wrong store: the visit keeps its photos and times, and is recorded under the store chosen here ---------- */
+function openStorePick(){if(guard('the store'))return;$('storeOv').style.display='flex';push('store');$('soQ').value='';renderStorePick();window.scrollTo(0,0)}
+function renderStorePick(){const q=$('soQ').value.trim().toUpperCase(),el=$('soList');el.innerHTML='';const hits=myStores().filter(s=>s.bw!==V.store&&(!q||s.bw.includes(q)||s.name.toUpperCase().includes(q)||(s.city||'').toUpperCase().includes(q))).slice(0,40);
+  if(!hits.length){el.innerHTML='<p class="muted">No other assigned store matches. If the correct store is not on your list, write it in the audit remarks and tell the office.</p>';return}
+  hits.forEach(s=>{const d=document.createElement('div');d.className='pres';d.innerHTML=`<b>${esc(s.name)}</b><span class="muted">${esc(s.bw)}${s.city?' · '+esc(s.city):''}</span>`;d.addEventListener('click',()=>{V.corr={bw:s.bw,name:s.name,client:s.client||''};V.manifestSent=false;persist();toast('The visit will be recorded under '+s.name);back()});el.appendChild(d)})}
+$('soQ').addEventListener('input',renderStorePick);$('soClose').addEventListener('click',()=>back());
+/* ---------- SOS checklist (Excel file) attached to the visit ---------- */
+$('chkFile').addEventListener('change',async()=>{const f=$('chkFile').files[0];if(!f||!V)return;if(guard('the checklist file'))return;
+  if(!/\.xlsx$/i.test(f.name)){toast('Choose the SOS checklist Excel file (.xlsx).',4000);return}if(f.size>15*1024*1024){toast('That file is larger than 15 MB. Choose the checklist file.',4000);return}
+  const head=new Uint8Array(await f.slice(0,2).arrayBuffer());if(head[0]!==80||head[1]!==75){toast('That is not an Excel (.xlsx) file.',4000);return}
+  const name=`${base(V)}_SOS checklist.xlsx`;await dbPut(PH,name,f);V.chk={name,orig:f.name,size:f.size,status:'pending'};V.manifestSent=false;persist();renderVisit();toast('Checklist attached. It is checked and uploaded when you tap Submit visit.',4000)});
 function renderHub(t,p,refused){const xs=V.extras||[];
   if(!refused){const n=p.cats.filter(([c])=>catGroups(V,c).some(g=>g.shots.length)).length,ph=shelfShots(V).length;
     t.appendChild(bigTile({title:'SOS - Photos',sub:n?`${n} of ${p.cats.length} categories · ${ph} photo${ph===1?'':'s'}`:'Shelf photos, per category',icon:IC.shelf,color:'#F26B21',pct:p.cats.length?Math.round(100*n/p.cats.length):0,done:p.cats.length>0&&n===p.cats.length,go:openSos}));
     const mc=p.cats.filter(([c])=>MDEF[c]),md=mc.filter(([c])=>measState(V,c)==='ok').length,mno=measMode(V)==='none';if(mc.length)t.appendChild(bigTile({title:'SOS - Measurement',sub:mno?'Not allowed in this store: skipped':`${md} of ${mc.length} categories complete${measMode(V)==='mnc'?' · MNC only':''}`,icon:IC.ruler,color:'#2B6CB0',pct:mno?null:Math.round(100*md/mc.length),done:!mno&&md===mc.length,lock:mno,go:()=>{if(mno){toast('Measurement is marked Not allowed for this store, so it is skipped. Change it in Visit details if that is wrong.',4000);return}openMeas()}}));
     const s=mclStats(V);t.appendChild(bigTile({title:'MCL',sub:s.total?`${s.total-s.todo} of ${s.total} SKUs complete`:'Must Carry List, per category',icon:IC.list,color:'#1F7A4D',pct:s.total?Math.round(100*(s.total-s.todo)/s.total):0,done:s.total>0&&!s.todo,go:openPack}))}
   t.appendChild(bigTile({title:'Visit photos',sub:xs.length?`${xs.length} photo${xs.length>1?'s':''} · ${xs.filter(s=>s.status==='sent').length} uploaded`:'Storefront, secondary displays, COC, visicooler, others',icon:IC.cam,color:'#12202B',done:false,go:()=>{$('visit').hidden=true;$('xPage').hidden=false;push('x');renderX()}}))}
+function bigUI(v){const p=P(v.project);return isHub(v)||p.shelfReq||p.packReq||p.checklist}
+function renderFlowHub(t,p,refused){const xs=V.extras||[];      // photo-only projects (PS): the same four big tiles as MNC, without the input pages
+  if(!refused){const live=p.cats.filter(([c])=>!catNA(V,c)),n=p.cats.filter(([c])=>catNA(V,c)||catGroups(V,c).some(g=>g.shots.length)).length,ph=shelfShots(V).length,nas=p.cats.length-live.length;
+    t.appendChild(bigTile({title:'SOS - Photos',sub:n?`${n} of ${p.cats.length} categories · ${ph} photo${ph===1?'':'s'}${nas?' · '+nas+' not available':''}`:'Shelf photos, per category',icon:IC.shelf,color:'#F26B21',pct:p.cats.length?Math.round(100*n/p.cats.length):0,done:p.cats.length>0&&n===p.cats.length,go:openSos}));
+    const pn=(V.msl||[]).length,pd=live.filter(([c])=>(V.msl||[]).some(s=>s.cat===c)).length;
+    t.appendChild(bigTile({title:'Pack shots',sub:pn?`${pd} of ${live.length} categories · ${pn} pack${pn===1?'':'s'}`:'One photo per SKU in the store, per category',icon:IC.list,color:'#1F7A4D',pct:live.length?Math.round(100*pd/live.length):0,done:live.length>0&&pd===live.length,go:openPack}));
+    if(p.checklist){const k=V.chk,off=measMode(V)==='none';t.appendChild(bigTile({title:'SOS checklist',sub:off?'Not needed: measurement is not allowed in this store':k?(k.status==='sent'?'Uploaded · ':k.status==='bad'?'Wrong file, attach again · ':'Attached · ')+k.orig:'Attach the Excel file',icon:IC.ruler,color:'#2B6CB0',done:!off&&!!k&&k.status!=='bad',lock:off,go:()=>{if(guard('the checklist file'))return;if(off){toast('Measurement is marked Not allowed for this store, so no checklist is needed.',4000);return}$('chkFile').value='';$('chkFile').click()}}))}}
+  t.appendChild(bigTile({title:'Visit photos',sub:xs.length?`${xs.length} photo${xs.length>1?'s':''} · ${xs.filter(s=>s.status==='sent').length} uploaded`:'Storefront, secondary displays, COC, visicooler, others',icon:IC.cam,color:'#12202B',done:xs.length>0&&p.visitReq,go:()=>{$('visit').hidden=true;$('xPage').hidden=false;push('x');renderX()}}))}
 function openSos(){$('visit').hidden=true;$('sosPage').hidden=false;push('sos');renderSos();window.scrollTo(0,0)}
-function renderSos(){if(!V)return;const p=P(V.project),el=$('sosTiles');el.innerHTML='';p.cats.forEach(([c,nm],i)=>{const gs=catGroups(V,c),n=gs.reduce((a,g)=>a+g.shots.length,0);el.appendChild(bigTile({title:nm,sub:n?`${gs.length} group${gs.length===1?'':'s'} · ${n} photo${n===1?'':'s'}`:'No photos yet',icon:abbr(nm),color:PAL[i%PAL.length],done:n>0,go:()=>openCat(c)}))})}
+function renderSos(){if(!V)return;const p=P(V.project),el=$('sosTiles');el.innerHTML='';p.cats.forEach(([c,nm],i)=>{const gs=catGroups(V,c),n=gs.reduce((a,g)=>a+g.shots.length,0);const na=catNA(V,c);el.appendChild(bigTile({title:nm,sub:n?`${gs.length} group${gs.length===1?'':'s'} · ${n} photo${n===1?'':'s'}`:na?'Not available in this store':'No photos yet',icon:abbr(nm),color:PAL[i%PAL.length],done:n>0||na,go:()=>openCat(c)}))})}
 $('sosBack').addEventListener('click',()=>back());
 
 /* ---------- SOS measurement: totals per brand, the app computes the shares; plus the checks asked in the paper checklist ---------- */
@@ -693,7 +763,7 @@ const MDEF={NOODLES:{unit:'cm',cols:['Lucky Me! (MNC)','Payless','Nissin Cup Noo
 let measCat='';
 const fmtN=n=>(Math.round(n*10)/10).toLocaleString('en-PH');
 const has=v=>v!==''&&v!=null&&!isNaN(v);
-function measMode(v){const m=(v.det||{}).measure||'';return /^not allowed/i.test(m)?'none':/mnc only/i.test(m)?'mnc':'all'}
+function measMode(v){const m=(v.det||{}).measure||'';return /^not allowed/i.test(m)?'none':/ only$/i.test(m)?'mnc':'all'}
 function measNeed(v,cat,i){const c=MDEF[cat];return c.mncOnly||measMode(v)!=='mnc'||i===0}
 function measTotals(v,cat){const c=MDEF[cat],m=(v.meas||{})[cat]||{vals:{}};let tot=0,n=0,ok=true;c.cols.forEach((_,i)=>{if(has(m.vals[i])){tot+=Number(m.vals[i]);n++}else if(measNeed(v,cat,i))ok=false});return {tot,n,all:ok,full:n===c.cols.length,pct:i=>(!c.mncOnly&&tot>0&&has(m.vals[i]))?Number(m.vals[i])/tot:null,cluster:c.cluster&&tot>0?(tot>c.cluster[0]?'A':tot>c.cluster[1]?'B':tot>c.cluster[2]?'C':'D'):''}}
 function measState(v,cat){const c=MDEF[cat],m=(v.meas||{})[cat];if(!c||measMode(v)==='none')return 'ok';if(!m)return 'todo';const t=measTotals(v,cat);
@@ -726,15 +796,24 @@ function renderMeas(){if(!V||$('measPage').hidden)return;const p=P(V.project),el
   if(m.cons===1){const ch=document.createElement('div');ch.className='chips';const lab=document.createElement('label');lab.textContent='Tap each type used';cc.appendChild(lab);CONS.forEach((t0,i)=>{const t=(i===5&&cfg.cons6)?cfg.cons6:t0;const b=document.createElement('button');const on=(m.types||[]).includes(i);b.className=on?'on':'';b.textContent=(on?'✓ ':'')+t;b.addEventListener('click',()=>{const ts=new Set(m.types||[]);on?ts.delete(i):ts.add(i);set('types',[...ts].sort(),true)});ch.appendChild(b)});cc.appendChild(ch);cc.appendChild(txt('Brand(s) / where (remarks)','where'))}
   el.appendChild(cc);
   const rc=mCard('Remarks');const ta=document.createElement('textarea');ta.placeholder='anything QC should know about this category';ta.value=m.remarks||'';ta.addEventListener('input',()=>set('remarks',ta.value));rc.appendChild(ta);el.appendChild(rc);
-  const nb=document.createElement('button');nb.className='primary';nb.textContent='Done with this category';nb.addEventListener('click',()=>back());el.appendChild(nb);window.scrollTo(0,y)}
+  const nb=document.createElement('button');nb.className='primary';nb.textContent='Done with this category';nb.addEventListener('click',()=>back());el.appendChild(nb);
+  if(!measOpen(V)){el.querySelectorAll('input,select,textarea,button').forEach(x=>{if(x!==nb)x.disabled=true});const n0=document.createElement('p');n0.className='notice';n0.textContent=`This visit is submitted and the ${EDIT_DAYS}-day correction window has passed. The measurement can no longer be changed.`;el.insertBefore(n0,el.firstChild)}
+  window.scrollTo(0,y)}
 $('vsPick').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setDet('status',b.dataset.v)});
 $('ptPick').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setDet('photo',b.dataset.v)});
 $('msPick').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setDet('measure',b.dataset.v)});
-$('refReason').addEventListener('input',()=>{if(!V)return;V.det=V.det||{};V.det.reason=$('refReason').value;V.manifestSent=false;persist();renderVisit()});
+$('refReason').addEventListener('input',()=>{if(!V||locked(V))return;V.det=V.det||{};V.det.reason=$('refReason').value;V.manifestSent=false;persist();renderVisit()});
 function missing(v){const p=P(v.project),out=[];
   if(p.details){const d=v.det||{};if(!d.status)return ['choose the visit status'];
     if(d.status==='Refused Audit'){if(!(d.reason||'').trim())out.push('type the reason for refusal');if(!(v.extras||[]).length)out.push('take at least one visit photo');return out}
     if(!d.photo)out.push('choose Photo taking');if(!d.measure)out.push('choose Measurement')}
+  const noPhoto=p.details&&/^not allowed/i.test((v.det||{}).photo||'');
+  if(!noPhoto){
+    if(p.shelfReq){const k=p.cats.filter(([c])=>!catNA(v,c)&&!catGroups(v,c).some(g=>g.shots.length)).length;if(k)out.push(`${k} categor${k>1?'ies have':'y has'} no shelf photo (take one, or mark the category Not available in this store)`)}
+    if(p.packReq){const k=p.cats.filter(([c])=>!catNA(v,c)&&!(v.msl||[]).some(s=>s.cat===c)).length;if(k)out.push(`${k} categor${k>1?'ies have':'y has'} no pack shot`)}
+    if(p.visitReq&&!(v.extras||[]).length)out.push('take at least one visit photo')}
+  if(p.cats.some(([c])=>catNA(v,c)&&!(v.na[c].remark||'').trim()))out.push('write the remark for each category marked Not available');
+  if(p.checklist&&measMode(v)!=='none'){if(!v.chk)out.push('attach the SOS checklist (Excel file)');else if(v.chk.status==='bad')out.push('attach the correct SOS checklist file')}
   if(p.mclRequired&&p.mcl.length){const s=mclStats(v);if(s.todo)out.push(`${s.todo} MCL SKU${s.todo>1?'s are':' is'} not complete`)}
   if(p.measRequired&&isHub(v)&&measMode(v)!=='none'){const k=p.cats.filter(([c])=>MDEF[c]&&measState(v,c)!=='ok').length;if(k)out.push(`${k} SOS measurement categor${k>1?'ies are':'y is'} not complete`)}
   return out}
@@ -755,7 +834,10 @@ function renderCat(){if(!V||!CAT)return;$('catTitle').textContent=catName(CAT);c
       dbGet(TH,s.name).then(b=>{if(b)im.src=URL.createObjectURL(b)});th.addEventListener('click',()=>openViewer(g,s))}
     if(!g.shots.length){const b=document.createElement('button');b.className='ghost small';b.textContent='Remove empty group';b.addEventListener('click',()=>{V.groups=V.groups.filter(x=>x!==g);persist();renderCat()});d.appendChild(b)}
     el.appendChild(d)}
-  $('catCount').textContent=total+(total===1?' photo':' photos');$('grpTitle').textContent=`Add group ${gs.length+1}`;$('guideBtn').hidden=!P(V.project).guide}
+  $('catCount').textContent=total+(total===1?' photo':' photos');$('grpTitle').textContent=`Add group ${gs.length+1}`;$('guideBtn').hidden=!P(V.project).guide;
+  const na=catNA(V,CAT),lk=locked(V);$('naCard').hidden=!(P(V.project).shelfReq&&!total&&!lk)&&!na;$('naBtn').textContent=na?'✓ Marked Not available · tap to undo':'Not available in this store';$('naBtn').disabled=lk;$('naRemark').hidden=!na;$('naRemark').disabled=lk;if(document.activeElement!==$('naRemark'))$('naRemark').value=na?(V.na[CAT].remark||''):'';$('newGroup').hidden=na||lk}
+$('naBtn').addEventListener('click',()=>{if(!V||!CAT||guard('this category'))return;V.na=V.na||{};if(V.na[CAT])delete V.na[CAT];else V.na[CAT]={remark:''};V.manifestSent=false;persist();renderCat();if(V.na[CAT])$('naRemark').focus()});
+$('naRemark').addEventListener('input',()=>{if(!V||!CAT||!catNA(V,CAT)||locked(V))return;V.na[CAT].remark=$('naRemark').value;V.manifestSent=false;persist()});
 document.querySelectorAll('.choice').forEach(c=>c.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;c.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}));
 const picked=id=>$(id).querySelector('.on').dataset.v;
 document.querySelector('#kindPick').addEventListener('click',()=>{const k=picked('kindPick');const want=k==='row'?'landscape':'portrait';$('orientPick').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===want))});
@@ -774,7 +856,7 @@ function mclAns(v,no){return (v.mcl||{})[no]||null}
 function mclPhoto(v,no){return (v.msl||[]).find(s=>s.cat==='MCL'&&s.sku===no)||null}
 function mclState(v,m){const a=mclAns(v,m[0]);if(!a||a.a==null)return 'todo';if(a.a===1)return (mclPhoto(v,m[0])||(a.remark||'').trim())?'ok':'need';return a.reason&&(!/^others/i.test(a.reason)||(a.remark||'').trim())?'ok':'need'}
 function mclStats(v){const list=P(v.project).mcl;let yes=0,no=0,todo=0;for(const m of list){const a=mclAns(v,m[0]);if(mclState(v,m)!=='ok')todo++;if(a&&a.a===1)yes++;else if(a&&a.a===0)no++}return {total:list.length,yes,no,todo,unanswered:list.length-yes-no}}
-function setMcl(no,o){V.mcl=V.mcl||{};V.mcl[no]=o;V.manifestSent=false;persist()}
+function setMcl(no,o){if(guard('the MCL answers'))return;V.mcl=V.mcl||{};V.mcl[no]=o;V.manifestSent=false;persist()}
 function thumbEl(s,label,onTap){const th=document.createElement('div');th.className='th';const im=document.createElement('img');im.className=s.status;th.appendChild(im);const sp=document.createElement('span');sp.textContent=label;th.appendChild(sp);dbGet(TH,s.name).then(b=>{if(b)im.src=URL.createObjectURL(b)});th.addEventListener('click',onTap);return th}
 function openPack(){$('visit').hidden=true;$('packPage').hidden=false;push('pack');mclOpen='';renderPack();window.scrollTo(0,0)}
 function leavePack(){if(V){const p=P(V.project);if(p.mcl.length){const s=mclStats(V);if(s.todo)toast(`MCL is not complete: ${s.todo} SKU${s.todo>1?'s':''} still to finish. The visit cannot be submitted, so the data will not be uploaded, until MCL is complete.`,5000)}}$('packPage').hidden=true;$('visit').hidden=false;renderVisit()}
@@ -789,7 +871,7 @@ function renderPack(){if(!V||$('packPage').hidden)return;const p=P(V.project),el
         el.appendChild(bigTile({title,sub:`${mm?mm[2]+' · ':''}${done} of ${g.items.length} complete`,icon:abbr(title),color:PAL[i%PAL.length],pct:Math.round(100*done/g.items.length),done:done===g.items.length,go:()=>{mclOpen=g.name;push('mclcat');renderPack();window.scrollTo(0,0)}}))})}
     else{$('packTitle').textContent=cg.name;const d=document.createElement('div');d.className='card mgrp';for(const m of cg.items)d.appendChild(mclRow(p,m));el.appendChild(d);const nb=document.createElement('button');nb.className='primary';nb.textContent='Done with this category';nb.addEventListener('click',()=>back());el.appendChild(nb)}
   }else{$('packTitle').textContent='Pack shots';$('mclBarWrap').hidden=true;$('packSub').textContent='One pack per photo, front face, fill the frame. Only the SKUs that are actually in the store, wherever they are. Choose the category, then shoot.';
-    for(const [c,nm] of p.cats){const list=(V.msl||[]).filter(s=>s.cat===c);const d=document.createElement('div');d.className='card';d.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:baseline"><h3>${esc(nm)}</h3><span class="muted">${list.length} pack${list.length===1?'':'s'} · ${list.filter(s=>s.status==='sent').length} uploaded</span></div><div class="thumbrow"></div><button class="ghost">Shoot ${esc(nm)} packs</button>`;
+    for(const [c,nm] of p.cats){if(catNA(V,c))continue;const list=(V.msl||[]).filter(s=>s.cat===c);const d=document.createElement('div');d.className='card';d.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:baseline"><h3>${esc(nm)}</h3><span class="muted">${list.length} pack${list.length===1?'':'s'} · ${list.filter(s=>s.status==='sent').length} uploaded</span></div><div class="thumbrow"></div><button class="ghost">Shoot ${esc(nm)} packs</button>`;
       const tr=d.querySelector('.thumbrow');for(const s of list)tr.appendChild(thumbEl(s,'p'+pad2(s.n),()=>openViewer(MG(V,c),s)));
       d.querySelector('button').addEventListener('click',async()=>{cur=MG(V,c);prevG=null;prevBmp=null;await openCamera()});el.appendChild(d)}}
   window.scrollTo(0,y)}
@@ -803,7 +885,7 @@ function mclRow(p,m){const no=m[0],a=mclAns(V,no)||{},ph=mclPhoto(V,no);const d=
   if(a.a===0){const s=document.createElement('select');[['','Choose the reason']].concat(p.reasons.map(r=>[r,r])).forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;s.appendChild(o)});s.value=a.reason||'';s.addEventListener('change',()=>{setMcl(no,{...(mclAns(V,no)||{a:0}),reason:s.value});renderPack()});mx.appendChild(s);
     if(/^others/i.test(a.reason||''))mx.appendChild(inp('Remarks (required for Others)',a.remark,val=>setMcl(no,{...(mclAns(V,no)||{a:0}),remark:val})))}
   return d}
-$('openCam').addEventListener('click',async()=>{cur={n:catGroups(V,CAT).length+1,cat:CAT,kind:picked('kindPick'),type:picked('typePick'),orient:picked('orientPick'),shots:[],addedLater:!!V.done};V.groups.push(cur);persist();prevG=null;prevBmp=null;await openCamera()});
+$('openCam').addEventListener('click',async()=>{if(guard('photos'))return;cur={n:catGroups(V,CAT).length+1,cat:CAT,kind:picked('kindPick'),type:picked('typePick'),orient:picked('orientPick'),shots:[],addedLater:!!V.done};V.groups.push(cur);persist();prevG=null;prevBmp=null;await openCamera()});
 
 /* ---------- visit photos page ---------- */
 function renderX(){if(!V)return;const xs=V.extras||[];const xt=$('xThumbs');xt.innerHTML='';for(const s of xs){const th=document.createElement('div');th.className='th';const im=document.createElement('img');im.className=s.status;th.appendChild(im);const sp=document.createElement('span');sp.textContent='v'+pad2(s.n);th.appendChild(sp);xt.appendChild(th);dbGet(TH,s.name).then(b=>{if(b)im.src=URL.createObjectURL(b)});th.addEventListener('click',()=>openViewer(XG(V),s))}
@@ -837,7 +919,7 @@ async function startStream(){if(stream){stream.getTracks().forEach(t=>t.stop());
 function fitFrame(){const v=$('video'),mid=$('camMid'),f=$('frame');const ar=(v.videoWidth&&v.videoHeight)?v.videoWidth/v.videoHeight:3/4;const W=mid.clientWidth,H=mid.clientHeight;let fw=W,fh=W/ar;if(fh>H){fh=H;fw=H*ar}f.style.width=Math.floor(fw)+'px';f.style.height=Math.floor(fh)+'px';if(!f.contains(v))f.insertBefore(v,f.firstChild)}
 window.addEventListener('resize',()=>{if(!$('cam').hidden)fitFrame()});$('video').addEventListener('resize',()=>{if(!$('cam').hidden)fitFrame()});$('video').addEventListener('loadedmetadata',()=>{if(!$('cam').hidden)fitFrame()});
 function refit(){[0,100,400,1000].forEach(t=>setTimeout(()=>{if(!$('cam').hidden)fitFrame()},t))}
-async function openCamera(){
+async function openCamera(){if(guard('photos'))return;
   $('cam').hidden=false;push('cam');const isX=cur.kind==='visit',isM=cur.kind==='msl';$('endGroup').textContent=(isX||isM)?'Done':'End group';$('endGroup').dataset.a='';
   try{if(screen.orientation&&screen.orientation.lock){await screen.orientation.lock(cur.orient==='landscape'?'landscape':'portrait')}}catch(e){}
   $('placeRow').hidden=true;
@@ -976,15 +1058,15 @@ $('vwCrop').addEventListener('click',async()=>{if(!vw)return;vwCropped=false;awa
 $('vwCropCancel').addEventListener('click',()=>{$('vwCropBox').style.display='none';$('vwCropHelp').hidden=true;$('vwActions').hidden=false;$('vwCropActions').hidden=true;crop=null;cropCtx=null;if(vw)drawShade(vw.s)});
 $('vwCropClear').addEventListener('click',()=>{if(!vw)return;vw.s.crop=null;persist();$('vwCropCancel').click();openViewer(vw.g,vw.s,true);toast('Crop removed')});
 $('vwCropSave').addEventListener('click',()=>{if(!vw||!crop)return;const c=crop;const isFull=c.l<0.005&&c.t<0.005&&c.r>0.995&&c.b>0.995;vw.s.crop=isFull?null:{l:+c.l.toFixed(3),t:+c.t.toFixed(3),r:+c.r.toFixed(3),b:+c.b.toFixed(3)};persist();$('vwCropCancel').click();openViewer(vw.g,vw.s,true);toast(isFull?'No crop':'Crop saved: the grey part will not be read')});
-async function deleteShot(g,s){await dbDel(PH,s.name);await dbDel(TH,s.name);
+async function deleteShot(g,s){if(locked(V))return;await dbDel(PH,s.name);await dbDel(TH,s.name);
   if(g.kind==='msl'){V.msl=V.msl.filter(x=>x!==s);V.manifestSent=false;const same=s.cat==='MCL'?[]:V.msl.filter(x=>x.cat===s.cat);for(const x of same){const want=same.indexOf(x)+1;if(x.n!==want){const nn=fnameM(V,x.cat,want);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,nn,b);if(t)await dbPut(TH,nn,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=nn;x.n=want}}persist();return}
   if(g.kind==='visit'){V.extras=V.extras.filter(x=>x!==s);for(const x of V.extras){const want=V.extras.indexOf(x)+1;if(x.n!==want){const nn=fnameX(V,want);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,nn,b);if(t)await dbPut(TH,nn,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=nn;x.n=want}}persist();return}
   g.shots=g.shots.filter(x=>x!==s);
   for(const x of g.shots){const want=g.shots.indexOf(x)+1;if(x.n!==want){const nn=fname(V,g,want);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,nn,b);if(t)await dbPut(TH,nn,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=nn;x.n=want}}
   if(!g.shots.length){V.groups=V.groups.filter(x=>x!==g)}persist()}
-$('vwDelete').addEventListener('click',async()=>{if(!vw)return;const b=$('vwDelete');if(b.dataset.a!=='1'){b.dataset.a='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.a='';b.textContent='Delete'},3000);return}
+$('vwDelete').addEventListener('click',async()=>{if(!vw)return;if(guard('photos'))return;const b=$('vwDelete');if(b.dataset.a!=='1'){b.dataset.a='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.a='';b.textContent='Delete'},3000);return}
   b.dataset.a='';b.textContent='Delete';const {g,s}=vw;await deleteShot(g,s);toast('Photo deleted');back()});
-$('vwRetake').addEventListener('click',async()=>{if(!vw)return;const {g,s}=vw;await deleteShot(g,s);$('viewer').style.display='none';vw=null;depth--;history.replaceState({aegis:'cat',d:depth},'');
+$('vwRetake').addEventListener('click',async()=>{if(!vw)return;if(guard('photos'))return;const {g,s}=vw;await deleteShot(g,s);$('viewer').style.display='none';vw=null;depth--;history.replaceState({aegis:'cat',d:depth},'');
   if(!V.groups.includes(g)){V.groups.push(g);g.shots=[]}cur=g;prevG=null;prevBmp=null;const last=g.shots[g.shots.length-1];if(last&&last.gray){prevG=last.gray;const tb=await dbGet(PH,last.name);if(tb)prevBmp=await loadBitmap(tb)}
   await openCamera()});
 
@@ -996,7 +1078,7 @@ function manifestCSV(v){const lines=['visit_id,file,project,bw_code,client_code,
   for(const g of v.groups)for(const s of g.shots){const c=s.crop||{};lines.push([v.id,s.name,...vp,g.cat,g.n,g.kind,g.type,g.orient||'',''  ,g.lens||'',g.addedLater?1:0,s.n,s.w,s.h,s.sharp,s.tilt,s.ov==null?'':Math.round(s.ov*100),s.postL?1:0,s.postR?1:0,JSON.stringify(s.dup||''),s.level,c.l??'',c.t??'',c.r??'',c.b??'',s.time].join(','))}
   for(const s of (v.extras||[]))lines.push([v.id,s.name,...vp,'VISIT','','visit','visit','','','',0,s.n,s.w,s.h,'','','','','','','','','','','',s.time].join(','));
   for(const s of (v.msl||[]))lines.push([v.id,s.name,...vp,s.cat,'pack','pack','pack','',JSON.stringify(s.skuCode||''),'',0,s.n,s.w,s.h,s.sharp,'','','','','',s.level||'','','','','',s.time].join(','));return lines.join('\n')}
-function visitFields(v){const sd=(v.storeLat!=null&&v.gps)?distM(v.gps,{lat:v.storeLat,lng:v.storeLng}):'';return {visitId:v.id,project:v.project||'',store:v.store,storeName:v.name||'',clientCode:v.client||'',onList:v.onList?1:0,storeLat:v.storeLat==null?'':v.storeLat,storeLng:v.storeLng==null?'':v.storeLng,storeDistM:sd,auditor:v.auditor,wod:v.wod||'',device:v.device,date:v.date,time:v.hhmm,seq:v.seq,folder:folderName(v),started:v.started,clockOffsetS:v.clockOffsetS||0,clockChecked:v.clockChecked?1:0,gpsLat:v.gps?v.gps.lat:'',gpsLng:v.gps?v.gps.lng:'',gpsAcc:v.gps?Math.round(v.gps.acc):'',placeName:v.place?v.place.name:'',placeLat:v.place?v.place.lat:'',placeLng:v.place?v.place.lng:'',placeSrc:v.place?v.place.src:'',placeDistM:v.place&&v.gps?distM(v.gps,v.place):'',categories:catsCovered(v).join(', '),groups:v.groups.length,photos:shelfShots(v).length,visitPhotos:(v.extras||[]).length,mslPacks:(v.msl||[]).length,appVersion:VERSION,visitStatus:(v.det||{}).status||'',refuseReason:(v.det||{}).status==='Refused Audit'?(v.det.reason||''):'',photoRule:(v.det||{}).status==='Allowed Audit'?(v.det.photo||''):'',measureRule:(v.det||{}).status==='Allowed Audit'?(v.det.measure||''):''}}
+function visitFields(v){const sd=(v.storeLat!=null&&v.gps)?distM(v.gps,{lat:v.storeLat,lng:v.storeLng}):'';return {visitId:v.id,project:v.project||'',store:v.store,storeName:v.name||'',clientCode:v.client||'',onList:v.onList?1:0,storeLat:v.storeLat==null?'':v.storeLat,storeLng:v.storeLng==null?'':v.storeLng,storeDistM:sd,auditor:v.auditor,wod:v.wod||'',device:v.device,date:v.date,time:v.hhmm,seq:v.seq,folder:folderName(v),started:v.started,clockOffsetS:v.clockOffsetS||0,clockChecked:v.clockChecked?1:0,gpsLat:v.gps?v.gps.lat:'',gpsLng:v.gps?v.gps.lng:'',gpsAcc:v.gps?Math.round(v.gps.acc):'',placeName:v.place?v.place.name:'',placeLat:v.place?v.place.lat:'',placeLng:v.place?v.place.lng:'',placeSrc:v.place?v.place.src:'',placeDistM:v.place&&v.gps?distM(v.gps,v.place):'',categories:catsCovered(v).join(', '),groups:v.groups.length,photos:shelfShots(v).length,visitPhotos:(v.extras||[]).length,mslPacks:(v.msl||[]).length,appVersion:VERSION,visitStatus:(v.det||{}).status||'',refuseReason:(v.det||{}).status==='Refused Audit'?(v.det.reason||''):'',photoRule:(v.det||{}).status==='Allowed Audit'?(v.det.photo||''):'',measureRule:(v.det||{}).status==='Allowed Audit'?(v.det.measure||''):'',corrBW:(v.corr||{}).bw||'',corrName:(v.corr||{}).name||''}}
 function hhmm(iso){const d=new Date(iso);return pad2(d.getHours())+':'+pad2(d.getMinutes())}
 function qcFlags(cfg,m,t){const ty=m.types||[];let f=0;if(m.cons===1&&!ty.length)f++;if(m.cons!==1&&ty.length)f++;if(cfg.extra){if(ty.includes(4))f++}else if(cfg.cluster&&(ty.includes(4)||ty.includes(5))&&(t.cluster==='A'||t.cluster==='B'))f++;return f?`CHECK – ${f} flag(s)`:'OK'}
 function rawPayload(v){if(!isHub(v))return {};const p=P(v.project),det=v.det||{},f={},meas=[],refused=det.status==='Refused Audit',now=new Date(nowMs()).toISOString();
@@ -1011,6 +1093,7 @@ function rawPayload(v){if(!isHub(v))return {};const p=P(v.project),det=v.det||{}
       if((m.where||'').trim())f[k+'Brand(s) / where']=m.where.trim();if((m.others||'').trim()&&c!=='BISCUITS')f[k+'Other brands measured']=m.others.trim();if((m.remarks||'').trim())f[k+'Remarks']=m.remarks.trim();
       meas.push({name:nm,unit:cfg.unit,cols:cfg.cols,mnc:cfg.cols.map((_,i)=>!!cfg.mncOnly||i===0),vals:cfg.cols.map((_,i)=>has(m.vals[i])?Number(m.vals[i]):null),total:t.tot,pct:cfg.cols.map((_,i)=>{const q=t.full?t.pct(i):null;return q==null?null:+q.toFixed(4)}),cluster:t.full?t.cluster:'',cons:m.cons,types:ty,where:m.where||'',others:c==='BISCUITS'?'':(m.others||''),remarks:m.remarks||'',bevLoc:m.bevLoc,bevComp:m.bevComp,bevDel:m.bevDel,pcRep:m.pcRep,pcType:m.pcType,pcProd:m.pcProd,pcHome:m.pcHome,flags})}}
   return {flat:JSON.stringify(f),meas:JSON.stringify(meas)}}
+function detailPayload(v){const d=v.det||{},p=P(v.project);if(!p.details&&!v.chk&&!v.corr&&!(v.na&&Object.keys(v.na).length))return {};return {det2:JSON.stringify({sec:d.sec||'',mgr:d.mgr||'',diser:d.diser||'',remarks:d.remarks||'',na:p.cats.filter(([c])=>catNA(v,c)).map(([c,nm])=>nm+': '+(v.na[c].remark||'')).join(' | '),checklist:v.chk?v.chk.orig:'',checklistWarn:v.chk?(v.chk.warn||''):'',corrBW:(v.corr||{}).bw||'',corrName:(v.corr||{}).name||''})}}
 function mclPayload(v){const p=P(v.project);if(!p.mcl.length||(v.det||{}).status==='Refused Audit')return {};const s=mclStats(v);return {mclYes:s.yes,mclNo:s.no,mclTodo:s.unanswered,mcl:JSON.stringify(p.mcl.map(m=>{const a=mclAns(v,m[0])||{};const ph=mclPhoto(v,m[0]);return [m[0],m[1],m[2],m[3],a.a==null?'':a.a,a.a===0?(a.reason||''):'',a.remark||'',a.a===1&&ph?ph.name:'']}))}}
 async function post(body){const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify(body)});return await r.json()}
 function setStatus(t,bad){const st=$('upStatus');st.className='status'+(bad?' bad':'');st.textContent=t}
@@ -1028,25 +1111,41 @@ async function runQueue(){const v=Q.v;const units=[[XG(v),true],[{n:0,cat:'',kin
     if(!navigator.onLine){stop='No signal. Upload resumes when the phone is back online.';break}
     for(const [,s] of batch)s.status='uploading';if(V===v)renderVisit();setStatus(`Uploading photo ${sent+1}${batch.length>1?'–'+(sent+batch.length):''} of ${all.length}… keep Aegis open.`);
     const rs=await Promise.all(batch.map(([g,s])=>sendOne(v,g,s)));
-    for(const r of rs){if(r.ok)sent++;else if(r.busy)stop='The server is busy right now. Aegis will try again by itself in a minute: keep the app open.';else if(r.error==='bad token')stop='Upload refused: your access token is not valid any more. Sign in again or check with the office.';else if(r.net)stop='Could not reach the upload link (weak signal, or the link changed). Will retry.';else stop='Upload refused: '+(r.error||'unknown error')}
+    for(const r of rs){if(r.ok)sent++;else if(r.busy)stop='The server is busy right now. Aegis will try again by itself in a minute: keep the app open.';else if(r.error==='bad token'){stop='Your access token was changed. Sign in with the new token; nothing on this phone is lost.';needLogin()}else if(r.net)stop='Could not reach the upload link (weak signal, or the link changed). Will retry.';else stop='Upload refused: '+(r.error||'unknown error')}
     persist();if(V===v)renderVisit()}
   if(stop){setStatus(stop,true);return}
-  if(all.every(s=>s.status==='sent')&&(!Q.quiet||v.submitted)&&!missing(v).length){setStatus('Sending the visit record…');
-    try{const j=await post({token:CFG.token,name:CFG.name,kind:'manifest',filename:`${base(v)}_manifest.csv`,text:manifestCSV(v),...visitFields(v),...mclPayload(v),...rawPayload(v)});if(j.ok){v.manifestSent=true;v.submitted=false;persist();setStatus(all.length?`All ${all.length} photos and the visit record are in Drive.`:'The visit record is in Drive.');toast('Submitted')}else if(j.busy)setStatus('Photos are in; the server is busy saving the visit record. Aegis will try again in a minute: keep the app open.',true);else setStatus('Photos are in; the visit record was refused: '+(j.error||''),true)}
+  if(all.every(s=>s.status==='sent')&&(!Q.quiet||v.submitted)&&!missing(v).length){
+    if(v.chk&&v.chk.status!=='sent'&&measMode(v)!=='none'){setStatus('Checking and sending the SOS checklist file… keep Aegis open.');const cb=await dbGet(PH,v.chk.name);
+      if(!cb){v.chk=null;persist();setStatus('The checklist file is no longer on this phone. Attach it again, then tap Submit visit.',true);if(V===v)renderVisit();return}
+      try{const cj=await post({token:CFG.token,name:CFG.name,kind:'checklist',filename:v.chk.name,origName:v.chk.orig,data:await b64(cb),...visitFields(v)});
+        if(cj.ok){v.chk.status='sent';v.chk.sentAt=new Date().toISOString();v.chk.warn=cj.warn||'';persist();if(cj.warn)toast(cj.warn,7000)}
+        else if(cj.error==='checklist'){v.chk.status='bad';v.chk.error=cj.detail||'';persist();setStatus('The file attached is not the SOS checklist. '+(cj.detail||'')+' Attach the correct file, then tap Submit visit again.',true);if(V===v)renderVisit();return}
+        else if(cj.error==='bad token'){setStatus('Your access token was changed. Sign in with the new token; nothing on this phone is lost.',true);needLogin();return}
+        else{setStatus(cj.busy?'The server is busy right now. Aegis will try again by itself in a minute: keep the app open.':'The checklist file was refused: '+(cj.error||''),true);return}}
+      catch(e){setStatus('The checklist file could not be sent yet. Aegis will retry when there is signal.',true);return}}
+    setStatus('Sending the visit record…');
+    try{const j=await post({token:CFG.token,name:CFG.name,kind:'manifest',filename:`${base(v)}_manifest.csv`,text:manifestCSV(v),...visitFields(v),...mclPayload(v),...rawPayload(v),...detailPayload(v)});if(j.ok){v.manifestSent=true;v.submitted=false;if(!v.firstSent)v.firstSent=new Date(nowMs()).toISOString();persist();setStatus(all.length?`All ${all.length} photos and the visit record are in Drive.`:'The visit record is in Drive.');toast('Submitted')}else if(j.busy)setStatus('Photos are in; the server is busy saving the visit record. Aegis will try again in a minute: keep the app open.',true);else if(j.error==='bad token'){setStatus('Your access token was changed. Sign in with the new token; nothing on this phone is lost.',true);needLogin()}else setStatus('Photos are in; the visit record was refused: '+(j.error||''),true)}
     catch(e){setStatus('Photos are in; the visit record could not be sent yet. Aegis will retry when there is signal.',true)}}
   else if(!Q.quiet){const left=all.filter(s=>s.status!=='sent').length;setStatus(`${left} photo${left>1?'s':''} still to send. Tap Submit visit to retry.`,true)}
   else{const left=all.filter(s=>s.status!=='sent').length;if(left)setStatus(`Visit photos and pack shots sent. ${left} shelf photo${left>1?'s':''} waiting for Submit visit.`);else setStatus('Photos sent. Tap Submit visit when the visit is complete.')}}
-$('uploadBtn').addEventListener('click',()=>{if(!V)return;const need=missing(V);if(need.length){toast('Cannot submit yet: '+need.join('; ')+'.',5000);return}V.submitted=true;V.manifestSent=false;persist();enqueue(V,false)});
+$('uploadBtn').addEventListener('click',async()=>{if(!V)return;const b0=$('uploadBtn');b0.disabled=true;const upd=await checkUpdate();b0.disabled=false;if(upd||!V)return;const need=missing(V);if(need.length){toast('Cannot submit yet: '+need.join('; ')+'.',5000);return}V.submitted=true;V.manifestSent=false;persist();enqueue(V,false)});
+const verNum=x=>{const m=String(x||'').match(/(\d+)\.(\d+)(?:\.(\d+))?/);return m?Number(m[1])*1e6+Number(m[2])*1e3+Number(m[3]||0):0};
+async function checkUpdate(soft){if(!navigator.onLine)return false;if(soft&&(V||!['main','proj'].includes(topScreen())))return false;   // a newer Aegis on the server is installed before anything is submitted
+  try{const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),8000);const r=await fetch('./index.html?u='+Date.now(),{cache:'no-store',signal:ctl.signal});clearTimeout(tm);if(!r.ok)return false;const t=await r.text();const m=t.match(/VERSION='(v[\d.]+)'/);
+    if(m&&verNum(m[1])>verNum(VERSION)){persist();if(V)save('aegis.resume',V.id);toast(`Updating Aegis to ${m[1]}… your visit is saved.`,3000);
+      try{if('caches' in window){const c=await caches.open('aegis-v2'),mk=()=>new Response(t,{headers:{'Content-Type':'text/html; charset=utf-8'}});await c.put('./index.html',mk());await c.put('./',mk())}}catch(e){}
+      setTimeout(()=>location.reload(),1200);return true}}catch(e){}return false}
 function resumeIfNeeded(){if(!V||!navigator.onLine||Q.running||!signedIn())return;if(V.submitted&&!V.manifestSent&&!missing(V).length)enqueue(V,false);else if((V.extras||[]).concat(V.msl||[]).some(s=>s.status!=='sent'))enqueue(V,true)}
 setInterval(resumeIfNeeded,60000);
 window.addEventListener('online',resumeIfNeeded);document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeIfNeeded()});
 
 /* ---------- housekeeping ---------- */
-async function purgeOld(){const cutoff=Date.now()-KEEP_DAYS*864e5;for(const v of VISITS)for(const s of shots(v)){if(s.status==='sent'&&s.sentAt&&new Date(s.sentAt).getTime()<cutoff&&!s.purged){await dbDel(PH,s.name);s.purged=true}}persist()}
+async function purgeOld(){const cutoff=Date.now()-KEEP_DAYS*864e5;for(const v of VISITS)if(v.chk&&v.chk.status==='sent'&&v.chk.sentAt&&new Date(v.chk.sentAt).getTime()<cutoff&&!v.chk.purged){await dbDel(PH,v.chk.name);v.chk.purged=true}for(const v of VISITS)for(const s of shots(v)){if(s.status==='sent'&&s.sentAt&&new Date(s.sentAt).getTime()<cutoff&&!s.purged){await dbDel(PH,s.name);s.purged=true}}persist()}
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
 (function boot(){history.replaceState({aegis:'main',d:0},'');renderCfg();CLOCK=Object.assign(CLOCK,load('aegis.clock',{}));VISITS=load('aegis.visits',[]);
-  for(const v of VISITS){v.extras=v.extras||[];v.msl=v.msl||[];v.mcl=v.mcl||{};if(!v.project||/perfect store/i.test(v.project))v.project='PS 2026';for(const g of v.groups){if(!g.cat)g.cat=v.cat||'POWBEV'}for(const s of shots(v))if(s.status==='uploading')s.status='failed'}
-  renderHome();showVer();if(!signedIn()){$('settings').hidden=false}else showProj();ctx();checkClock();purgeOld();if(signedIn()&&(!SYNC.at||!(SYNC.projects||[]).length||!(SYNC.projects||[]).every(p=>Array.isArray(p.cats)&&Array.isArray(p.cats[0]||[]))||Date.now()-new Date(SYNC.at).getTime()>3*3600e3))doSync(true)})();
+  for(const v of VISITS){v.extras=v.extras||[];v.msl=v.msl||[];v.mcl=v.mcl||{};if(!v.project||/perfect store/i.test(v.project))v.project='PS 2026';for(const g of v.groups){if(!g.cat)g.cat=v.cat||'POWBEV'}for(const s of shots(v))if(s.status==='uploading')s.status='failed';if(v.manifestSent&&!v.firstSent)v.firstSent=v.finished||v.started}
+  renderHome();showVer();if(!signedIn()){$('settings').hidden=false}else showProj();ctx();checkClock();purgeOld();if(signedIn()&&(!SYNC.at||!(SYNC.projects||[]).length||!(SYNC.projects||[]).every(p=>Array.isArray(p.cats)&&Array.isArray(p.cats[0]||[]))||Date.now()-new Date(SYNC.at).getTime()>3*3600e3))doSync(true);
+  const rid=load('aegis.resume',null);if(rid){save('aegis.resume',null);const rv=VISITS.find(x=>x.id===rid);if(rv&&signedIn())setTimeout(()=>{CFG.project=rv.project;save('aegis.cfg',CFG);$('projPage').hidden=true;openVisit(rv);toast(`Aegis is now ${VERSION}. Tap Submit visit to continue.`,5000)},400)}else setTimeout(()=>checkUpdate(true),5000)})();
 })();
 </script>
 </body>
