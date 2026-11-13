@@ -261,7 +261,7 @@ button[disabled]{opacity:.45;cursor:default}
       <div class="choice" id="msPick"><button data-v="Allowed for all"><b>Allowed</b>for all</button><button data-v="Allowed for MNC only"><b>MNC only</b>allowed for MNC only</button><button data-v="Not allowed (MNC and competitor)"><b>Not allowed</b>MNC and competitor</button></div>
     </div>
     </div>
-    <details id="extraBox" hidden><summary class="muted">People met and audit remarks (optional)</summary><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px"><input type="text" id="dSec" placeholder="Name of security personnel" autocomplete="off"><input type="text" id="dMgr" placeholder="Name of store manager / OIC" autocomplete="off"><input type="text" id="dDis" placeholder="Name of MNC diser / merchandiser" autocomplete="off"><textarea id="dRem" placeholder="Audit remarks: restrictions, diser / coordinator alignment, stock issues, delivery schedule, requests"></textarea></div></details>
+    <div id="extraBox" hidden><label>People met and audit remarks · required (type N/A if none)</label><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px"><input type="text" id="dSec" placeholder="Name of security personnel" autocomplete="off"><input type="text" id="dMgr" placeholder="Name of store manager / OIC" autocomplete="off"><input type="text" id="dDis" placeholder="Name of MNC diser / merchandiser" autocomplete="off"><textarea id="dRem" placeholder="Audit remarks: restrictions, diser / coordinator alignment, stock issues, delivery schedule, requests"></textarea></div></div>
   </div>
   <div class="card" id="tilesCard">
     <h3>What are you doing?</h3>
@@ -316,6 +316,8 @@ button[disabled]{opacity:.45;cursor:default}
     <div style="display:flex;justify-content:space-between;align-items:baseline"><h3>Groups in this category</h3><span class="muted" id="catCount">0 photos</span></div>
     <p class="muted">Tap a photo to view, crop, delete or retake it.</p>
     <div class="vlist" id="groups"></div>
+    <button class="ghost" id="catUp">Upload this category's photos now</button>
+    <p class="status upMirror"></p>
   </div>
 </section>
 
@@ -343,8 +345,23 @@ button[disabled]{opacity:.45;cursor:default}
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="packTitle">Pack shots</h2><button class="ghost small" id="packBack">← Back</button></div>
     <p class="muted" id="packSub"></p>
     <div class="progress" id="mclBarWrap" hidden><i id="mclBar"></i></div>
+    <button class="ghost" id="packUp">Upload these photos now</button>
+    <p class="status upMirror"></p>
   </div>
   <div id="packBody" style="display:flex;flex-direction:column;gap:12px"></div>
+</section>
+
+<!-- RECORDINGS PAGE -->
+<section id="recPage" hidden style="display:flex;flex-direction:column;gap:16px">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>Recordings</h2><button class="ghost small" id="recBack">← Visit</button></div>
+    <p class="muted">The recording of your discussion with the guard, diser or store manager. Audio or video, from the phone's files or gallery. At least one is required.</p>
+    <div class="vlist" id="recList"></div>
+    <button class="primary" id="recAdd">Add a recording</button>
+    <input type="file" id="recFile" accept="audio/*,video/*,.amr,.3gp,.m4a,.mp3,.wav,.aac,.ogg,.opus,.mp4,.mkv,.mov" multiple hidden>
+    <button class="ghost" id="recUp">Upload recordings now</button>
+    <p class="status upMirror"></p>
+  </div>
 </section>
 
 <!-- VISIT PHOTOS PAGE -->
@@ -355,6 +372,8 @@ button[disabled]{opacity:.45;cursor:default}
     <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="muted" id="xCount">0 photos</span></div>
     <div class="thumbrow" id="xThumbs"></div>
     <button class="primary" id="openXCam">Take visit photos</button>
+    <button class="ghost" id="xUp">Upload visit photos now</button>
+    <p class="status upMirror"></p>
   </div>
 </section>
 </main>
@@ -455,20 +474,20 @@ button[disabled]{opacity:.45;cursor:default}
 <script>
 (function(){
 'use strict';
-const APP='BW Aegis App', VERSION='v4.2';
+const APP='BW Aegis App', VERSION='v4.4';
 const $=id=>document.getElementById(id);
 const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxHPqdY8X5CckGOREXFPZdkji-MJijE0HEiV2hr5TR7lSmRJpFJWZySSNU5MjJ9UY2Z/exec';
 const CFG={url:DEFAULT_URL,token:'',name:'',role:''};
 const PDEF={'PS 2026':{cats:[['POWBEV','Powdered Beverage'],['BISCUITS','Biscuits'],['CHOCO','Chocolates'],['BREADFILL','Breadfill'],['CHILLER','Chiller']]},
   'MNC':{cats:[['NOODLES','Noodles'],['BISCUITS','Biscuits'],['OYSTER','Oyster Sauce'],['BBQ','BBQ Marinade'],['MEALMIX','Meal Mixes'],['GATA','Gata'],['BEV','Beverage'],['PCAKES','Packaged Cakes']],details:true,mclRequired:true}};
 const REASONS=['OOS','Not Carried','Others (specify in Remarks)'];
-function P(name){const n=name||curProject();const s=(SYNC.projects||[]).find(p=>p.name===n)||{};const d=PDEF[n]||{cats:[]},fl=s.flow||{};return {name:n,cats:(s.cats&&s.cats.length?s.cats:d.cats),mcl:s.mcl||[],details:fl.details!=null?!!fl.details:(s.details!=null?!!s.details:!!d.details),mclRequired:s.mclRequired!=null?!!s.mclRequired:!!d.mclRequired,measRequired:s.measRequired!=null?!!s.measRequired:!!d.mclRequired,reasons:(s.reasons&&s.reasons.length?s.reasons:REASONS),guide:!!s.guide,client:fl.client||(n==='MNC'?'MNC':'client'),shelfReq:!!fl.shelfReq,packReq:!!fl.packReq,visitReq:!!fl.visitReq,checklist:!!fl.checklist}}
+function P(name){const n=name||curProject();const s=(SYNC.projects||[]).find(p=>p.name===n)||{};const d=PDEF[n]||{cats:[]},fl=s.flow||{};return {name:n,cats:(s.cats&&s.cats.length?s.cats:d.cats),mcl:s.mcl||[],details:fl.details!=null?!!fl.details:(s.details!=null?!!s.details:!!d.details),mclRequired:s.mclRequired!=null?!!s.mclRequired:!!d.mclRequired,measRequired:s.measRequired!=null?!!s.measRequired:!!d.mclRequired,reasons:(s.reasons&&s.reasons.length?s.reasons:REASONS),guide:!!s.guide,client:fl.client||(n==='MNC'?'MNC':'client'),shelfReq:!!fl.shelfReq,packReq:!!fl.packReq,visitReq:!!fl.visitReq,checklist:!!fl.checklist,recReq:!!fl.recReq}}
 const catName=c=>{if(c==='MCL')return 'MCL';const names=[...new Set([V&&V.project,...Object.keys(PDEF),...(SYNC.projects||[]).map(p=>p.name)].filter(Boolean))];for(const n of names){const h=P(n).cats.find(x=>x[0]===c);if(h)return h[1]}return c};
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
 const pad3=n=>String(n).padStart(3,'0');
 const PAL=['#F26B21','#1F7A4D','#2B6CB0','#B8860B','#8E44AD','#C0392B','#00838F','#5D4037'];
 const svg=d=>`<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
-const IC={shelf:svg('<path d="M4 3v18M20 3v18M4 9h16M4 15h16M4 21h16"/><path d="M8 9V6M12 9V5M16 9V6M9 15v-3M15 15v-3"/>'),list:svg('<path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5L7.5 11M3.5 18l1.5 1.5L7.5 17"/>'),cam:svg('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>'),ruler:svg('<path d="M3 17L17 3l4 4L7 21z"/><path d="M7.5 13.5l1.5 1.5M10.5 10.5l1.5 1.5M13.5 7.5l1.5 1.5"/>')};
+const IC={shelf:svg('<path d="M4 3v18M20 3v18M4 9h16M4 15h16M4 21h16"/><path d="M8 9V6M12 9V5M16 9V6M9 15v-3M15 15v-3"/>'),list:svg('<path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5L7.5 11M3.5 18l1.5 1.5L7.5 17"/>'),cam:svg('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>'),mic:svg('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/>'),ruler:svg('<path d="M3 17L17 3l4 4L7 21z"/><path d="M7.5 13.5l1.5 1.5M10.5 10.5l1.5 1.5M13.5 7.5l1.5 1.5"/>')};
 function abbr(nm){const w=String(nm).replace(/[^A-Za-z0-9 ]/g,' ').trim().split(/\s+/);return (w[0].length<=3?w[0]:w.length>1?w[0][0]+w[1][0]:w[0].slice(0,2)).toUpperCase()}
 function bigTile(o){const b=document.createElement('button');b.className='btile'+(o.done?' done':'')+(o.lock?' lock':'');b.innerHTML=`<span class="bic" style="background:${o.color}">${o.icon}</span><span class="btx"><b>${esc(o.title)}</b><span>${esc(o.sub)}</span>${o.pct==null?'':`<span class="bbar"><i style="width:${o.pct}%"></i></span>`}</span><span class="bgo">${o.done?'✓':'›'}</span>`;b.addEventListener('click',o.go);return b}
 let VISITS=[],V=null,CAT=null,cur=null;
@@ -555,10 +574,11 @@ const typeName={shelf:'Shelf',rack:'Frame/Rack',visit:'Visit photos',msl:'Pack s
 function ctx(){$('ctx').textContent=V?`${V.store} · ${V.groups.length} group${V.groups.length===1?'':'s'}, ${shots(V).length} photo${shots(V).length===1?'':'s'}`:'no visit open'}
 
 /* ---------- navigation: every screen is a step the phone's Back button can undo ---------- */
-let depth=0;
-function push(name){depth++;history.pushState({aegis:name,d:depth},'')}
+let depth=0;const SID=String(Date.now());
+function push(name){depth++;history.pushState({aegis:name,d:depth,sid:SID},'')}
+function rs(name,d){history.replaceState({aegis:name,d,sid:SID},'')}
 function back(n){if(depth>0)history.go(-Math.min(n||1,depth))}
-function topScreen(){if($('confirmOv').style.display==='flex')return 'confirm';if($('storeOv').style.display==='flex')return 'store';if($('guideOv').style.display==='flex')return 'guide';if($('review').style.display==='flex')return 'review';if($('viewer').style.display==='flex')return 'viewer';if($('mapOv').style.display==='flex')return 'map';if(!$('cam').hidden)return 'cam';if(!$('settings').hidden)return 'settings';if(!$('catPage').hidden)return 'cat';if(!$('xPage').hidden)return 'x';if(!$('packPage').hidden)return mclOpen?'mclcat':'pack';if(!$('sosPage').hidden)return 'sos';if(!$('measPage').hidden)return measCat?'meascat':'meas';if(!$('visit').hidden)return 'visit';if(!$('newPage').hidden)return 'new';if(!$('histPage').hidden)return 'hist';if(!$('projPage').hidden)return 'proj';return 'main'}
+function topScreen(){if($('confirmOv').style.display==='flex')return 'confirm';if($('storeOv').style.display==='flex')return 'store';if($('guideOv').style.display==='flex')return 'guide';if($('review').style.display==='flex')return 'review';if($('viewer').style.display==='flex')return 'viewer';if($('mapOv').style.display==='flex')return 'map';if(!$('cam').hidden)return 'cam';if(!$('settings').hidden)return 'settings';if(!$('catPage').hidden)return 'cat';if(!$('xPage').hidden)return 'x';if(!$('recPage').hidden)return 'rec';if(!$('packPage').hidden)return mclOpen?'mclcat':'pack';if(!$('sosPage').hidden)return 'sos';if(!$('measPage').hidden)return measCat?'meascat':'meas';if(!$('visit').hidden)return 'visit';if(!$('newPage').hidden)return 'new';if(!$('histPage').hidden)return 'hist';if(!$('projPage').hidden)return 'proj';return 'main'}
 function closeTop(){const t=topScreen();
   if(t==='review'){if(pending){push('review');toast('Choose Keep or Retake first');return}$('review').style.display='none';return}
   if(t==='guide'){$('guideOv').style.display='none';return}
@@ -575,10 +595,15 @@ function closeTop(){const t=topScreen();
   if(t==='sos'){$('sosPage').hidden=true;$('visit').hidden=false;renderVisit();return}
   if(t==='mclcat'){mclOpen='';renderPack();window.scrollTo(0,0);return}
   if(t==='x'){$('xPage').hidden=true;$('visit').hidden=false;renderVisit();return}
+  if(t==='rec'){$('recPage').hidden=true;$('visit').hidden=false;renderVisit();return}
   if(t==='visit'){if(V&&!V.manifestSent&&(shots(V).length||Object.keys(V.mcl||{}).length||V.det))toast('This visit is not submitted yet. It is saved on this phone, but it is NOT in Drive until you tap Submit visit.',4500);V=null;$('visit').hidden=true;$('newPage').hidden=true;$('histPage').hidden=true;$('start').hidden=false;renderHome();ctx();return}
   if(t==='new'){$('newPage').hidden=true;$('start').hidden=false;renderHome();return}
   if(t==='hist'){$('histPage').hidden=true;$('start').hidden=false;renderHome();return}}
-window.addEventListener('popstate',e=>{const d=(e.state&&typeof e.state.d==='number')?e.state.d:0;if(d>=depth){depth=d;return}const steps=depth-d;depth=d;for(let i=0;i<steps;i++){try{closeTop()}catch(err){}}});
+window.addEventListener('popstate',e=>{const st0=e.state;
+  if(!st0||st0.sid!==SID||!(st0.d>=0)){   // the bottom of the app, or a page from before a reload: stay in Aegis, on the home page
+    for(let i=0;i<12;i++){const b4=topScreen();if(b4==='main'||b4==='proj')break;try{closeTop()}catch(err){break}if(topScreen()===b4)break}
+    depth=0;history.pushState({aegis:'main',d:0,sid:SID},'');return}
+  const d=st0.d;if(d>=depth){depth=d;return}const steps=depth-d;depth=d;for(let i=0;i<steps;i++){try{closeTop()}catch(err){}}});
 
 /* ---------- sign in / account ---------- */
 Object.assign(CFG,load('aegis.cfg',{}));if(!CFG.url)CFG.url=DEFAULT_URL;
@@ -681,7 +706,7 @@ function createVisit(ps){const code=ps.code,st=ps.st,gps=ps.gps,wod=ps.wod;
   const np=parts(nowMs());const seq=VISITS.filter(v=>v.store===code&&v.date===np.date).length+1;
   save('aegis.wod',{date:np.date,word:wod});
   V={id:`${code}_${np.date.replace(/-/g,'')}_${np.hhmm}_${DEVICE}`,project:curProject(),store:code,name:ps.name,client:st?st.client:'',onList:!!st,storeLat:st&&st.lat!=null?st.lat:null,storeLng:st&&st.lng!=null?st.lng:null,auditor:CFG.name,wod,date:np.date,hhmm:np.hhmm,started:np.iso,seq,gps,place:PLACE,device:DEVICE,clockOffsetS:Math.round((CLOCK.raw||0)/1000),clockChecked:!!CLOCK.checked,groups:[],extras:[],msl:[],mcl:{},det:null,done:false,manifestSent:false};
-  PLACE=null;STORE=null;$('storePicked').hidden=true;showPlace();$('placeResults').innerHTML='';$('placeQ').value='';lastGPS=gps||lastGPS;VISITS.push(V);persist();if(!gps)toast('No GPS fix; photos will say "no GPS"');$('newPage').hidden=true;$('storeCode').value='';$('storeName').value='';$('sameDayNote').hidden=true;V=null;depth--;history.replaceState({aegis:'main',d:depth},'');openVisit(VISITS[VISITS.length-1])}
+  PLACE=null;STORE=null;$('storePicked').hidden=true;showPlace();$('placeResults').innerHTML='';$('placeQ').value='';lastGPS=gps||lastGPS;VISITS.push(V);persist();if(!gps)toast('No GPS fix; photos will say "no GPS"');$('newPage').hidden=true;$('storeCode').value='';$('storeName').value='';$('sameDayNote').hidden=true;V=null;depth--;rs('main',depth);openVisit(VISITS[VISITS.length-1])}
 
 /* ---------- visit page ---------- */
 function openVisit(v){detOpen=false;V=v;$('start').hidden=true;$('histPage').hidden=true;$('newPage').hidden=true;$('visit').hidden=false;push('visit');renderVisit();window.scrollTo(0,0)}
@@ -691,16 +716,17 @@ function renderVisit(){if(!V)return;$('vTitle').textContent=`${V.store}${V.seq>1
   if($('ptPick').dataset.c!==p.client){const C=esc(p.client),h=`<button data-v="Allowed for all"><b>Allowed</b>for all</button><button data-v="Allowed for ${C} only"><b>${C} only</b>allowed for ${C} only</button><button data-v="Not allowed (${C} and competitor)"><b>Not allowed</b>${C} and competitor</button>`;$('ptPick').innerHTML=h;$('msPick').innerHTML=h;$('ptPick').dataset.c=p.client;$('dDis').placeholder=`Name of ${p.client} diser / merchandiser`}
   const ll=$('lockLine');ll.hidden=!LK;if(LK){const end=new Date(new Date(V.date+'T00:00:00').getTime()+EDIT_DAYS*864e5);ll.textContent=isHub(V)&&measOpen(V)?`Submitted. Photos, MCL and visit details are locked. Only the SOS measurement can still be corrected, until ${end.toLocaleDateString('en-PH',{day:'numeric',month:'short'})}.`:'Submitted. This visit can no longer be changed.'}
   if(p.details){[['vsPick','status'],['ptPick','photo'],['msPick','measure']].forEach(([id,k])=>$(id).querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===det[k])));$('refBox').hidden=det.status!=='Refused Audit';$('ruleBox').hidden=det.status!=='Allowed Audit';if(document.activeElement!==$('refReason'))$('refReason').value=det.reason||''}
-  if(p.details){$('extraBox').hidden=!det.status;DX.forEach(([id,k])=>{if(document.activeElement!==$(id))$(id).value=det[k]||''})}
-  const refused=p.details&&det.status==='Refused Audit';const complete=!p.details||refused||!!(det.status&&det.photo&&det.measure);const showBody=!complete||refused||detOpen;$('detBody').hidden=!showBody;$('detSum').hidden=showBody;if(!showBody)$('detSumTxt').innerHTML=`<b>${esc(det.status)}</b> · Photo taking: ${esc(det.photo)} · Measurement: ${esc(det.measure)}`;$('tilesCard').hidden=!complete;document.querySelectorAll('#detCard button,#detCard input,#detCard textarea').forEach(e=>{e.disabled=LK});
+  const pd=peopleDone(V);
+  if(p.details){DX.forEach(([id,k])=>{if(document.activeElement!==$(id))$(id).value=det[k]||''})}
+  const refused=p.details&&det.status==='Refused Audit';const complete=!p.details||refused||!!(det.status&&det.photo&&det.measure);const showBody=!complete||refused||detOpen;$('detBody').hidden=!showBody;$('detSum').hidden=showBody;if(!showBody)$('detSumTxt').innerHTML=`<b>${esc(det.status)}</b> · Photo taking: ${esc(det.photo)} · Measurement: ${esc(det.measure)}${pd?' · People and remarks: filled':''}`;if(p.details)$('extraBox').hidden=!det.status||(complete&&!refused&&pd&&!detOpen);$('tilesCard').hidden=!complete;document.querySelectorAll('#detCard button,#detCard input,#detCard textarea').forEach(e=>{e.disabled=LK});
   const t=$('catTiles');t.innerHTML='';const hub=isHub(V),big=bigUI(V);t.className=big?'blist':'tiles2';
   if(hub)renderHub(t,p,refused);else if(big)renderFlowHub(t,p,refused);else{
   if(!refused)for(const [c,nm] of p.cats){const gs=catGroups(V,c);const n=gs.reduce((a,g)=>a+g.shots.length,0);const b=document.createElement('button');const na=catNA(V,c);b.className='tile'+((n||na)?' has':'');b.innerHTML=`<b>SOS: ${esc(nm)}</b><span>${n?`${gs.length} group${gs.length===1?'':'s'}, ${n} photo${n===1?'':'s'}`:na?'Not available in this store':p.shelfReq?'required: no photos yet':'no photos yet'}</span>`;b.addEventListener('click',()=>openCat(c));t.appendChild(b)}
-  const xs=V.extras||[];const xb=document.createElement('button');xb.className='tile x'+(xs.length?' has':'');xb.innerHTML=`<b>Visit photos</b><span>${xs.length?`${xs.length} photo${xs.length>1?'s':''} · ${xs.filter(s=>s.status==='sent').length} uploaded`:'storefront, secondary displays, COC, visicooler, others'}</span>`;xb.addEventListener('click',()=>{$('visit').hidden=true;$('xPage').hidden=false;push('x');renderX()});t.appendChild(xb);
+  const xs=V.extras||[];const xb=document.createElement('button');xb.className='tile x'+(xs.length?' has':'');xb.innerHTML=`<b>Visit photos</b><span>${xs.length?`${xs.length} photo${xs.length>1?'s':''} · ${xs.filter(s=>s.status==='sent').length} uploaded`:'storefront, secondary displays, COC, visicooler, others'}</span>`;xb.addEventListener('click',()=>{$('visit').hidden=true;$('xPage').hidden=false;push('x');clearMirror();renderX()});t.appendChild(xb);
   if(!refused){const pb=document.createElement('button');if(p.mcl.length||p.mclRequired){const s=mclStats(V);pb.className='tile x'+(s.total&&!s.todo?' has':'');pb.innerHTML=`<b>MCL</b><span>${s.total?`${s.total-s.todo} of ${s.total} SKUs complete`:'Must Carry List'}</span>`}else{const pn=(V.msl||[]).length,pc=p.cats.filter(([c])=>!catNA(V,c)),pd=pc.filter(([c])=>(V.msl||[]).some(s=>s.cat===c)).length;pb.className='tile x'+((p.packReq?(pc.length>0&&pd===pc.length):pn)?' has':'');pb.innerHTML=`<b>Pack shots</b><span>${p.packReq?`${pd} of ${pc.length} categories · ${pn} pack${pn===1?'':'s'}`:pn?`${pn} pack${pn>1?'s':''} · ${V.msl.filter(s=>s.status==='sent').length} uploaded`:'one photo per SKU that is in the store'}</span>`}pb.addEventListener('click',openPack);t.appendChild(pb);
     if(p.checklist){const cb=document.createElement('button'),k=V.chk,off=measMode(V)==='none';cb.className='tile x'+(k&&k.status!=='bad'?' has':'');cb.innerHTML=`<b>SOS checklist</b><span>${off?'not needed: measurement not allowed':k?esc(k.orig)+(k.status==='sent'?' · uploaded':k.status==='bad'?' · wrong file, attach again':' · attached'):'required: attach the Excel file'}</span>`;cb.addEventListener('click',()=>{if(guard('the checklist file'))return;if(off){toast('Measurement is marked Not allowed for this store, so no checklist is needed.',4000);return}$('chkFile').value='';$('chkFile').click()});t.appendChild(cb)}}}
   const all=shots(V),total=all.length,sent=all.filter(s=>s.status==='sent').length;const st=vStatus(V);$('vPill').className='pill '+st.l;$('vPill').textContent=st.t;
-  const hasData=total>0||Object.keys(V.mcl||{}).length>0||refused||!!V.chk||!!(V.na&&Object.keys(V.na).length)||(p.details&&!!det.status);const allSent=hasData&&sent===total&&V.manifestSent;const need=missing(V);
+  const hasData=total>0||(V.recs||[]).length>0||Object.keys(V.mcl||{}).length>0||refused||!!V.chk||!!(V.na&&Object.keys(V.na).length)||(p.details&&!!det.status);const allSent=hasData&&sent===total&&V.manifestSent;const need=missing(V);
   $('uploadBtn').disabled=!hasData||allSent||Q.running;$('uploadBtn').textContent=Q.running?'Uploading…':allSent?'All uploaded':'Submit visit';
   $('needLine').hidden=!need.length||allSent||!hasData;$('needLine').textContent='Before you can submit: '+need.join('; ')+'.';
   const sf=$('subFor');sf.innerHTML=V.corr?`<span>Will be recorded as <b>${esc(V.corr.name)}</b> · ${esc(V.corr.bw)} <span class="pill warn">corrected</span><br><span class="muted">started as ${esc(V.name||'')} · ${esc(V.store)}</span></span>`:`<span>Submitting for <b>${esc(V.name||'')}</b> · ${esc(V.store)}</span>`;if(!LK){const wb=document.createElement('button');wb.className='ghost small';wb.style.flex='none';wb.textContent=V.corr?'Undo correction':'Wrong store?';wb.addEventListener('click',()=>{if(V.corr){V.corr=null;V.manifestSent=false;persist();renderVisit()}else openStorePick()});sf.appendChild(wb)}$('discardBtn').hidden=LK;
@@ -720,6 +746,7 @@ function locked(v){return !!(v&&v.firstSent)}
 function measOpen(v){if(!locked(v))return true;if(!isHub(v))return false;return nowMs()-new Date(v.date+'T00:00:00').getTime()<(EDIT_DAYS+1)*864e5}
 function guard(what){if(V&&locked(V)){toast(`This visit is already submitted, so ${what} can no longer be changed.`+(isHub(V)&&measOpen(V)?' Only the SOS measurement can still be corrected.':''),4500);return true}return false}
 function catNA(v,c){return !!(v.na&&v.na[c])}
+function peopleDone(v){const d=v.det||{};return ['sec','mgr','diser','remarks'].every(k=>(d[k]||'').trim())}
 function needLogin(msg){CFG.token='';save('aegis.cfg',CFG);renderCfg();$('setName').value=CFG.name||'';$('settings').hidden=false;if(!(history.state&&history.state.aegis==='settings'))push('settings');const st=$('setStatus');st.className='status bad';st.textContent=msg||'Your access token was changed. Type the new token from the office to continue. Your visits and photos on this phone are safe.';window.scrollTo(0,0)}
 /* ---------- wrong store: the visit keeps its photos and times, and is recorded under the store chosen here ---------- */
 function openStorePick(){if(guard('the store'))return;$('storeOv').style.display='flex';push('store');$('soQ').value='';renderStorePick();window.scrollTo(0,0)}
@@ -737,7 +764,43 @@ function renderHub(t,p,refused){const xs=V.extras||[];
     t.appendChild(bigTile({title:'SOS - Photos',sub:n?`${n} of ${p.cats.length} categories · ${ph} photo${ph===1?'':'s'}`:'Shelf photos, per category',icon:IC.shelf,color:'#F26B21',pct:p.cats.length?Math.round(100*n/p.cats.length):0,done:p.cats.length>0&&n===p.cats.length,go:openSos}));
     const mc=p.cats.filter(([c])=>MDEF[c]),md=mc.filter(([c])=>measState(V,c)==='ok').length,mno=measMode(V)==='none';if(mc.length)t.appendChild(bigTile({title:'SOS - Measurement',sub:mno?'Not allowed in this store: skipped':`${md} of ${mc.length} categories complete${measMode(V)==='mnc'?' · MNC only':''}`,icon:IC.ruler,color:'#2B6CB0',pct:mno?null:Math.round(100*md/mc.length),done:!mno&&md===mc.length,lock:mno,go:()=>{if(mno){toast('Measurement is marked Not allowed for this store, so it is skipped. Change it in Visit details if that is wrong.',4000);return}openMeas()}}));
     const s=mclStats(V);t.appendChild(bigTile({title:'MCL',sub:s.total?`${s.total-s.todo} of ${s.total} SKUs complete`:'Must Carry List, per category',icon:IC.list,color:'#1F7A4D',pct:s.total?Math.round(100*(s.total-s.todo)/s.total):0,done:s.total>0&&!s.todo,go:openPack}))}
-  t.appendChild(bigTile({title:'Visit photos',sub:xs.length?`${xs.length} photo${xs.length>1?'s':''} · ${xs.filter(s=>s.status==='sent').length} uploaded`:'Storefront, secondary displays, COC, visicooler, others',icon:IC.cam,color:'#12202B',done:false,go:()=>{$('visit').hidden=true;$('xPage').hidden=false;push('x');renderX()}}))}
+  if(!refused)recTile(t,p);
+  t.appendChild(bigTile({title:'Visit photos',sub:xs.length?`${xs.length} photo${xs.length>1?'s':''} · ${xs.filter(s=>s.status==='sent').length} uploaded`:'Storefront, secondary displays, COC, visicooler, others',icon:IC.cam,color:'#12202B',done:false,go:()=>{$('visit').hidden=true;$('xPage').hidden=false;push('x');clearMirror();renderX()}}))}
+const mb=n=>n>=1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB';
+function recTile(t,p){if(!p.recReq&&!(V.recs||[]).length)return;const rs=V.recs||[],sent=rs.filter(r=>r.status==='sent').length;
+  t.appendChild(bigTile({title:'Recordings',sub:rs.length?`${rs.length} file${rs.length>1?'s':''} · ${sent} uploaded`:'Guard, diser or manager discussion · required',icon:IC.mic,color:'#8E44AD',done:rs.length>0,go:()=>{$('visit').hidden=true;$('recPage').hidden=false;push('rec');clearMirror();renderRec();window.scrollTo(0,0)}}))}
+function renderRec(){if(!V)return;const el=$('recList'),rs=V.recs||[],lk=locked(V);el.innerHTML=rs.length?'':'<p class="muted">No recording added yet.</p>';
+  rs.forEach(r=>{const d=document.createElement('div');d.className='vrow';d.innerHTML=`<div><b style="overflow-wrap:anywhere">${esc(r.orig)}</b><div class="sub">${mb(r.size)} · saved as ${esc(r.name)}</div></div><span class="pill ${r.status==='sent'?'':'warn'}">${r.status==='sent'?'uploaded':r.sent?Math.round(100*r.sent/r.size)+'% sent':'not uploaded'}</span>`;
+    if(!lk){const b=document.createElement('button');b.className='ghost small';b.style.flex='none';b.textContent='Remove';b.addEventListener('click',async e=>{e.stopPropagation();if(Q.running){toast('An upload is running. Wait for it to finish, then remove.',3500);return}if(b.dataset.a!=='1'){b.dataset.a='1';b.textContent='Tap again';setTimeout(()=>{b.dataset.a='';b.textContent='Remove'},3000);return}
+      if(r.status==='sent'||r.sent){V.trash=V.trash||[];V.trash.push(r.name)}await dbDel(PH,r.name);V.recs=V.recs.filter(x=>x!==r);V.manifestSent=false;persist();renderRec()});d.appendChild(b)}
+    el.appendChild(d)});
+  $('recAdd').disabled=lk;$('recUp').hidden=lk}
+$('recBack').addEventListener('click',()=>back());
+$('recAdd').addEventListener('click',()=>{if(guard('the recordings'))return;$('recFile').value='';$('recFile').click()});
+$('recFile').addEventListener('change',async()=>{if(!V||guard('the recordings'))return;const fs=[...$('recFile').files];V.recs=V.recs||[];let added=0;
+  for(const f of fs){if(f.size>200*1048576){toast(`${f.name} is larger than 200 MB and was not added. Trim it or record a shorter clip.`,5000);continue}if(!f.size)continue;
+    if(V.recs.some(r=>r.orig===f.name&&r.size===f.size)){toast(f.name+' is already added.');continue}
+    let n=1;while(V.recs.some(r=>r.n===n))n++;const ext=(f.name.match(/\.[A-Za-z0-9]{1,5}$/)||['.dat'])[0].toLowerCase(),name=`${base(V)}_rec${pad2(n)}${ext}`;
+    try{await dbPut(PH,name,f)}catch(e){toast('The phone has no room to keep '+f.name+'. Upload and finish old visits first.',5000);continue}
+    V.recs.push({n,name,orig:f.name,size:f.size,mime:f.type||'application/octet-stream',status:'local',sent:0,time:new Date(nowMs()).toISOString()});added++}
+  if(added){V.manifestSent=false;persist();toast(`${added} recording${added>1?'s':''} added`)}renderRec()});
+$('recUp').addEventListener('click',()=>{if(!V)return;if(!navigator.onLine){toast('No signal. Try again when the phone is online.',3500);return}if(Q.running){toast('An upload is already running. Wait for it to finish, then tap again.',3500);return}if(!(V.recs||[]).some(r=>r.status!=='sent')){setStatus((V.recs||[]).length?'Everything here is already uploaded.':'Add a recording first.');return}enqueue(V,true,()=>false,true)});
+const REC_CHUNK=4*1024*1024,REC_SIMPLE=6*1024*1024;
+async function sendRec(v,r,i,n){const blob=await dbGet(PH,r.name);if(!blob)return {ok:false,gone:true};const say=p=>setStatus(`Uploading recording ${i} of ${n}${p==null?'':' · '+p+'%'}… keep Aegis open.`);
+  const base0={token:CFG.token,name:CFG.name,filename:r.name,origName:r.orig,mime:r.mime,...visitFields(v)};
+  if(r.size<=REC_SIMPLE){say(null);const j=await post({...base0,kind:'recording',data:await b64(blob)});if(j.ok){r.status='sent';r.sent=r.size;r.sentAt=new Date().toISOString()}return j}
+  if(!r.session){say(0);const j=await post({...base0,kind:'recStart',size:r.size});if(!j.ok)return j;r.session=j.session;r.sent=0;persist()}
+  while(r.sent<r.size){say(Math.round(100*r.sent/r.size));const part=blob.slice(r.sent,Math.min(r.size,r.sent+REC_CHUNK));
+    const j=await post({token:CFG.token,name:CFG.name,kind:'recChunk',filename:r.name,project:v.project,session:r.session,offset:r.sent,total:r.size,mime:r.mime,device:v.device,data:await b64(part)});
+    if(!j.ok){if(j.restart){r.session=null;r.sent=0;persist()}return j}
+    if(j.done){r.sent=r.size;r.status='sent';r.sentAt=new Date().toISOString();delete r.session;persist();return j}
+    r.sent=typeof j.next==='number'&&j.next>r.sent?j.next:r.sent+part.size;persist();if(V===v)renderRec()}
+  return {ok:true}}
+async function sendRecs(v){const rs=(v.recs||[]).filter(r=>r.status!=='sent');let i=0;for(const r of rs){i++;let j;try{j=await sendRec(v,r,i,rs.length)}catch(e){return 'The recording could not be sent yet (weak signal). Aegis will retry; keep the app open.'}
+    if(j.gone){v.recs=v.recs.filter(x=>x!==r);persist();return 'A recording is no longer on this phone. Add it again.'}
+    if(!j.ok){if(j.error==='bad token'){needLogin();return 'Your access token was changed. Sign in with the new token; nothing on this phone is lost.'}return j.busy?'The server is busy right now. Aegis will try again by itself in a minute: keep the app open.':'The recording was refused: '+(j.error||'unknown error')}
+    persist();if(V===v)renderRec()}
+  return null}
 function bigUI(v){const p=P(v.project);return isHub(v)||p.shelfReq||p.packReq||p.checklist}
 function renderFlowHub(t,p,refused){const xs=V.extras||[];      // photo-only projects (PS): the same four big tiles as MNC, without the input pages
   if(!refused){const live=p.cats.filter(([c])=>!catNA(V,c)),n=p.cats.filter(([c])=>catNA(V,c)||catGroups(V,c).some(g=>g.shots.length)).length,ph=shelfShots(V).length,nas=p.cats.length-live.length;
@@ -745,7 +808,8 @@ function renderFlowHub(t,p,refused){const xs=V.extras||[];      // photo-only pr
     const pn=(V.msl||[]).length,pd=live.filter(([c])=>(V.msl||[]).some(s=>s.cat===c)).length;
     t.appendChild(bigTile({title:'Pack shots',sub:pn?`${pd} of ${live.length} categories · ${pn} pack${pn===1?'':'s'}`:'One photo per SKU in the store, per category',icon:IC.list,color:'#1F7A4D',pct:live.length?Math.round(100*pd/live.length):0,done:live.length>0&&pd===live.length,go:openPack}));
     if(p.checklist){const k=V.chk,off=measMode(V)==='none';t.appendChild(bigTile({title:'SOS checklist',sub:off?'Not needed: measurement is not allowed in this store':k?(k.status==='sent'?'Uploaded · ':k.status==='bad'?'Wrong file, attach again · ':'Attached · ')+k.orig:'Attach the Excel file',icon:IC.ruler,color:'#2B6CB0',done:!off&&!!k&&k.status!=='bad',lock:off,go:()=>{if(guard('the checklist file'))return;if(off){toast('Measurement is marked Not allowed for this store, so no checklist is needed.',4000);return}$('chkFile').value='';$('chkFile').click()}}))}}
-  t.appendChild(bigTile({title:'Visit photos',sub:xs.length?`${xs.length} photo${xs.length>1?'s':''} · ${xs.filter(s=>s.status==='sent').length} uploaded`:'Storefront, secondary displays, COC, visicooler, others',icon:IC.cam,color:'#12202B',done:xs.length>0&&p.visitReq,go:()=>{$('visit').hidden=true;$('xPage').hidden=false;push('x');renderX()}}))}
+  if(!refused)recTile(t,p);
+  t.appendChild(bigTile({title:'Visit photos',sub:xs.length?`${xs.length} photo${xs.length>1?'s':''} · ${xs.filter(s=>s.status==='sent').length} uploaded`:'Storefront, secondary displays, COC, visicooler, others',icon:IC.cam,color:'#12202B',done:xs.length>0&&p.visitReq,go:()=>{$('visit').hidden=true;$('xPage').hidden=false;push('x');clearMirror();renderX()}}))}
 function openSos(){$('visit').hidden=true;$('sosPage').hidden=false;push('sos');renderSos();window.scrollTo(0,0)}
 function renderSos(){if(!V)return;const p=P(V.project),el=$('sosTiles');el.innerHTML='';p.cats.forEach(([c,nm],i)=>{const gs=catGroups(V,c),n=gs.reduce((a,g)=>a+g.shots.length,0);const na=catNA(V,c);el.appendChild(bigTile({title:nm,sub:n?`${gs.length} group${gs.length===1?'':'s'} · ${n} photo${n===1?'':'s'}`:na?'Not available in this store':'No photos yet',icon:abbr(nm),color:PAL[i%PAL.length],done:n>0||na,go:()=>openCat(c)}))})}
 $('sosBack').addEventListener('click',()=>back());
@@ -806,13 +870,14 @@ $('refReason').addEventListener('input',()=>{if(!V||locked(V))return;V.det=V.det
 function missing(v){const p=P(v.project),out=[];
   if(p.details){const d=v.det||{};if(!d.status)return ['choose the visit status'];
     if(d.status==='Refused Audit'){if(!(d.reason||'').trim())out.push('type the reason for refusal');if(!(v.extras||[]).length)out.push('take at least one visit photo');return out}
-    if(!d.photo)out.push('choose Photo taking');if(!d.measure)out.push('choose Measurement')}
+    if(!d.photo)out.push('choose Photo taking');if(!d.measure)out.push('choose Measurement');if(!locked(v)&&!peopleDone(v))out.push('fill in the people met and audit remarks (type N/A if none)')}
   const noPhoto=p.details&&/^not allowed/i.test((v.det||{}).photo||'');
   if(!noPhoto){
     if(p.shelfReq){const k=p.cats.filter(([c])=>!catNA(v,c)&&!catGroups(v,c).some(g=>g.shots.length)).length;if(k)out.push(`${k} categor${k>1?'ies have':'y has'} no shelf photo (take one, or mark the category Not available in this store)`)}
     if(p.packReq){const k=p.cats.filter(([c])=>!catNA(v,c)&&!(v.msl||[]).some(s=>s.cat===c)).length;if(k)out.push(`${k} categor${k>1?'ies have':'y has'} no pack shot`)}
     if(p.visitReq&&!(v.extras||[]).length)out.push('take at least one visit photo')}
   if(p.cats.some(([c])=>catNA(v,c)&&!(v.na[c].remark||'').trim()))out.push('write the remark for each category marked Not available');
+  if(p.recReq&&!locked(v)&&!(v.recs||[]).length)out.push('add at least one recording (guard, diser or manager discussion)');
   if(p.checklist&&measMode(v)!=='none'){if(!v.chk)out.push('attach the SOS checklist (Excel file)');else if(v.chk.status==='bad')out.push('attach the correct SOS checklist file')}
   if(p.mclRequired&&p.mcl.length){const s=mclStats(v);if(s.todo)out.push(`${s.todo} MCL SKU${s.todo>1?'s are':' is'} not complete`)}
   if(p.measRequired&&isHub(v)&&measMode(v)!=='none'){const k=p.cats.filter(([c])=>MDEF[c]&&measState(v,c)!=='ok').length;if(k)out.push(`${k} SOS measurement categor${k>1?'ies are':'y is'} not complete`)}
@@ -823,7 +888,7 @@ $('discardBtn').addEventListener('click',async()=>{const b=$('discardBtn');if(b.
 $('finishBtn').addEventListener('click',()=>{V.done=true;V.finished=new Date(nowMs()).toISOString();persist();toast('Visit finished.');back()});
 
 /* ---------- category page ---------- */
-function openCat(c){CAT=c;$('visit').hidden=true;$('sosPage').hidden=true;$('catPage').hidden=false;push('cat');renderCat()}
+function openCat(c){clearMirror();CAT=c;$('visit').hidden=true;$('sosPage').hidden=true;$('catPage').hidden=false;push('cat');renderCat()}
 $('catBack').addEventListener('click',()=>back());
 function renderCat(){if(!V||!CAT)return;$('catTitle').textContent=catName(CAT);const gs=catGroups(V,CAT);$('catSub').textContent=`${V.store}${V.name?' · '+V.name:''}`;
   const el=$('groups');el.innerHTML='';let total=0;
@@ -858,7 +923,7 @@ function mclState(v,m){const a=mclAns(v,m[0]);if(!a||a.a==null)return 'todo';if(
 function mclStats(v){const list=P(v.project).mcl;let yes=0,no=0,todo=0;for(const m of list){const a=mclAns(v,m[0]);if(mclState(v,m)!=='ok')todo++;if(a&&a.a===1)yes++;else if(a&&a.a===0)no++}return {total:list.length,yes,no,todo,unanswered:list.length-yes-no}}
 function setMcl(no,o){if(guard('the MCL answers'))return;V.mcl=V.mcl||{};V.mcl[no]=o;V.manifestSent=false;persist()}
 function thumbEl(s,label,onTap){const th=document.createElement('div');th.className='th';const im=document.createElement('img');im.className=s.status;th.appendChild(im);const sp=document.createElement('span');sp.textContent=label;th.appendChild(sp);dbGet(TH,s.name).then(b=>{if(b)im.src=URL.createObjectURL(b)});th.addEventListener('click',onTap);return th}
-function openPack(){$('visit').hidden=true;$('packPage').hidden=false;push('pack');mclOpen='';renderPack();window.scrollTo(0,0)}
+function openPack(){clearMirror();$('visit').hidden=true;$('packPage').hidden=false;push('pack');mclOpen='';renderPack();window.scrollTo(0,0)}
 function leavePack(){if(V){const p=P(V.project);if(p.mcl.length){const s=mclStats(V);if(s.todo)toast(`MCL is not complete: ${s.todo} SKU${s.todo>1?'s':''} still to finish. The visit cannot be submitted, so the data will not be uploaded, until MCL is complete.`,5000)}}$('packPage').hidden=true;$('visit').hidden=false;renderVisit()}
 $('packBack').addEventListener('click',()=>back());
 function mclTop(){const st=mclStats(V);$('packSub').textContent=`Answer every SKU. Available: take a pack shot (if a photo is not possible, write a remark instead). Not available: choose the reason. ${st.total-st.todo} of ${st.total} complete.`;$('mclBar').style.width=st.total?Math.round(100*(st.total-st.todo)/st.total)+'%':'0%'}
@@ -960,13 +1025,13 @@ async function grab(){ // returns a bitmap that shows exactly what the frame sho
   const ba=bmp.width/bmp.height;if(Math.abs(ba-pa)/pa>0.02){let w=bmp.width,h=bmp.height;if(ba>pa)w=Math.round(h*pa);else h=Math.round(w/pa);const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(bmp,(bmp.width-w)/2,(bmp.height-h)/2,w,h,0,0,w,h);return await createImageBitmap(c)}
   return bmp}
 $('shutter').addEventListener('click',async()=>{if(!cur||shutterBusy)return;shutterBusy=true;$('shutter').disabled=true;
-  try{const bmp=await grab();if(!cur)return;if(cur.kind==='visit')await keepX(bmp);else if(cur.kind==='msl')await keepM(bmp);else await review(bmp)}
+  try{const bmp=await grab();if(!cur)return;if(cur.kind==='visit'||cur.kind==='msl')await quickReview(bmp);else await review(bmp)}
   catch(e){const m=String(e&&e.message||e);toast(/no picture/i.test(m)?'The camera is not sending a picture on this phone. Tap "Use phone camera" instead.':'Could not take the photo: '+m,4000)}
   finally{shutterBusy=false;$('shutter').disabled=false}});
 function diag(){const v=$('video');const vw=v.videoWidth||0,vh=v.videoHeight||0;$('camDiag').textContent=`preview ${vw&&vh?vw+'×'+vh:'none'}${camProfile?' (reduced)':''} · photo ${photoW?photoW+'px':imageCapture?'camera':'from preview'} · ${curLens()} · motion ${motionOK===null?'…':motionOK?'ok':'ignored'}`}
 $('fileCamBtn').addEventListener('click',()=>{if(!cur||shutterBusy)return;$('fileCam').value='';$('fileCam').click()});
 $('fileCam').addEventListener('change',async()=>{const f=$('fileCam').files&&$('fileCam').files[0];if(!f||!cur)return;shutterBusy=true;$('shutter').disabled=true;
-  try{const bmp=await loadBitmap(f);if(!cur)return;if(cur.kind==='visit')await keepX(bmp);else if(cur.kind==='msl')await keepM(bmp);else await review(bmp)}catch(e){toast('Could not read that photo: '+(e.message||e))}finally{shutterBusy=false;$('shutter').disabled=false}});
+  try{const bmp=await loadBitmap(f);if(!cur)return;if(cur.kind==='visit'||cur.kind==='msl')await quickReview(bmp);else await review(bmp)}catch(e){toast('Could not read that photo: '+(e.message||e))}finally{shutterBusy=false;$('shutter').disabled=false}});
 
 /* ---------- review ---------- */
 function evaluate(m,g,nShot){const rows=[];let worst='good';const lvl=l=>{if(l==='bad')worst='bad';else if(l==='warn'&&worst!=='bad')worst='warn'};
@@ -980,8 +1045,14 @@ function evaluate(m,g,nShot){const rows=[];let worst='good';const lvl=l=>{if(l==
     else{const p=Math.round(o.f*100);l=p>=65?'bad':p>=15&&p<=45?'good':'warn';lvl(l);rows.push({l,name:'Overlap with previous',val:p+'%',note:p>=65?'Almost the same frame. Move on along the shelf.':p<15?'Thin. Step back half a pace.':p>45?'More than needed; fine.':'Good for joining.'})}}
   if(m.dup){lvl('bad');rows.push({l:'bad',name:'Duplicate',val:m.dup,note:'Looks like a shelf already photographed in this visit. Retake, or crop out the shared part so it is not counted twice.'})}
   return {rows,worst}}
+async function quickReview(bmp){   // pack shots and visit photos: a quick look before the photo is kept
+  $('review').style.display='flex';push('review');$('cropBox').style.display='none';$('cropHelp').hidden=true;$('cropBtn').hidden=true;crop=null;pending={bmp,simple:true};$('verdict').className='verdict';$('verdict').textContent='Checking…';$('checks').innerHTML='';
+  const rc=$('revCanvas');const scale=Math.min(1,1000/bmp.width);rc.width=Math.round(bmp.width*scale);rc.height=Math.round(bmp.height*scale);rc.getContext('2d').drawImage(bmp,0,0,rc.width,rc.height);
+  await new Promise(r=>setTimeout(r,30));const sh=sharpness(toGray(bmp,Math.min(1000,bmp.width))),l=sh>=18?'good':sh>=12?'warn':'bad';
+  $('checks').innerHTML=`<div class="check ${l}"><span class="dot"></span><div><b>Sharpness</b><small>${l==='good'?'Fine detail is there.':l==='warn'?'A little soft. Usable; hold still if you retake.':'Blurred. Hold still, tap to focus, retake.'}</small></div><span class="val">${sh.toFixed(1)}</span></div>`;
+  const v=$('verdict');v.className='verdict '+l;v.textContent=l==='good'?'Good photo':l==='warn'?'Usable, could be better':'Retake this one';$('keepBtn').textContent=l==='bad'?'Keep anyway':'Keep'}
 async function review(bmp){
-  $('review').style.display='flex';push('review');$('verdict').className='verdict';$('verdict').textContent='Checking…';$('checks').innerHTML='';$('cropBox').style.display='none';$('cropHelp').hidden=true;crop=null;pending={bmp};
+  $('cropBtn').hidden=false;$('review').style.display='flex';push('review');$('verdict').className='verdict';$('verdict').textContent='Checking…';$('checks').innerHTML='';$('cropBox').style.display='none';$('cropHelp').hidden=true;crop=null;pending={bmp};
   await new Promise(r=>setTimeout(r,30));
   const G=toGray(bmp,480),G12=toGray(bmp,Math.min(1200,bmp.width));
   const m={w:bmp.width,h:bmp.height,sharp:sharpness(G12),tilt:tiltDeg(G),ov:null,dup:null,postL:postEdge(G,'l'),postR:postEdge(G,'r')};
@@ -1001,30 +1072,33 @@ function stamp(bmp,g,n){const c=document.createElement('canvas');c.width=bmp.wid
   line(`WOD ${V.wod||'—'}  ·  ${gpsText(V.gps)}  ·  ${code}  ·  ${V.auditor}`,pad,c.height-pad,false);
   line(code,c.width-pad,pad+fs,true,'right');return c}
 async function thumbOf(sc,w,h){const tc=document.createElement('canvas');tc.width=180;tc.height=240;const s=Math.max(180/w,240/h);tc.getContext('2d').drawImage(sc,(180-w*s)/2,(240-h*s)/2,w*s,h*s);return await new Promise(r=>tc.toBlob(r,'image/jpeg',0.7))}
-$('keepBtn').addEventListener('click',async()=>{if(!pending||!pending.ev)return;const {bmp,G,m,ev}=pending;$('keepBtn').disabled=true;
+$('keepBtn').addEventListener('click',async()=>{
+  if(pending&&pending.simple){const b=pending.bmp,g=cur;if(!g){pending=null;back();return}pending=null;$('keepBtn').disabled=true;try{if(g.kind==='visit')await keepX(b);else await keepM(b,true)}finally{$('keepBtn').disabled=false}if(g.kind==='msl'&&g.sku)back(2);else back();return}
+  if(!pending||!pending.ev)return;const {bmp,G,m,ev}=pending;$('keepBtn').disabled=true;
   try{
     if(cur.kind==='single'&&cur.shots.length){const old=cur.shots.pop();await dbDel(PH,old.name);await dbDel(TH,old.name)}
     const n=cur.shots.length+1,name=fname(V,cur,n);
-    let sb=bmp;const L=3264;if(Math.max(bmp.width,bmp.height)>L){const s=L/Math.max(bmp.width,bmp.height);const c=document.createElement('canvas');c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);sb=c}
-    const sc=stamp(sb,cur,n);const blob=await new Promise(r=>sc.toBlob(r,'image/jpeg',0.82));const thumb=await thumbOf(sc,sc.width,sc.height);
+    let sb=bmp;const L=SIZE.shelf[0];if(Math.max(bmp.width,bmp.height)>L){const s=L/Math.max(bmp.width,bmp.height);const c=document.createElement('canvas');c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);sb=c}
+    const sc=stamp(sb,cur,n);const blob=await new Promise(r=>sc.toBlob(r,'image/jpeg',SIZE.shelf[1]));const thumb=await thumbOf(sc,sc.width,sc.height);
     const rec={name,n,w:sc.width,h:sc.height,sharp:+m.sharp.toFixed(1),tilt:+m.tilt.toFixed(1),ov:m.ov&&m.ov.f?+m.ov.f.toFixed(2):null,dup:m.dup,postL:m.postL,postR:m.postR,level:ev.worst,crop,time:new Date(nowMs()).toISOString(),status:'local',gray:G};
     cur.lens=curLens();if(cur.kind==='row'&&m.postR)cur.rightOk=true;
     await dbPut(PH,name,blob);await dbPut(TH,name,thumb);
     cur.shots.push(rec);persist();prevG=G;prevBmp=bmp;pending=null;toast('Kept · s'+pad2(n));
     if(cur.kind==='single'){back(2)}else{back();updateTiles();updateEdge()}
   }finally{$('keepBtn').disabled=false}});
-async function keepM(bmp){const cat=cur.cat,sku=cur.sku||null;V.msl=V.msl||[];
+const SIZE={shelf:[2880,0.80],pack:[1800,0.80],visit:[1600,0.75]};   // longest side in pixels, JPEG quality
+async function keepM(bmp,noBack){const cat=cur.cat,sku=cur.sku||null;V.msl=V.msl||[];
   if(sku){const old=mclPhoto(V,sku[0]);if(old){await dbDel(PH,old.name);await dbDel(TH,old.name);V.msl=V.msl.filter(x=>x!==old)}}
   const n=sku?sku[0]:V.msl.filter(s=>s.cat===cat).length+1,name=sku?fnameK(V,sku[0]):fnameM(V,cat,n);
-  let b=bmp;const L=2400;if(Math.max(bmp.width,bmp.height)>L){const s=L/Math.max(bmp.width,bmp.height);const c=document.createElement('canvas');c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);b=c}
+  let b=bmp;const L=SIZE.pack[0];if(Math.max(bmp.width,bmp.height)>L){const s=L/Math.max(bmp.width,bmp.height);const c=document.createElement('canvas');c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);b=c}
   const G12=toGray(bmp,Math.min(1000,bmp.width));const sh=sharpness(G12);
-  const sc=stamp(b,{cat,kind:'msl',n:0,sku},n);const out=await new Promise(r=>sc.toBlob(r,'image/jpeg',0.85));const thumb=await thumbOf(sc,sc.width,sc.height);
+  const sc=stamp(b,{cat,kind:'msl',n:0,sku},n);const out=await new Promise(r=>sc.toBlob(r,'image/jpeg',SIZE.pack[1]));const thumb=await thumbOf(sc,sc.width,sc.height);
   await dbPut(PH,name,out);await dbPut(TH,name,thumb);const rec={name,n,cat,w:sc.width,h:sc.height,sharp:+sh.toFixed(1),tilt:'',ov:null,dup:null,level:sh<12?'warn':'',crop:null,time:new Date(nowMs()).toISOString(),status:'local'};
   if(sku){rec.sku=sku[0];rec.skuCode=sku[1];const a=mclAns(V,sku[0])||{};V.mcl=V.mcl||{};V.mcl[sku[0]]={a:1,reason:'',remark:a.remark||''}}
-  V.msl.push(rec);V.manifestSent=false;persist();updateTiles();toast(sh<12?'Saved (a little soft: hold still next time)':sku?'Pack shot saved':'Saved · p'+pad2(n));if(sku)back()}
+  V.msl.push(rec);V.manifestSent=false;persist();updateTiles();toast(sh<12?'Saved (a little soft: hold still next time)':sku?'Pack shot saved':'Saved · p'+pad2(n));if(sku&&!noBack)back()}
 async function keepX(bmp){const n=(V.extras||[]).length+1,name=fnameX(V,n);
-  let b=bmp;const L=2400;if(Math.max(bmp.width,bmp.height)>L){const s=L/Math.max(bmp.width,bmp.height);const c=document.createElement('canvas');c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);b=c}
-  const sc=stamp(b,null,n);const out=await new Promise(r=>sc.toBlob(r,'image/jpeg',0.8));const thumb=await thumbOf(sc,sc.width,sc.height);
+  let b=bmp;const L=SIZE.visit[0];if(Math.max(bmp.width,bmp.height)>L){const s=L/Math.max(bmp.width,bmp.height);const c=document.createElement('canvas');c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);b=c}
+  const sc=stamp(b,null,n);const out=await new Promise(r=>sc.toBlob(r,'image/jpeg',SIZE.visit[1]));const thumb=await thumbOf(sc,sc.width,sc.height);
   await dbPut(PH,name,out);await dbPut(TH,name,thumb);V.extras.push({name,n,w:sc.width,h:sc.height,sharp:'',tilt:'',ov:null,dup:null,level:'',crop:null,time:new Date(nowMs()).toISOString(),status:'local'});persist();updateTiles();toast('Saved · v'+pad2(n))}
 
 /* ---------- crop ---------- */
@@ -1049,7 +1123,7 @@ async function showVwImage(s){const b=await dbGet(PH,s.name)||await dbGet(TH,s.n
 async function openViewer(g,s,noPush){vw={g,s};vwCropped=false;crop=null;cropCtx=null;$('viewer').style.display='flex';if(!noPush)push('viewer');const isX=g.kind==='visit'||g.kind==='msl';$('vwTitle').textContent=g.kind==='msl'?(s.cat==='MCL'?`MCL ${s.sku} · ${s.skuCode||''}`:`${catName(s.cat)} · pack shot p${pad2(s.n)}`):isX?`Visit photo v${pad2(s.n)}`:`${catName(g.cat)} · Group ${g.n} · s${pad2(s.n)}`;$('vwCrop').hidden=isX;$('vwRetake').hidden=isX;$('vwCropBox').style.display='none';$('vwCropHelp').hidden=true;$('vwActions').hidden=false;$('vwCropActions').hidden=true;
   $('vwToggle').hidden=!s.crop;$('vwToggle').textContent='Show cropped result';await showVwImage(s);
   const c=s.crop;$('vwMeta').innerHTML=isX?`<b>File</b><span style="word-break:break-all">${s.name}</span><b>Upload</b><span>${s.status==='sent'?'in Drive':s.status==='failed'?'failed, will retry':'waiting for signal'}</span>`:`<b>File</b><span style="word-break:break-all">${s.name}</span><b>Checks</b><span>sharpness ${s.sharp} · level ${s.tilt}° · ${s.ov==null?'first in group':'overlap '+Math.round(s.ov*100)+'%'}${s.dup?' · duplicate of '+s.dup:''} · <span class="pill ${s.level}">${s.level==='good'?'good':s.level==='warn'?'usable':'weak'}</span></span><b>Crop</b><span>${c?`left ${Math.round(c.l*100)}% · top ${Math.round(c.t*100)}% · right ${Math.round((1-c.r)*100)}% · bottom ${Math.round((1-c.b)*100)}% removed. The grey part is not read by the engine; the full photo is kept.`:'none'}</span><b>Upload</b><span>${s.status==='sent'?'in Drive':s.status==='failed'?'failed, will retry':'on this phone, not sent yet'}</span>`;
-  const locked=s.status==='sent';$('vwCrop').disabled=locked;$('vwDelete').disabled=locked;$('vwRetake').disabled=locked;
+  const isSent=s.status==='sent',lkv=locked(V)||s.status==='uploading';$('vwCrop').disabled=isSent||lkv;$('vwDelete').disabled=lkv;$('vwRetake').disabled=lkv;
   if(locked)$('vwMeta').innerHTML+='<b>Note</b><span>Already uploaded: cannot be changed from the phone. Ask QC to adjust it in the register.</span>'}
 $('vwToggle').addEventListener('click',async()=>{if(!vw)return;vwCropped=!vwCropped;$('vwToggle').textContent=vwCropped?'Show full photo':'Show cropped result';await showVwImage(vw.s)});
 function doCloseViewer(){$('viewer').style.display='none';crop=null;cropCtx=null;const g=vw&&vw.g;vw=null;if(vwUrl){URL.revokeObjectURL(vwUrl);vwUrl=null}if(g&&g.kind==='visit')renderX();else if(g&&g.kind==='msl')renderPack();else renderCat()}
@@ -1058,15 +1132,17 @@ $('vwCrop').addEventListener('click',async()=>{if(!vw)return;vwCropped=false;awa
 $('vwCropCancel').addEventListener('click',()=>{$('vwCropBox').style.display='none';$('vwCropHelp').hidden=true;$('vwActions').hidden=false;$('vwCropActions').hidden=true;crop=null;cropCtx=null;if(vw)drawShade(vw.s)});
 $('vwCropClear').addEventListener('click',()=>{if(!vw)return;vw.s.crop=null;persist();$('vwCropCancel').click();openViewer(vw.g,vw.s,true);toast('Crop removed')});
 $('vwCropSave').addEventListener('click',()=>{if(!vw||!crop)return;const c=crop;const isFull=c.l<0.005&&c.t<0.005&&c.r>0.995&&c.b>0.995;vw.s.crop=isFull?null:{l:+c.l.toFixed(3),t:+c.t.toFixed(3),r:+c.r.toFixed(3),b:+c.b.toFixed(3)};persist();$('vwCropCancel').click();openViewer(vw.g,vw.s,true);toast(isFull?'No crop':'Crop saved: the grey part will not be read')});
-async function deleteShot(g,s){if(locked(V))return;await dbDel(PH,s.name);await dbDel(TH,s.name);
-  if(g.kind==='msl'){V.msl=V.msl.filter(x=>x!==s);V.manifestSent=false;const same=s.cat==='MCL'?[]:V.msl.filter(x=>x.cat===s.cat);for(const x of same){const want=same.indexOf(x)+1;if(x.n!==want){const nn=fnameM(V,x.cat,want);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,nn,b);if(t)await dbPut(TH,nn,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=nn;x.n=want}}persist();return}
-  if(g.kind==='visit'){V.extras=V.extras.filter(x=>x!==s);for(const x of V.extras){const want=V.extras.indexOf(x)+1;if(x.n!==want){const nn=fnameX(V,want);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,nn,b);if(t)await dbPut(TH,nn,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=nn;x.n=want}}persist();return}
+function toTrash(v,x){if(x.status==='sent'){v.trash=v.trash||[];if(!v.trash.includes(x.name))v.trash.push(x.name)}}   // a file already in Drive is removed there too, on the next upload
+async function reName(v,x,nn){toTrash(v,x);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,nn,b);if(t)await dbPut(TH,nn,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=nn;if(x.status==='sent'){x.status='local';delete x.sentAt}}
+async function deleteShot(g,s){if(locked(V))return;toTrash(V,s);await dbDel(PH,s.name);await dbDel(TH,s.name);V.manifestSent=false;
+  if(g.kind==='msl'){V.msl=V.msl.filter(x=>x!==s);const same=s.cat==='MCL'?[]:V.msl.filter(x=>x.cat===s.cat);for(const x of same){const want=same.indexOf(x)+1;if(x.n!==want){await reName(V,x,fnameM(V,x.cat,want));x.n=want}}persist();return}
+  if(g.kind==='visit'){V.extras=V.extras.filter(x=>x!==s);for(const x of V.extras){const want=V.extras.indexOf(x)+1;if(x.n!==want){await reName(V,x,fnameX(V,want));x.n=want}}persist();return}
   g.shots=g.shots.filter(x=>x!==s);
-  for(const x of g.shots){const want=g.shots.indexOf(x)+1;if(x.n!==want){const nn=fname(V,g,want);const b=await dbGet(PH,x.name),t=await dbGet(TH,x.name);if(b)await dbPut(PH,nn,b);if(t)await dbPut(TH,nn,t);await dbDel(PH,x.name);await dbDel(TH,x.name);x.name=nn;x.n=want}}
+  for(const x of g.shots){const want=g.shots.indexOf(x)+1;if(x.n!==want){await reName(V,x,fname(V,g,want));x.n=want}}
   if(!g.shots.length){V.groups=V.groups.filter(x=>x!==g)}persist()}
-$('vwDelete').addEventListener('click',async()=>{if(!vw)return;if(guard('photos'))return;const b=$('vwDelete');if(b.dataset.a!=='1'){b.dataset.a='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.a='';b.textContent='Delete'},3000);return}
+$('vwDelete').addEventListener('click',async()=>{if(!vw)return;if(guard('photos'))return;if(Q.running){toast('An upload is running. Wait for it to finish, then delete.',3500);return}const b=$('vwDelete');if(b.dataset.a!=='1'){b.dataset.a='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.a='';b.textContent='Delete'},3000);return}
   b.dataset.a='';b.textContent='Delete';const {g,s}=vw;await deleteShot(g,s);toast('Photo deleted');back()});
-$('vwRetake').addEventListener('click',async()=>{if(!vw)return;if(guard('photos'))return;const {g,s}=vw;await deleteShot(g,s);$('viewer').style.display='none';vw=null;depth--;history.replaceState({aegis:'cat',d:depth},'');
+$('vwRetake').addEventListener('click',async()=>{if(!vw)return;if(guard('photos'))return;if(Q.running){toast('An upload is running. Wait for it to finish, then retake.',3500);return}const {g,s}=vw;await deleteShot(g,s);$('viewer').style.display='none';vw=null;depth--;rs('cat',depth);
   if(!V.groups.includes(g)){V.groups.push(g);g.shots=[]}cur=g;prevG=null;prevBmp=null;const last=g.shots[g.shots.length-1];if(last&&last.gray){prevG=last.gray;const tb=await dbGet(PH,last.name);if(tb)prevBmp=await loadBitmap(tb)}
   await openCamera()});
 
@@ -1093,19 +1169,32 @@ function rawPayload(v){if(!isHub(v))return {};const p=P(v.project),det=v.det||{}
       if((m.where||'').trim())f[k+'Brand(s) / where']=m.where.trim();if((m.others||'').trim()&&c!=='BISCUITS')f[k+'Other brands measured']=m.others.trim();if((m.remarks||'').trim())f[k+'Remarks']=m.remarks.trim();
       meas.push({name:nm,unit:cfg.unit,cols:cfg.cols,mnc:cfg.cols.map((_,i)=>!!cfg.mncOnly||i===0),vals:cfg.cols.map((_,i)=>has(m.vals[i])?Number(m.vals[i]):null),total:t.tot,pct:cfg.cols.map((_,i)=>{const q=t.full?t.pct(i):null;return q==null?null:+q.toFixed(4)}),cluster:t.full?t.cluster:'',cons:m.cons,types:ty,where:m.where||'',others:c==='BISCUITS'?'':(m.others||''),remarks:m.remarks||'',bevLoc:m.bevLoc,bevComp:m.bevComp,bevDel:m.bevDel,pcRep:m.pcRep,pcType:m.pcType,pcProd:m.pcProd,pcHome:m.pcHome,flags})}}
   return {flat:JSON.stringify(f),meas:JSON.stringify(meas)}}
-function detailPayload(v){const d=v.det||{},p=P(v.project);if(!p.details&&!v.chk&&!v.corr&&!(v.na&&Object.keys(v.na).length))return {};return {det2:JSON.stringify({sec:d.sec||'',mgr:d.mgr||'',diser:d.diser||'',remarks:d.remarks||'',na:p.cats.filter(([c])=>catNA(v,c)).map(([c,nm])=>nm+': '+(v.na[c].remark||'')).join(' | '),checklist:v.chk?v.chk.orig:'',checklistWarn:v.chk?(v.chk.warn||''):'',corrBW:(v.corr||{}).bw||'',corrName:(v.corr||{}).name||''})}}
+function detailPayload(v){const d=v.det||{},p=P(v.project);if(!p.details&&!v.chk&&!v.corr&&!(v.recs||[]).length&&!(v.na&&Object.keys(v.na).length))return {};return {det2:JSON.stringify({sec:d.sec||'',mgr:d.mgr||'',diser:d.diser||'',remarks:d.remarks||'',na:p.cats.filter(([c])=>catNA(v,c)).map(([c,nm])=>nm+': '+(v.na[c].remark||'')).join(' | '),checklist:v.chk?v.chk.orig:'',checklistWarn:v.chk?(v.chk.warn||''):'',corrBW:(v.corr||{}).bw||'',corrName:(v.corr||{}).name||'',recordings:(v.recs||[]).map(r=>r.name).join(' | ')})}}
 function mclPayload(v){const p=P(v.project);if(!p.mcl.length||(v.det||{}).status==='Refused Audit')return {};const s=mclStats(v);return {mclYes:s.yes,mclNo:s.no,mclTodo:s.unanswered,mcl:JSON.stringify(p.mcl.map(m=>{const a=mclAns(v,m[0])||{};const ph=mclPhoto(v,m[0]);return [m[0],m[1],m[2],m[3],a.a==null?'':a.a,a.a===0?(a.reason||''):'',a.remark||'',a.a===1&&ph?ph.name:'']}))}}
 async function post(body){const r=await fetch(CFG.url,{method:'POST',body:JSON.stringify(body)});return await r.json()}
-function setStatus(t,bad){const st=$('upStatus');st.className='status'+(bad?' bad':'');st.textContent=t}
-function enqueue(v,quiet){if(!signedIn()){if(!quiet){toast('Sign in first');openSettings()}return}
+function setStatus(t,bad){const st=$('upStatus');st.className='status'+(bad?' bad':'');st.textContent=t;document.querySelectorAll('.upMirror').forEach(e=>{e.className='status upMirror'+(bad?' bad':'');e.textContent=t})}
+function clearMirror(){document.querySelectorAll('.upMirror').forEach(e=>{e.textContent=''})}
+function unitsOf(v){return [[XG(v),true],[{n:0,cat:'',kind:'msl',type:'msl',shots:v.msl||[]},true],...v.groups.map(g=>[g,false])]}
+function refreshPage(){try{if(!$('recPage').hidden)renderRec();else if(!$('catPage').hidden)renderCat();else if(!$('packPage').hidden)renderPack();else if(!$('xPage').hidden)renderX()}catch(e){}}
+function upPart(only){if(!V)return;if(!signedIn()){toast('Sign in first');return}if(!navigator.onLine){toast('No signal. Try again when the phone is online.',3500);return}if(Q.running){toast('An upload is already running. Wait for it to finish, then tap again.',3500);return}
+  let n=0;for(const [g] of unitsOf(V))for(const s of g.shots)if(s.status!=='sent'&&only(g,s))n++;if(!n){setStatus('Everything here is already uploaded.');return}enqueue(V,true,only)}
+$('catUp').addEventListener('click',()=>{const c=CAT;upPart(g=>g.kind!=='visit'&&g.kind!=='msl'&&g.cat===c)});
+$('packUp').addEventListener('click',()=>upPart(g=>g.kind==='msl'));
+$('xUp').addEventListener('click',()=>upPart(g=>g.kind==='visit'));
+function enqueue(v,quiet,only,recs){if(!signedIn()){if(!quiet){toast('Sign in first');openSettings()}return}
   if(Q.running){Q.again=true;if(!quiet)Q.quiet=false;if(!quiet)toast('Upload already running; the rest is queued behind it.');return}
-  Q.running=true;Q.quiet=!!quiet;Q.v=v;if(V===v)renderVisit();runQueue().catch(e=>setStatus('Upload stopped: '+(e.message||e),true)).finally(()=>{Q.running=false;if(V===v)renderVisit();if(Q.again){const q=Q.quiet;Q.again=false;enqueue(v,q)}})}
+  Q.running=true;Q.quiet=!!quiet;Q.only=only||null;Q.recs=!!recs;Q.v=v;if(V===v)renderVisit();runQueue().catch(e=>setStatus('Upload stopped: '+(e.message||e),true)).finally(()=>{Q.running=false;Q.only=null;Q.recs=false;if(V===v){renderVisit();refreshPage()}if(Q.again){const q=Q.quiet;Q.again=false;enqueue(v,q)}})}
 async function sendOne(v,g,s){const blob=await dbGet(PH,s.name);if(!blob){s.status='failed';return {ok:false,error:'file missing on phone'}}
   try{const j=await post({token:CFG.token,name:CFG.name,kind:'photo',filename:s.name,mime:'image/jpeg',data:await b64(blob),...visitFields(v),category:(g.kind==='msl'?s.cat:g.cat)||'VISIT',categoryName:g.kind==='visit'?'Visit photos':catName(g.kind==='msl'?s.cat:g.cat),sku:s.skuCode?(s.sku+' · '+s.skuCode):'',group:g.kind==='visit'?'visit':g.kind==='msl'?'msl':g.n,groupType:g.kind+'/'+g.type,orientation:g.orient||'',placement:s.placement||'',lens:g.lens||'',shot:s.n,sharpness:s.sharp,tilt:s.tilt,overlap:s.ov==null?'':Math.round(s.ov*100),verdict:s.level,crop:s.crop?JSON.stringify(s.crop):'',dup:s.dup||''});
     if(j.ok){s.status='sent';s.sentAt=new Date().toISOString()}else s.status='failed';return j||{ok:false}}
   catch(e){s.status='failed';return {ok:false,net:true,error:String(e&&e.message||e)}}}
-async function runQueue(){const v=Q.v;const units=[[XG(v),true],[{n:0,cat:'',kind:'msl',type:'msl',shots:v.msl||[]},true],...v.groups.map(g=>[g,false])];
-  const todo=[];for(const [g,isX] of units)for(const s of g.shots)if(s.status!=='sent'&&(!Q.quiet||isX))todo.push([g,s]);
+async function runQueue(){const v=Q.v;const units=unitsOf(v);
+  if(v.trash&&v.trash.length){if(!navigator.onLine){setStatus('No signal. Upload resumes when the phone is back online.',true);return}   // files removed on the phone are removed from Drive first
+    try{const dj=await post({token:CFG.token,name:CFG.name,kind:'delete',files:JSON.stringify(v.trash),...visitFields(v)});
+      if(dj.ok){v.trash=[];persist()}else if(dj.error==='bad token'){setStatus('Your access token was changed. Sign in with the new token; nothing on this phone is lost.',true);needLogin();return}
+      else{setStatus(dj.busy?'The server is busy right now. Aegis will try again by itself in a minute: keep the app open.':'Could not remove the deleted photos from Drive: '+(dj.error||''),true);return}}
+    catch(e){setStatus('Could not reach the server to remove the deleted photos. Aegis will retry when there is signal.',true);return}}
+  const todo=[];for(const [g,isX] of units)for(const s of g.shots)if(s.status!=='sent'&&(Q.only?Q.only(g,s):(!Q.quiet||isX)))todo.push([g,s]);
   const all=shots(v);let sent=all.filter(s=>s.status==='sent').length;let stop=null;
   for(let i=0;i<todo.length&&!stop;i+=2){const batch=todo.slice(i,i+2);
     if(!navigator.onLine){stop='No signal. Upload resumes when the phone is back online.';break}
@@ -1114,6 +1203,8 @@ async function runQueue(){const v=Q.v;const units=[[XG(v),true],[{n:0,cat:'',kin
     for(const r of rs){if(r.ok)sent++;else if(r.busy)stop='The server is busy right now. Aegis will try again by itself in a minute: keep the app open.';else if(r.error==='bad token'){stop='Your access token was changed. Sign in with the new token; nothing on this phone is lost.';needLogin()}else if(r.net)stop='Could not reach the upload link (weak signal, or the link changed). Will retry.';else stop='Upload refused: '+(r.error||'unknown error')}
     persist();if(V===v)renderVisit()}
   if(stop){setStatus(stop,true);return}
+  if(Q.recs){const er=await sendRecs(v);if(er){setStatus(er,true);return}setStatus('Recordings uploaded. The visit is complete only after you tap Submit visit.');return}
+  if(Q.only){setStatus(todo.length?`${todo.length} photo${todo.length>1?'s':''} uploaded. The visit is complete only after you tap Submit visit.`:'Everything here is already uploaded.');return}
   if(all.every(s=>s.status==='sent')&&(!Q.quiet||v.submitted)&&!missing(v).length){
     if(v.chk&&v.chk.status!=='sent'&&measMode(v)!=='none'){setStatus('Checking and sending the SOS checklist file… keep Aegis open.');const cb=await dbGet(PH,v.chk.name);
       if(!cb){v.chk=null;persist();setStatus('The checklist file is no longer on this phone. Attach it again, then tap Submit visit.',true);if(V===v)renderVisit();return}
@@ -1123,6 +1214,7 @@ async function runQueue(){const v=Q.v;const units=[[XG(v),true],[{n:0,cat:'',kin
         else if(cj.error==='bad token'){setStatus('Your access token was changed. Sign in with the new token; nothing on this phone is lost.',true);needLogin();return}
         else{setStatus(cj.busy?'The server is busy right now. Aegis will try again by itself in a minute: keep the app open.':'The checklist file was refused: '+(cj.error||''),true);return}}
       catch(e){setStatus('The checklist file could not be sent yet. Aegis will retry when there is signal.',true);return}}
+    if((v.recs||[]).some(r=>r.status!=='sent')){const er=await sendRecs(v);if(er){setStatus(er,true);if(V===v)renderVisit();return}}
     setStatus('Sending the visit record…');
     try{const j=await post({token:CFG.token,name:CFG.name,kind:'manifest',filename:`${base(v)}_manifest.csv`,text:manifestCSV(v),...visitFields(v),...mclPayload(v),...rawPayload(v),...detailPayload(v)});if(j.ok){v.manifestSent=true;v.submitted=false;if(!v.firstSent)v.firstSent=new Date(nowMs()).toISOString();persist();setStatus(all.length?`All ${all.length} photos and the visit record are in Drive.`:'The visit record is in Drive.');toast('Submitted')}else if(j.busy)setStatus('Photos are in; the server is busy saving the visit record. Aegis will try again in a minute: keep the app open.',true);else if(j.error==='bad token'){setStatus('Your access token was changed. Sign in with the new token; nothing on this phone is lost.',true);needLogin()}else setStatus('Photos are in; the visit record was refused: '+(j.error||''),true)}
     catch(e){setStatus('Photos are in; the visit record could not be sent yet. Aegis will retry when there is signal.',true)}}
@@ -1140,9 +1232,9 @@ setInterval(resumeIfNeeded,60000);
 window.addEventListener('online',resumeIfNeeded);document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeIfNeeded()});
 
 /* ---------- housekeeping ---------- */
-async function purgeOld(){const cutoff=Date.now()-KEEP_DAYS*864e5;for(const v of VISITS)if(v.chk&&v.chk.status==='sent'&&v.chk.sentAt&&new Date(v.chk.sentAt).getTime()<cutoff&&!v.chk.purged){await dbDel(PH,v.chk.name);v.chk.purged=true}for(const v of VISITS)for(const s of shots(v)){if(s.status==='sent'&&s.sentAt&&new Date(s.sentAt).getTime()<cutoff&&!s.purged){await dbDel(PH,s.name);s.purged=true}}persist()}
+async function purgeOld(){const cutoff=Date.now()-KEEP_DAYS*864e5;for(const v of VISITS)for(const r of (v.recs||[]))if(r.status==='sent'&&r.sentAt&&new Date(r.sentAt).getTime()<cutoff&&!r.purged){await dbDel(PH,r.name);r.purged=true}for(const v of VISITS)if(v.chk&&v.chk.status==='sent'&&v.chk.sentAt&&new Date(v.chk.sentAt).getTime()<cutoff&&!v.chk.purged){await dbDel(PH,v.chk.name);v.chk.purged=true}for(const v of VISITS)for(const s of shots(v)){if(s.status==='sent'&&s.sentAt&&new Date(s.sentAt).getTime()<cutoff&&!s.purged){await dbDel(PH,s.name);s.purged=true}}persist()}
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
-(function boot(){history.replaceState({aegis:'main',d:0},'');renderCfg();CLOCK=Object.assign(CLOCK,load('aegis.clock',{}));VISITS=load('aegis.visits',[]);
+(function boot(){history.replaceState({aegis:'root',d:-1,sid:SID},'');history.pushState({aegis:'main',d:0,sid:SID},'');renderCfg();CLOCK=Object.assign(CLOCK,load('aegis.clock',{}));VISITS=load('aegis.visits',[]);
   for(const v of VISITS){v.extras=v.extras||[];v.msl=v.msl||[];v.mcl=v.mcl||{};if(!v.project||/perfect store/i.test(v.project))v.project='PS 2026';for(const g of v.groups){if(!g.cat)g.cat=v.cat||'POWBEV'}for(const s of shots(v))if(s.status==='uploading')s.status='failed';if(v.manifestSent&&!v.firstSent)v.firstSent=v.finished||v.started}
   renderHome();showVer();if(!signedIn()){$('settings').hidden=false}else showProj();ctx();checkClock();purgeOld();if(signedIn()&&(!SYNC.at||!(SYNC.projects||[]).length||!(SYNC.projects||[]).every(p=>Array.isArray(p.cats)&&Array.isArray(p.cats[0]||[]))||Date.now()-new Date(SYNC.at).getTime()>3*3600e3))doSync(true);
   const rid=load('aegis.resume',null);if(rid){save('aegis.resume',null);const rv=VISITS.find(x=>x.id===rid);if(rv&&signedIn())setTimeout(()=>{CFG.project=rv.project;save('aegis.cfg',CFG);$('projPage').hidden=true;openVisit(rv);toast(`Aegis is now ${VERSION}. Tap Submit visit to continue.`,5000)},400)}else setTimeout(()=>checkUpdate(true),5000)})();
