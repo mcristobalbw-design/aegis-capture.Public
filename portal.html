@@ -86,6 +86,9 @@ table.sm{min-width:0}table.sm td,table.sm th{white-space:normal}
 #ov .ovh{display:flex;gap:10px;align-items:center;padding:10px 16px;background:#fff;font-size:14px;word-break:break-all}
 #ovB{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:12px;position:relative}#ovB img{max-width:100%;height:auto;border-radius:6px}#ovB p{position:absolute;top:16px;color:#fff;background:rgba(0,0,0,.5);padding:6px 12px;border-radius:8px}
 [hidden]{display:none!important}
+.flt{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.flt label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}.flt select{width:100%;text-transform:none;letter-spacing:0;font-weight:400}
+table.cmp{min-width:560px}table.cmp td.pend{color:var(--muted);font-style:italic}table.cmp tr.tot td{font-weight:700;background:var(--soft)}table.cmp tr.key td{font-weight:700}table.cmp tbody tr{cursor:default}
+table.cmp th.n{text-align:right}table.trend{min-width:760px}table.trend tbody tr{cursor:default}
 </style></head><body>
 <header><div class="wrap">
   <h1>Aegis Portal <small id="ver"></small></h1>
@@ -98,9 +101,10 @@ table.sm{min-width:0}table.sm td,table.sm th{white-space:normal}
 <script>
 (function(){
 'use strict';
-const API='https://script.google.com/macros/s/AKfycbxHPqdY8X5CckGOREXFPZdkji-MJijE0HEiV2hr5TR7lSmRJpFJWZySSNU5MjJ9UY2Z/exec', PV='Portal 1.1';
+const API='https://script.google.com/macros/s/AKfycbxHPqdY8X5CckGOREXFPZdkji-MJijE0HEiV2hr5TR7lSmRJpFJWZySSNU5MjJ9UY2Z/exec', PV='Portal 1.2';
 const $=s=>document.querySelector(s), esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ls={get(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set(k,v){try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}}};
+let Q=null,qBusy=false,qf={m:'',amim:'',fa:'',chain:'',katd:'',store:''};
 let tok=ls.get('aegis.portal.token'),S=null,proj=ls.get('aegis.portal.project'),view='overview',sel=null,det=null,dtab='photos',period='month',fFa='',fSt='',busy=false,msg='';
 async function api(body){const r=await fetch(API,{method:'POST',body:JSON.stringify(Object.assign({kind:'portal',token:tok,project:proj},body||{}))});return await r.json()}
 const pad=n=>String(n).padStart(2,'0'), today=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
@@ -155,6 +159,45 @@ function coverage(){const D=S.data,d=vis().filter(v=>!v.excl),norm=s=>String(s).
   return `<div class="toolbar"><h2>Coverage</h2><span class="grow"></span>${periodSel()}</div>
   <div class="tw"><table style="min-width:640px"><thead><tr><th>Auditor</th><th>Region</th><th>Stores tagged</th><th>Doors visited</th><th>Coverage</th><th>Refused</th><th>Last visit</th></tr></thead><tbody>${rows.map(r=>{const pc=r.f.tagged?Math.min(100,Math.round(100*r.n/r.f.tagged)):0;return `<tr style="cursor:default"><td>${esc(r.f.name)}</td><td>${esc(r.f.region)}</td><td class="n">${r.f.tagged||'—'}</td><td class="n">${r.n}</td><td>${r.f.tagged?`<div class="bar" style="grid-template-columns:1fr 44px"><i><u style="width:${Math.max(2,pc)}%"></u></i><b>${pc}%</b></div>`:'—'}</td><td class="n">${r.ref}</td><td>${r.last?nice(r.last):'—'}</td></tr>`}).join('')||'<tr style="cursor:default"><td colspan="7" class="muted">No auditors yet.</td></tr>'}</tbody></table></div>
   <div class="grid2"><div class="card"><h3>Stores with no FA tagged</h3><p>${D.stores.total?`<b>${D.stores.untagged}</b> of ${D.stores.total} stores have no auditor in the store list yet.`:'The store list for this project is not uploaded yet.'}</p></div></div>`}
+/* ---------- SOS results: FA checklist vs image recognition vs QC'd actual, for the doors in the store list ---------- */
+const SCAT=[
+ {name:'Powdered Beverage',tot:['pb_total'],key:['Tang % of PowBev',['tang'],['pb_total']],rows:[['Tang and Tang Ice Tea',['tang']],['Nestea Ice Tea',['nestea']],["Eight O'Clock",['eoc']],['24Seven',['s247']],['Other brands',['pb_other']]]},
+ {name:'Breadfill',tot:['bf_total'],key:['Eden % of block cheese',['eden'],['block']],rows:[['Eden Original',['edo']],['Eden Meltsarap',['edm']],['Eden Slices',['eds']],['Magnolia block cheese',['magb']],['Other block cheese',['othb']],['Cheez Whiz',['cw']],['Magnolia cheese spread',['mags']],['Arla cheese spread',['arla']],['Other cheese spread',['oths']],['Eden Mayo and Sandwich Spread',['mayo']],['Other breadfill',['bf_other']]],
+  extra:[['Eden % of block cheese (Original + Meltsarap + Slices)',['eden'],['block']],['Cheez Whiz % of cheese spread',['cw'],['spread']]]},
+ {name:'Biscuits',tot:['bi_total'],key:['MDLZ % of biscuits',['mdlzb'],['bi_total']],rows:[['Total Oreo',['oreo']],['Total Tiger',['tgs','te','tb']],['Total Chips Ahoy',['ca']],['Total MDLZ',['mdlzb'],1],['Total other brands',['bi_other']]]},
+ {name:'Chocolates',tot:['ch_home','ch_gl'],key:['MDLZ % of chocolates',['mdlz_h','mdlz_g'],['ch_home','ch_gl']],rows:[['Total CDM',['cdm_h','cdm_g']],['Total Toblerone',['tob_h','tob_g']],['Total MDLZ',['mdlz_h','mdlz_g'],1],['Total others',['oth_h','oth_g']]]}];
+const SKEY=[SCAT[0].key,SCAT[1].key,['Cheez Whiz % of cheese spread',['cw'],['spread']],SCAT[2].key,SCAT[3].key];
+const mlabel=m=>m&&m.length===7?`${MON[Number(m.slice(5,7))-1]} ${m.slice(0,4)}`:m, p1=x=>x==null||isNaN(x)?'—':(100*x).toFixed(1)+'%', cm=x=>Math.round(x).toLocaleString();
+async function loadSos(){qBusy=true;const want=proj;try{const j=await api({what:'sos'});if(want!==proj)return;if(j.ok){const F={};((j.qc||{}).fields||[]).forEach((k,i)=>F[k]=i+2);Q={project:want,stores:j.stores||[],qc:j.qc,F};const ms=(j.qc||{}).months||[];if(!ms.includes(qf.m)&&qf.m!=='all')qf.m=ms[ms.length-1]||''}else Q={project:want,error:j.error||'unknown error'}}catch(e){Q={project:want,error:'Could not reach the server.'}}qBusy=false;if(view==='sos')render()}
+function sosView(){
+  if(!Q||Q.project!==proj){if(!qBusy)loadSos();return '<p class="muted">Loading the SOS results…</p>'}
+  if(Q.error)return `<div class="toolbar"><h2>${esc(proj)} · SOS results</h2></div><p class="err">Could not load: ${esc(Q.error)}</p>`;
+  if(!Q.qc)return `<div class="toolbar"><h2>${esc(proj)} · SOS results</h2></div><div class="note">The QC'd data is still being read. It is picked up within the hour after a file is placed in 06 Results / QC data.</div>`;
+  const F=Q.F,st=Q.stores,uniq=a=>[...new Set(a.filter(Boolean))].sort((x,y)=>x.localeCompare(y));
+  const opt=(id,label,vals,cur,all)=>`<label>${label}<select id="${id}"><option value="">${all}</option>${vals.map(v=>{const k=Array.isArray(v)?v[0]:v,t=Array.isArray(v)?v[1]:v;return `<option value="${esc(k)}" ${k===cur?'selected':''}>${esc(t)}</option>`}).join('')}</select></label>`;
+  const pick=st.filter(s=>(!qf.amim||s[5]===qf.amim)&&(!qf.fa||s[6].includes(qf.fa))&&(!qf.chain||s[3]===qf.chain)&&(!qf.katd||s[4]===qf.katd)&&(!qf.store||s[0]===qf.store)),set=new Set(pick.map(s=>s[0]));
+  const inSel=Q.qc.rows.filter(r=>set.has(r[1])),rows=inSel.filter(r=>qf.m==='all'||r[0]===qf.m);
+  const sum=(rs,ks)=>{let t=0;for(const r of rs)for(const k of ks){const v=r[F[k]];if(v!=null)t+=v}return t},share=(rs,a,b)=>{const d=sum(rs,b);return d?sum(rs,a)/d:null};
+  const withData=new Set(rows.map(r=>r[1])).size,per=qf.m==='all'?`${mlabel(Q.qc.months[0])} to ${mlabel(Q.qc.months[Q.qc.months.length-1])}`:mlabel(qf.m);
+  let h=`<div class="toolbar"><h2>${esc(proj)} · SOS results</h2><span class="grow"></span><button class="btn" id="qClr">Clear filters</button></div>
+  <div class="card"><div class="flt">
+   <label>Month<select id="q_m">${Q.qc.months.slice().reverse().map(m=>`<option value="${m}" ${m===qf.m?'selected':''}>${mlabel(m)}</option>`).join('')}<option value="all" ${qf.m==='all'?'selected':''}>All months</option></select></label>
+   ${opt('q_amim','AMIM',uniq(st.map(s=>s[5])),qf.amim,'All AMIMs')}${opt('q_fa','FA',uniq(st.flatMap(s=>s[6])),qf.fa,'All FAs')}${opt('q_chain','Chain / Distributor',uniq(st.map(s=>s[3])),qf.chain,'All chains')}${opt('q_katd','KA / TD',uniq(st.map(s=>s[4])),qf.katd,'KA and TD')}
+   ${opt('q_store','Store',st.slice().sort((a,b)=>a[1].localeCompare(b[1])).map(s=>[s[0],s[1]]),qf.store,'All stores')}</div>
+   <p class="muted">${pick.length} door${pick.length===1?'':'s'} in this selection · ${withData} with QC'd data for ${esc(per)}. Checklist and image recognition figures appear here as visits come in.</p></div>
+  <div class="kpis">${SKEY.map(k=>`<div class="kpi"><span>${esc(k[0])}</span><b>${p1(share(rows,k[1],k[2]))}</b><em>QC'd actual · ${esc(per)}</em></div>`).join('')}</div>`;
+  h+=SCAT.map(c=>{const T=sum(rows,c.tot),line=(l,ks,cls)=>`<tr class="${cls||''}"><td>${esc(l)}</td><td class="n pend">pending</td><td class="n pend">pending</td><td class="n">${T?p1(sum(rows,ks)/T):'—'}</td><td class="n">${cm(sum(rows,ks))}</td></tr>`;
+    return `<div class="card"><h3>${esc(c.name)}</h3><div class="tw"><table class="cmp sm"><thead><tr><th>Measure</th><th class="n">Checklist (FA file)</th><th class="n">Image recognition</th><th class="n">QC'd actual</th><th class="n">QC'd cm</th></tr></thead><tbody>
+    ${c.rows.map(r=>line(r[0],r[1],r[2]?'key':'')).join('')}<tr class="tot"><td>Total ${esc(c.name)}</td><td class="n pend">pending</td><td class="n pend">pending</td><td class="n">${T?'100.0%':'—'}</td><td class="n">${cm(T)}</td></tr>
+    ${(c.extra||[]).map(e=>`<tr class="key"><td>${esc(e[0])}</td><td class="n pend">pending</td><td class="n pend">pending</td><td class="n">${p1(share(rows,e[1],e[2]))}</td><td class="n">${cm(sum(rows,e[1]))} of ${cm(sum(rows,e[2]))}</td></tr>`).join('')}</tbody></table></div></div>`}).join('');
+  const byM=Q.qc.months.map(m=>[m,inSel.filter(r=>r[0]===m)]);
+  h+=`<div class="card"><h3>Trend by month · QC'd actual</h3><p class="muted">Same selection of doors, every month with QC'd data.</p><div class="tw"><table class="trend"><thead><tr><th>Measure</th>${byM.map(x=>`<th class="n">${mlabel(x[0]).replace(' 20',' ’')}</th>`).join('')}</tr></thead><tbody>
+   ${SKEY.map(k=>`<tr><td>${esc(k[0])}</td>${byM.map(x=>`<td class="n">${p1(share(x[1],k[1],k[2]))}</td>`).join('')}</tr>`).join('')}<tr><td class="muted">Doors with data</td>${byM.map(x=>`<td class="n muted">${x[1].length}</td>`).join('')}</tr></tbody></table></div></div>`;
+  if(qf.m!=='all'){const by=new Map(rows.map(r=>[r[1],r])),list=pick.slice().sort((a,b)=>a[1].localeCompare(b[1])),cap=300;
+    h+=`<div class="card"><h3>By door · ${esc(per)}</h3><p class="muted">QC'd actual per store. Select a row to see that store on its own.${list.length>cap?` Showing the first ${cap} of ${list.length}; narrow the filters to see the rest.`:''}</p><div class="tw"><table><thead><tr><th>Store</th><th>BW code</th><th>AMIM</th><th>FA</th>${SKEY.map(k=>`<th class="n">${esc(k[0].replace(' % of ',' / '))}</th>`).join('')}</tr></thead><tbody id="qtb">
+    ${list.slice(0,cap).map(s=>{const r=by.get(s[0]);return `<tr data-bw="${esc(s[0])}"><td>${esc(s[1])}</td><td>${esc(s[0])}</td><td>${esc(s[5])}</td><td>${esc(s[6].join(', '))}</td>${SKEY.map(k=>`<td class="n">${r?p1(share([r],k[1],k[2])):'<span class="muted">no data</span>'}</td>`).join('')}</tr>`}).join('')||`<tr style="cursor:default"><td colspan="9" class="muted">No doors in this selection.</td></tr>`}</tbody></table></div></div>`}
+  h+=`<div class="note">Each share is the brand's total centimetres divided by the category's total centimetres across the doors selected. QC'd source: ${esc((Q.qc.files||[]).join(', '))}. Doors outside the store list, and entries with typing errors, are left out.</div>`;
+  return h}
 function files(){const F=S.data.files||{};const f=(t,s,u)=>u?`<div><span><b>${esc(t)}</b><br><span class="muted">${esc(s)}</span></span><a class="btn" href="${esc(u)}" target="_blank" rel="noopener">Open</a></div>`:'';
   return `<div class="toolbar"><h2>Files</h2></div><p class="muted">These open in Google Drive. Your Google account must be on the access list with an email for the links to work.</p><div class="grid2">
   <div class="card"><h3>Results</h3><div class="list">${f(proj+' - Aegis raw data','Google Sheet · one row per door, plus SOS and MCL sheets',F.raw)}${f('Upload log','Google Sheet · every visit and photo',F.log)}</div></div>
@@ -167,23 +210,25 @@ async function loadThumbs(id){if(!det||det.id!==id||det.error)return;for(let fro
     try{const j=await api({what:'thumbs',visitId:id,from});if(!det||det.id!==id)return;(j.thumbs||[]).forEach((t,i)=>{det.thumbs[from+i]=t;const b=document.querySelector(`#detail .ph[data-ix="${from+i}"]`);if(b&&t&&!b.querySelector('img')){const im=document.createElement('img');im.src=t;im.alt='';b.insertBefore(im,b.firstChild)}})}catch(e){return}}}
 async function openPhoto(ix){if(!det)return;const id=det.id,p=det.photos[ix],ov=$('#ov');ov.hidden=false;$('#ovT').textContent=p[2];$('#ovB').innerHTML=(det.thumbs[ix]?`<img src="${det.thumbs[ix]}" alt="" style="filter:blur(2px);opacity:.6">`:'')+'<p class="muted">Loading the full photo…</p>';$('#ovL').hidden=!(p[3]&&S.role!=='viewer');$('#ovL').href=p[3]||'#';
   try{const j=await api({what:'photo',visitId:id,index:ix});if(ov.hidden||$('#ovT').textContent!==p[2])return;$('#ovB').innerHTML=j.ok?`<img src="${j.data}" alt="${esc(p[2])}">`:`<p class="err">${esc(j.error||'Could not load the photo.')}</p>`}catch(e){$('#ovB').innerHTML='<p class="err">Could not reach the server.</p>'}}
-const TABS=()=>[['overview','Overview'],['visits','Visits'],['coverage','Coverage'],...(S.role!=='viewer'?[['files','Files']]:[]),...(S.role==='admin'?[['access','Access']]:[])];
+const TABS=()=>[['overview','Overview'],['visits','Visits'],['coverage','Coverage'],...(S.data.sos?[['sos','SOS results']]:[]),...(S.role!=='viewer'?[['files','Files']]:[]),...(S.role==='admin'?[['access','Access']]:[])];
 function render(){paint();const main=$('#main');
   if(!S){$('#navbar').hidden=true;$('#proj').innerHTML='';$('#who').textContent='';$('#ver').textContent=PV;main.innerHTML=busy&&tok?'<p class="muted" style="margin-top:10vh;text-align:center">Loading…</p>':loginView();const g=$('#go');if(g){const go=()=>{const t=$('#tk').value.trim().toUpperCase();if(!t)return;tok=t;ls.set('aegis.portal.token',t);load(false)};g.addEventListener('click',go);$('#tk').addEventListener('keydown',e=>{if(e.key==='Enter')go()})}return}
   $('#ver').textContent=`${PV} · script ${S.version}`;$('#who').innerHTML=`${esc(S.name)} · ${esc(S.role==='qc'?'QC':S.role)} · <span class="lnk" id="out" style="color:inherit">Sign out</span>`;
   $('#proj').innerHTML=S.projects.map(p=>`<button data-p="${esc(p)}" class="${p===proj?'on':''}">${esc(p)}</button>`).join('');
   const tabs=TABS();if(!tabs.some(t=>t[0]===view))view='overview';$('#navbar').hidden=false;$('#nav').innerHTML=tabs.map(t=>`<button data-v="${t[0]}" class="${t[0]===view?'on':''}">${t[1]}</button>`).join('');
-  main.innerHTML=busy?'<p class="muted">Loading…</p>':({overview,visits,coverage,files,access})[view]();
+  main.innerHTML=busy?'<p class="muted">Loading…</p>':({overview,visits,coverage,files,access,sos:sosView})[view]();
   $('#out').addEventListener('click',()=>{tok='';ls.set('aegis.portal.token','');S=null;msg='';render()});
   const per=$('#per');if(per)per.addEventListener('change',()=>{period=per.value;render()});const rf=$('#rf');if(rf)rf.addEventListener('click',()=>load(false));
   const tb=$('#tb');if(tb)tb.addEventListener('click',async e=>{const tr=e.target.closest('tr');if(!tr||!tr.dataset.id)return;sel=tr.dataset.id;dtab='photos';det=null;render();const d=$('#detail');if(d)d.scrollIntoView({block:'nearest',behavior:'smooth'});
     try{const j=await api({what:'visit',visitId:sel});det=j.ok&&j.id===sel?{id:j.id,flat:Object.keys(j.flat||{}).length?j.flat:null,mcl:j.mcl||[],photos:j.photos||[],thumbs:[]}:{id:sel,error:'Could not load this visit: '+(j.error||'')}}catch(x){det={id:sel,flat:null,mcl:[],photos:[],thumbs:[],error:'Could not reach the server.'}}render();loadThumbs(sel)});
+  ['m','amim','fa','chain','katd','store'].forEach(k=>{const e=$('#q_'+k);if(e)e.addEventListener('change',()=>{qf[k]=e.value;render()})});const qc=$('#qClr');if(qc)qc.addEventListener('click',()=>{const m=qf.m;qf={m,amim:'',fa:'',chain:'',katd:'',store:''};render()});
+  const qt=$('#qtb');if(qt)qt.addEventListener('click',e=>{const tr=e.target.closest('tr');if(tr&&tr.dataset.bw){qf.store=tr.dataset.bw;render();window.scrollTo({top:0,behavior:'smooth'})}});
   const a=$('#fFa');if(a)a.addEventListener('change',()=>{fFa=a.value;render()});const s=$('#fSt');if(s)s.addEventListener('change',()=>{fSt=s.value;render()});
   const q=$('#q');if(q)q.addEventListener('input',()=>{const t=q.value.trim().toUpperCase();document.querySelectorAll('#tb tr').forEach(r=>{r.hidden=!!t&&!r.textContent.toUpperCase().includes(t)})});
   const dt=$('#dt');if(dt)dt.addEventListener('click',e=>{const b=e.target.closest('button');if(b){dtab=b.dataset.t;render()}});
   document.querySelectorAll('#detail .ph').forEach(b=>b.addEventListener('click',()=>openPhoto(Number(b.dataset.ix))))}
 $('#nav').addEventListener('click',e=>{const b=e.target.closest('button');if(b){view=b.dataset.v;render()}});
-$('#proj').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&b.dataset.p!==proj){proj=b.dataset.p;sel=null;det=null;fFa='';fSt='';load(false)}});
+$('#proj').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&b.dataset.p!==proj){proj=b.dataset.p;sel=null;det=null;fFa='';fSt='';Q=null;qf={m:'',amim:'',fa:'',chain:'',katd:'',store:''};load(false)}});
 $('#ovX').addEventListener('click',()=>{$('#ov').hidden=true;$('#ovB').innerHTML=''});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#ov').hidden)$('#ovX').click()});
 if(tok)load(true);else render();
 })();
